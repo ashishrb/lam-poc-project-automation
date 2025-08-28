@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from datetime import datetime, timedelta
 import sqlite3
+import os
 
 try:
     from autonomous_manager import AutonomousProjectManager, DatabaseManager, FullyAutonomousManager
@@ -18,10 +19,21 @@ api_bp = Blueprint('api_bp', __name__, url_prefix='/api/v1')
 
 
 DB_AUTONOMOUS = 'autonomous_projects.db'
+DEMO_SENTINEL = os.path.join('enhanced_autonomous_pm', 'data', 'DEMO_MODE_ON')
 
 
 def _db():
     return DatabaseManager(DB_AUTONOMOUS) if DatabaseManager else None
+
+
+def _is_demo_mode() -> bool:
+    # Demo mode enabled if sentinel file exists or env var is set
+    if os.getenv('DEMO_MODE', '').lower() in ('1', 'true', 'yes', 'on'):
+        return True
+    try:
+        return os.path.exists(DEMO_SENTINEL)
+    except Exception:
+        return False
 
 
 @api_bp.post('/employee/submit-data')
@@ -112,6 +124,9 @@ def health():
     except Exception as e:
         details["chromadb"] = {"ok": False, "error": str(e)}
 
+    # Demo mode status
+    details["demo_mode"] = {"enabled": _is_demo_mode()}
+
     status["data"] = details
     return jsonify(status)
 
@@ -119,6 +134,12 @@ def health():
 @api_bp.get('/projects/health')
 def projects_health():
     try:
+        if _is_demo_mode():
+            items = [
+                {'project_id': 'PROJ001', 'name': 'AI Customer Portal', 'budget_health': 'warning', 'schedule_health': 'healthy', 'team_health': 'healthy', 'overall_risk': 'medium'},
+                {'project_id': 'PROJ002', 'name': 'Banking App Redesign', 'budget_health': 'healthy', 'schedule_health': 'warning', 'team_health': 'critical', 'overall_risk': 'medium'},
+            ]
+            return jsonify({"success": True, "projects": items})
         if not DatabaseManager:
             return jsonify({"success": False, "error": "DatabaseManager unavailable"}), 500
         dbm = _db()
@@ -144,14 +165,24 @@ def projects_health():
 
 @api_bp.get('/projects/resource-utilization')
 def resource_utilization():
-    # Demo utilization; replace with live data as available
-    data = {"Backend": 0.92, "Frontend": 0.68, "QA": 0.55, "DevOps": 0.83, "Data": 0.49}
+    # Utilization snapshot
+    if _is_demo_mode():
+        data = {"Backend": 0.82, "Frontend": 0.64, "QA": 0.58, "DevOps": 0.76, "Data": 0.61}
+    else:
+        data = {"Backend": 0.92, "Frontend": 0.68, "QA": 0.55, "DevOps": 0.83, "Data": 0.49}
     return jsonify({"success": True, "utilization": data})
 
 
 @api_bp.get('/projects/budget-burndown')
 def budget_burndown():
     try:
+        if _is_demo_mode():
+            now = datetime.utcnow()
+            series = []
+            for i in range(14):
+                day = (now + timedelta(days=i)).strftime('%Y-%m-%d')
+                series.append({'date': day, 'spent': 10000 + i * 9000, 'allocated': 200000})
+            return jsonify({"success": True, "series": series, "project": "PROJ001"})
         if not DatabaseManager:
             return jsonify({"success": False}), 500
         dbm = _db()
@@ -176,6 +207,8 @@ def budget_burndown():
 @api_bp.get('/projects/timeline')
 def timeline_adherence():
     try:
+        if _is_demo_mode():
+            return jsonify({"success": True, "expected": 65, "actual": 62, "project": "PROJ001"})
         dbm = _db()
         p = dbm.get_all_projects()[0]
         start = datetime.fromisoformat(p.start_date)
@@ -191,6 +224,9 @@ def timeline_adherence():
 @api_bp.get('/projects/team-performance')
 def team_performance():
     try:
+        if _is_demo_mode():
+            perf = {'quality': 7.8, 'collaboration': 7.2, 'innovation': 8.1}
+            return jsonify({"success": True, "averages": perf})
         apm = AutonomousProjectManager(_db())
         res = apm.analyze_team_performance()
         if not res.get('success'):
@@ -208,6 +244,8 @@ def team_performance():
 @api_bp.get('/analytics/predictions')
 def predictions():
     try:
+        if _is_demo_mode():
+            return jsonify({"success": True, "prediction": 0.78})
         apm = AutonomousProjectManager(_db())
         prj = apm.db.get_all_projects()[0]
         days_total = (datetime.fromisoformat(prj.end_date) - datetime.fromisoformat(prj.start_date)).days
@@ -224,6 +262,52 @@ def predictions():
         pa = PredictiveAnalytics()
         res = pa.project_success_modeling(features)
         return jsonify({"success": True, "prediction": res['success_probability']})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# Admin endpoints for demo control
+@api_bp.post('/admin/demo-mode')
+def set_demo_mode():
+    try:
+        enabled = False
+        if request.is_json:
+            enabled = bool(request.json.get('enabled'))
+        else:
+            enabled = request.form.get('enabled') in ('1', 'true', 'on', 'True')
+        os.makedirs(os.path.dirname(DEMO_SENTINEL), exist_ok=True)
+        if enabled:
+            with open(DEMO_SENTINEL, 'w') as f:
+                f.write('on')
+        else:
+            if os.path.exists(DEMO_SENTINEL):
+                os.remove(DEMO_SENTINEL)
+        return jsonify({"success": True, "enabled": _is_demo_mode()})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@api_bp.post('/admin/reset-demo-data')
+def reset_demo_data():
+    try:
+        # Remove database file
+        if os.path.exists(DB_AUTONOMOUS):
+            os.remove(DB_AUTONOMOUS)
+        # Recreate and seed via DatabaseManager
+        if DatabaseManager:
+            _ = _db()  # instantiate to build tables and seed
+        # Ensure 'updates' table exists for dashboard submissions
+        with sqlite3.connect(DB_AUTONOMOUS) as conn:
+            c = conn.cursor()
+            c.execute('''CREATE TABLE IF NOT EXISTS updates (
+                   id INTEGER PRIMARY KEY AUTOINCREMENT,
+                   name TEXT NOT NULL,
+                   project TEXT NOT NULL,
+                   update_text TEXT NOT NULL,
+                   date TEXT NOT NULL
+               )''')
+            conn.commit()
+        return jsonify({"success": True})
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 

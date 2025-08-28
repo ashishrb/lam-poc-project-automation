@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, flash
 import sqlite3
 from datetime import datetime
 from typing import Any, Dict
@@ -24,6 +24,7 @@ except Exception:
 app = Flask(__name__, template_folder='enhanced_autonomous_pm/web/templates', static_folder='enhanced_autonomous_pm/web/static')
 from enhanced_autonomous_pm.core.config import Config
 DB_AUTONOMOUS = Config.DATABASE_URL
+app.secret_key = os.getenv('SECRET_KEY', 'dev-key')
 
 
 def init_db():
@@ -96,9 +97,12 @@ def dashboard():
 @app.route('/update', methods=['GET', 'POST'])
 def update():
     if request.method == 'POST':
-        name = request.form['name']
-        project = request.form['project']
-        update_text = request.form['update']
+        name = (request.form.get('name') or '').strip()
+        project = (request.form.get('project') or '').strip()
+        update_text = (request.form.get('update') or '').strip()
+        if not name or not project or not update_text:
+            flash('Please fill in Name, Project, and Update.', 'danger')
+            return render_template('forms/update.html', form=request.form)
         date = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
         with sqlite3.connect(DB_AUTONOMOUS) as conn:
             c = conn.cursor()
@@ -107,6 +111,7 @@ def update():
                 (name, project, update_text, date),
             )
             conn.commit()
+        flash('Update submitted successfully and visible on Leadership Dashboard.', 'success')
         return redirect(url_for('dashboard'))
     return render_template('forms/update.html')
 

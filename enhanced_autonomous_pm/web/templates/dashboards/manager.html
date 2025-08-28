@@ -4,6 +4,15 @@
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
 <div class="grid">
   <section>
+    <h3>Demo Controls</h3>
+    <p class="text-muted">Enable Demo Mode to force server-side sample data for all charts. Use Reset to reseed the database with fresh demo content.</p>
+    <div class="d-flex gap-2 align-items-center">
+      <button id="toggle-demo" class="btn btn-sm btn-primary">Toggle Demo Mode</button>
+      <button id="reset-demo" class="btn btn-sm btn-outline-light">Reset Demo Data</button>
+      <span id="demo-indicator" class="badge rounded-pill text-bg-secondary">Checking…</span>
+    </div>
+  </section>
+  <section>
     <h3>Project Health Heatmap</h3>
     <div id="health-heatmap" style="height:320px;"></div>
   </section>
@@ -108,6 +117,27 @@ async function drawPredictive(){
 }
 
 (async ()=>{
+  // Demo controls wiring
+  try {
+    const health = await fetchJSON('/api/v1/health');
+    const enabled = health?.data?.demo_mode?.enabled === true;
+    document.getElementById('demo-indicator').textContent = enabled ? 'Demo Mode: ON' : 'Demo Mode: OFF';
+    document.getElementById('demo-indicator').className = enabled ? 'badge rounded-pill text-bg-success' : 'badge rounded-pill text-bg-secondary';
+  } catch(e) {}
+
+  document.getElementById('toggle-demo').addEventListener('click', async () => {
+    const current = (document.getElementById('demo-indicator').textContent||'').includes('ON');
+    const resp = await fetch('/api/v1/admin/demo-mode', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({enabled: !current}) });
+    const js = await resp.json();
+    if(js.success){ location.reload(); }
+  });
+  document.getElementById('reset-demo').addEventListener('click', async () => {
+    if(!confirm('This will reset and reseed demo data. Continue?')) return;
+    const resp = await fetch('/api/v1/admin/reset-demo-data', { method:'POST' });
+    const js = await resp.json();
+    if(js.success){ location.reload(); }
+  });
+
   await drawHealthHeatmap();
   await drawUtilization();
   await drawBurndown();

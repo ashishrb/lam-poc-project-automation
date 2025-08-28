@@ -1,10 +1,17 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>Submit Daily Update</h1>
-<form method="post">
-    <label>Name:<br><input type="text" name="name" required></label><br>
-    <label>Project:<br><input type="text" name="project" required></label><br>
-    <label>Update:<br><textarea name="update" rows="4" cols="50" required></textarea></label><br>
+<p class="text-muted">Share a concise status to inform leadership and auto-feed analytics. Your message appears on the Leadership Dashboard immediately.</p>
+<form method="post" novalidate>
+    <label>Name:
+      <input type="text" name="name" value="{{ (form and form.get('name')) or '' }}" placeholder="Jane Doe" required>
+    </label>
+    <label>Project:
+      <input type="text" name="project" value="{{ (form and form.get('project')) or '' }}" placeholder="PROJ001 or Project Name" required>
+    </label>
+    <label>Update:
+      <textarea name="update" rows="4" placeholder="Key progress, blockers, next steps" required>{{ (form and form.get('update')) or '' }}</textarea>
+    </label>
     <button type="submit">Submit</button>
+</form>
 {% endblock %}
-
