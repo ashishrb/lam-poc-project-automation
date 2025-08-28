@@ -35,7 +35,7 @@ def init_db():
                    id INTEGER PRIMARY KEY AUTOINCREMENT,
                    name TEXT NOT NULL,
                    project TEXT NOT NULL,
-                   update TEXT NOT NULL,
+                   update_text TEXT NOT NULL,
                    date TEXT NOT NULL
                )'''
         )
@@ -49,10 +49,11 @@ def migrate_updates_to_autonomous():
     try:
         with sqlite3.connect(legacy) as src, sqlite3.connect(DB_AUTONOMOUS) as dst:
             sc = src.cursor(); dc = dst.cursor()
-            sc.execute('SELECT id, name, project, update, date FROM updates')
+            # Map legacy column name `update` to new `update_text`
+            sc.execute('SELECT id, name, project, update as update_text, date FROM updates')
             rows = sc.fetchall()
             for _, name, project, update_text, date in rows:
-                dc.execute('INSERT INTO updates (name, project, update, date) VALUES (?,?,?,?)',
+                dc.execute('INSERT INTO updates (name, project, update_text, date) VALUES (?,?,?,?)',
                            (name, project, update_text, date))
             dst.commit()
     except Exception:
@@ -80,7 +81,7 @@ def dashboard():
     with sqlite3.connect(DB_AUTONOMOUS) as conn:
         c = conn.cursor()
         c.execute(
-            'SELECT date, project, name, update FROM updates ORDER BY date DESC'
+            'SELECT date, project, name, update_text FROM updates ORDER BY date DESC'
         )
         rows = c.fetchall()
     return render_template('dashboards/leadership.html', updates=rows)
@@ -96,7 +97,7 @@ def update():
         with sqlite3.connect(DB_AUTONOMOUS) as conn:
             c = conn.cursor()
             c.execute(
-                'INSERT INTO updates (name, project, update, date) VALUES (?,?,?,?)',
+                'INSERT INTO updates (name, project, update_text, date) VALUES (?,?,?,?)',
                 (name, project, update_text, date),
             )
             conn.commit()

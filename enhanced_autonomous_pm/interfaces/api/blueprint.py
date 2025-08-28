@@ -51,9 +51,9 @@ def employee_submit():
                 conn.commit()
         # Also log a daily update if provided
         if data.get('tasks_completed') or data.get('innovation_suggestion'):
-            with sqlite3.connect(DB_NAME) as conn:
+            with sqlite3.connect(DB_AUTONOMOUS) as conn:
                 c = conn.cursor()
-                c.execute('INSERT INTO updates (name, project, update, date) VALUES (?,?,?,?)',
+                c.execute('INSERT INTO updates (name, project, update_text, date) VALUES (?,?,?,?)',
                           (name or emp_id, project_id or 'N/A',
                            f"Tasks Completed: {data.get('tasks_completed', '0')}; Suggestion: {data.get('innovation_suggestion', '-')}", now))
                 conn.commit()
