@@ -2,6 +2,8 @@ from flask import Blueprint, request, jsonify
 from datetime import datetime, timedelta
 import sqlite3
 import os
+import io
+import json as _json
 
 try:
     from autonomous_manager import AutonomousProjectManager, DatabaseManager, FullyAutonomousManager
@@ -14,6 +16,31 @@ try:
     from enhanced_autonomous_pm.automation.predictive_analytics import PredictiveAnalytics
 except Exception:
     PredictiveAnalytics = None
+
+try:
+    from enhanced_autonomous_pm.core.ai_orchestrator import EnhancedAIOrchestrator
+except Exception:
+    EnhancedAIOrchestrator = None
+
+try:
+    from enhanced_autonomous_pm.core.rag_engine import RAGKnowledgeEngine
+except Exception:
+    RAGKnowledgeEngine = None
+
+try:
+    from enhanced_autonomous_pm.core.knowledge_manager import KnowledgeManager
+except Exception:
+    KnowledgeManager = None
+
+try:
+    import pandas as pd
+except Exception:
+    pd = None
+
+try:
+    from bs4 import BeautifulSoup
+except Exception:
+    BeautifulSoup = None
 
 api_bp = Blueprint('api_bp', __name__, url_prefix='/api/v1')
 
@@ -34,6 +61,13 @@ def _is_demo_mode() -> bool:
         return os.path.exists(DEMO_SENTINEL)
     except Exception:
         return False
+
+
+def _check_admin() -> bool:
+    token = os.getenv('ADMIN_TOKEN')
+    if not token:
+        return True  # no token set → open in demo
+    return request.headers.get('X-Admin-Token') == token
 
 
 @api_bp.post('/employee/submit-data')
@@ -129,6 +163,402 @@ def health():
 
     status["data"] = details
     return jsonify(status)
+
+
+# RAG endpoints
+@api_bp.post('/rag/reindex')
+def rag_reindex():
+    try:
+        if not RAGKnowledgeEngine:
+            return jsonify({"success": False, "error": "RAG engine unavailable"}), 500
+        rag = RAGKnowledgeEngine()
+        res = rag.index_existing_project_data()
+        return jsonify(res)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@api_bp.post('/rag/query')
+def rag_query():
+    try:
+        q = request.json.get('query') if request.is_json else request.form.get('query')
+        if not q:
+            return jsonify({"success": False, "error": "Missing query"}), 400
+        if not RAGKnowledgeEngine:
+            return jsonify({"success": False, "error": "RAG engine unavailable"}), 500
+        rag = RAGKnowledgeEngine()
+        res = rag.enhance_query_with_context(q)
+        return jsonify(res)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# Model routing and Ollama usage
+@api_bp.get('/models/route')
+def model_route():
+    try:
+        q = request.args.get('query', 'Provide a strategic analysis and plan for improving delivery performance and reducing budget variance.')
+        if not EnhancedAIOrchestrator:
+            return jsonify({"success": True, "provider": "transformers", "selected_model": "Salesforce/xLAM-1b-fc-r", "note": "Core orchestrator unavailable"})
+        orch = EnhancedAIOrchestrator()
+        route = orch.route_query_to_appropriate_model(q)
+        return jsonify({"success": True, **route})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@api_bp.post('/models/ollama/generate')
+def ollama_generate():
+    try:
+        from enhanced_autonomous_pm.core.capabilities import OLLAMA_AVAILABLE, ollama
+        if not OLLAMA_AVAILABLE or not ollama:
+            return jsonify({"success": False, "error": "Ollama client not available"}), 500
+        data = request.get_json() if request.is_json else request.form.to_dict()
+        model = data.get('model', 'gpt-oss:20b')
+        prompt = data.get('prompt', 'Provide three bullet strategic recommendations to improve project delivery.')
+        # Keep it fast and short for demos
+        res = ollama.generate(model=model, prompt=prompt, options={"num_predict": 128})
+        return jsonify({"success": True, "model": model, "response": res.get('response', '')})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# Activity endpoints
+@api_bp.get('/activity/communications')
+def activity_communications():
+    try:
+        limit = int(request.args.get('limit', '50'))
+        with sqlite3.connect(DB_AUTONOMOUS) as conn:
+            c = conn.cursor()
+            c.execute('''CREATE TABLE IF NOT EXISTS communication_logs (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        stakeholder_id TEXT,
+                        project_id TEXT,
+                        channel TEXT,
+                        subject TEXT,
+                        message TEXT,
+                        sent_at TEXT,
+                        status TEXT
+                    )''')
+            c.execute('SELECT project_id, channel, subject, sent_at, status FROM communication_logs ORDER BY id DESC LIMIT ?', (limit,))
+            rows = c.fetchall()
+        items = [{"project_id": r[0], "channel": r[1], "subject": r[2], "sent_at": r[3], "status": r[4]} for r in rows]
+        return jsonify({"success": True, "items": items})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@api_bp.get('/activity/files')
+def activity_files():
+    try:
+        base = os.path.abspath(OPS_DIR)
+        os.makedirs(base, exist_ok=True)
+        out = []
+        for root, _, files in os.walk(base):
+            for fn in files:
+                path = os.path.join(root, fn)
+                st = os.stat(path)
+                out.append({
+                    "path": os.path.relpath(path, base),
+                    "size": st.st_size,
+                    "modified": datetime.utcfromtimestamp(st.st_mtime).isoformat()
+                })
+        out = sorted(out, key=lambda x: x['modified'], reverse=True)[:200]
+        return jsonify({"success": True, "files": out})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@api_bp.get('/ops/file')
+def ops_file_read():
+    try:
+        rel = request.args.get('path', 'note.txt')
+        target = _safe_path(OPS_DIR, rel)
+        if not os.path.exists(target):
+            return jsonify({"success": False, "error": "File not found"}), 404
+        with open(target, 'r', encoding='utf-8', errors='ignore') as f:
+            data = f.read(16384)
+        return jsonify({"success": True, "path": rel, "content": data})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@api_bp.post('/email/test')
+def email_test():
+    try:
+        if not _check_admin():
+            return jsonify({"success": False, "error": "Forbidden"}), 403
+        data = request.get_json() if request.is_json else request.form.to_dict()
+        to = data.get('to')
+        if not to:
+            # Fallback to leadership list
+            to = os.getenv('LEADERSHIP_EMAILS', '').split(',')[0].strip() if os.getenv('LEADERSHIP_EMAILS') else ''
+        if not to:
+            return jsonify({"success": False, "error": "No recipient provided and LEADERSHIP_EMAILS is empty"}), 400
+        subject = data.get('subject') or 'SMTP Test - Autonomous PM'
+        body = data.get('body') or f'This is a test email from Autonomous PM at {datetime.utcnow().isoformat()}.'
+        ok = _send_email(subject, body, [to])
+        return jsonify({"success": bool(ok), "to": to})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# File upload → RAG ingestion
+UPLOAD_DIR = os.path.join('enhanced_autonomous_pm', 'data', 'uploads')
+OPS_DIR = os.path.join('enhanced_autonomous_pm', 'data', 'ops')
+
+
+def _extract_text_from_file(filename: str, bytes_data: bytes) -> str:
+    name = filename.lower()
+    try:
+        if name.endswith(('.txt', '.md', '.log')):
+            return bytes_data.decode('utf-8', errors='ignore')
+        if name.endswith(('.csv',)) and pd is not None:
+            df = pd.read_csv(io.BytesIO(bytes_data))
+            return df.to_csv(index=False)
+        if name.endswith(('.json',)):
+            try:
+                return _json.dumps(_json.loads(bytes_data.decode('utf-8', errors='ignore')), indent=2)
+            except Exception:
+                return bytes_data.decode('utf-8', errors='ignore')
+        if name.endswith(('.html', '.htm')) and BeautifulSoup is not None:
+            soup = BeautifulSoup(bytes_data, 'html.parser')
+            return soup.get_text(separator='\n')
+        # Fallback: store raw bytes as hex-limited preview
+        return bytes_data[:4096].decode('utf-8', errors='ignore')
+    except Exception:
+        return bytes_data[:4096].decode('utf-8', errors='ignore')
+
+
+def _safe_path(base: str, rel: str) -> str:
+    os.makedirs(base, exist_ok=True)
+    rel = rel.lstrip('/\\')
+    full = os.path.abspath(os.path.join(base, rel))
+    base_abs = os.path.abspath(base)
+    if not full.startswith(base_abs + os.sep) and full != base_abs:
+        raise ValueError('Path traversal not allowed')
+    return full
+
+
+def _send_email(subject: str, body: str, to_addresses: list[str]) -> bool:
+    try:
+        import smtplib
+        from email.mime.text import MIMEText
+        host = os.getenv('SMTP_HOST')
+        port = int(os.getenv('SMTP_PORT', '587'))
+        user = os.getenv('SMTP_USER')
+        password = os.getenv('SMTP_PASS')
+        from_addr = os.getenv('FROM_EMAIL', user or 'noreply@example.com')
+        if not host or not to_addresses:
+            return False
+        msg = MIMEText(body)
+        msg['Subject'] = subject
+        msg['From'] = from_addr
+        msg['To'] = ', '.join(to_addresses)
+        with smtplib.SMTP(host, port, timeout=10) as server:
+            server.starttls()
+            if user and password:
+                server.login(user, password)
+            server.sendmail(from_addr, to_addresses, msg.as_string())
+        return True
+    except Exception:
+        return False
+
+
+@api_bp.post('/files/upload')
+def files_upload():
+    try:
+        if not _check_admin():
+            return jsonify({"success": False, "error": "Forbidden"}), 403
+        if not KnowledgeManager:
+            return jsonify({"success": False, "error": "Knowledge manager unavailable"}), 500
+        os.makedirs(UPLOAD_DIR, exist_ok=True)
+        files = request.files.getlist('files')
+        if not files:
+            return jsonify({"success": False, "error": "No files provided"}), 400
+        docs = []
+        saved = []
+        for f in files:
+            data = f.read()
+            save_path = os.path.join(UPLOAD_DIR, f.filename)
+            with open(save_path, 'wb') as out:
+                out.write(data)
+            saved.append(save_path)
+            text = _extract_text_from_file(f.filename, data)
+            docs.append({
+                "id": f"upload:{int(datetime.utcnow().timestamp()*1000)}:{f.filename}",
+                "text": text,
+                "metadata": {"source": "upload", "filename": f.filename, "path": save_path, "uploaded_at": datetime.utcnow().isoformat()}
+            })
+        km = KnowledgeManager()
+        res = km.add_documents(docs)
+        return jsonify({"success": True, "saved": saved, "indexed": res.get('count', 0) if res.get('success') else 0, "rag": res})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# NLP instruction endpoint (Auto/LAM/gpt-oss:20b) with optional RAG augmentation
+@api_bp.post('/nlp/execute')
+def nlp_execute():
+    try:
+        data = request.get_json() if request.is_json else request.form.to_dict()
+        prompt = data.get('prompt') or ''
+        provider = (data.get('provider') or 'auto').lower()  # auto|xlam|gpt
+        use_rag = str(data.get('use_rag') or 'false').lower() in ('1','true','yes','on')
+        intent = (data.get('intent') or '').lower()  # write_file|read_file|team_message|exec_email|leadership_update
+        args = data.get('args') or {}
+        confirm = str(data.get('confirm') or 'false').lower() in ('1','true','yes','on')
+        augmented = prompt
+        contexts = []
+        if use_rag and RAGKnowledgeEngine:
+            rag = RAGKnowledgeEngine()
+            res = rag.enhance_query_with_context(prompt)
+            if res.get('success'):
+                augmented = res.get('augmented_query', prompt)
+                contexts = res.get('contexts', [])
+
+        route = {"selected_model": "Salesforce/xLAM-1b-fc-r", "provider": "transformers"}
+        if EnhancedAIOrchestrator:
+            orch = EnhancedAIOrchestrator()
+            route = orch.route_query_to_appropriate_model(prompt)
+
+        # Provider resolution
+        final_provider = provider
+        if provider == 'auto':
+            final_provider = route.get('provider', 'transformers')
+
+        # Lightweight intent inference if not provided
+        if not intent:
+            low = prompt.lower()
+            inferred = None
+            inferred_args = {}
+            if any(k in low for k in ['write file','create file','save to file']):
+                inferred = 'write_file'; inferred_args = {'path': 'note.txt', 'content': prompt}
+            elif any(k in low for k in ['read file','open file','show file']):
+                inferred = 'read_file'; inferred_args = {'path': 'note.txt'}
+            elif 'team' in low and any(k in low for k in ['notify','message','mail','email','update']):
+                inferred = 'team_message'; inferred_args = {'project_id': None, 'subject': 'Team Update', 'recipients': [] , 'message': prompt}
+            elif any(k in low for k in ['executive','leadership']) and 'email' in low:
+                inferred = 'exec_email'; inferred_args = {'subject': 'Executive Update', 'recipients': [], 'body': prompt}
+            elif any(k in low for k in ['leadership update','post update','publish update']):
+                inferred = 'leadership_update'; inferred_args = {'name': 'Autonomous PM', 'project': 'N/A', 'update': prompt}
+            if inferred:
+                return jsonify({"success": True, "requires_confirmation": True, "inferred_intent": inferred, "inferred_args": inferred_args, "route": route})
+
+        # Tool actions (require confirmation on destructive ops)
+        if intent == 'write_file':
+            if not _check_admin():
+                return jsonify({"success": False, "error": "Forbidden"}), 403
+            rel = (args.get('path') or 'note.txt') if isinstance(args, dict) else 'note.txt'
+            content = (args.get('content') or prompt) if isinstance(args, dict) else prompt
+            target = _safe_path(OPS_DIR, rel)
+            preview = {"action": "write_file", "path": target, "bytes": len(content.encode('utf-8'))}
+            if not confirm:
+                return jsonify({"success": True, "requires_confirmation": True, "preview": preview})
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            with open(target, 'w', encoding='utf-8') as f:
+                f.write(content)
+            return jsonify({"success": True, **preview})
+
+        if intent == 'read_file':
+            rel = (args.get('path') or 'note.txt') if isinstance(args, dict) else 'note.txt'
+            target = _safe_path(OPS_DIR, rel)
+            if not os.path.exists(target):
+                return jsonify({"success": False, "error": "File not found"}), 404
+            with open(target, 'r', encoding='utf-8', errors='ignore') as f:
+                data = f.read(8192)
+            return jsonify({"success": True, "action": "read_file", "path": target, "content": data})
+
+        if intent == 'team_message':
+            if not _check_admin():
+                return jsonify({"success": False, "error": "Forbidden"}), 403
+            project_id = args.get('project_id') if isinstance(args, dict) else None
+            subject = args.get('subject') if isinstance(args, dict) else 'Team Update'
+            message = args.get('message') if isinstance(args, dict) else prompt
+            recipients = args.get('recipients') if isinstance(args, dict) else []
+            preview = {"action": "team_message", "project_id": project_id, "subject": subject, "recipients": recipients, "length": len(message)}
+            if not confirm:
+                return jsonify({"success": True, "requires_confirmation": True, "preview": preview})
+            sent = 0
+            if recipients:
+                if _send_email(subject, message, recipients):
+                    sent = len(recipients)
+            # log into communication_logs
+            try:
+                with sqlite3.connect(DB_AUTONOMOUS) as conn:
+                    c = conn.cursor()
+                    c.execute('''CREATE TABLE IF NOT EXISTS communication_logs (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        stakeholder_id TEXT,
+                        project_id TEXT,
+                        channel TEXT,
+                        subject TEXT,
+                        message TEXT,
+                        sent_at TEXT,
+                        status TEXT
+                    )''')
+                    c.execute('INSERT INTO communication_logs (stakeholder_id, project_id, channel, subject, message, sent_at, status) VALUES (?,?,?,?,?,?,?)',
+                              (None, project_id, 'email', subject, message, datetime.utcnow().isoformat(), 'sent' if sent else 'queued'))
+                    conn.commit()
+            except Exception:
+                pass
+            return jsonify({"success": True, **preview, "emails_sent": sent})
+
+        if intent == 'exec_email':
+            if not _check_admin():
+                return jsonify({"success": False, "error": "Forbidden"}), 403
+            subject = args.get('subject') if isinstance(args, dict) else 'Executive Update'
+            body = args.get('body') if isinstance(args, dict) else prompt
+            recipients = args.get('recipients') if isinstance(args, dict) else []
+            if not recipients:
+                recipients = [e.strip() for e in os.getenv('LEADERSHIP_EMAILS','').split(',') if e.strip()]
+            preview = {"action": "exec_email", "subject": subject, "recipients": recipients, "length": len(body)}
+            if not confirm:
+                return jsonify({"success": True, "requires_confirmation": True, "preview": preview})
+            sent = 0
+            if recipients:
+                if _send_email(subject, body, recipients):
+                    sent = len(recipients)
+            return jsonify({"success": True, **preview, "emails_sent": sent})
+
+        if intent == 'leadership_update':
+            if not _check_admin():
+                return jsonify({"success": False, "error": "Forbidden"}), 403
+            name = args.get('name') if isinstance(args, dict) else 'System'
+            project = args.get('project') if isinstance(args, dict) else (args.get('project_id') if isinstance(args, dict) else 'N/A')
+            upd = args.get('update') if isinstance(args, dict) else prompt
+            preview = {"action": "leadership_update", "project": project, "name": name, "length": len(upd)}
+            if not confirm:
+                return jsonify({"success": True, "requires_confirmation": True, "preview": preview})
+            with sqlite3.connect(DB_AUTONOMOUS) as conn:
+                c = conn.cursor()
+                c.execute('CREATE TABLE IF NOT EXISTS updates (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, project TEXT, update_text TEXT, date TEXT)')
+                c.execute('INSERT INTO updates (name, project, update_text, date) VALUES (?,?,?,?)',
+                          (name, project, upd, datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')))
+                conn.commit()
+            return jsonify({"success": True, **preview})
+
+        # Text generation paths
+        if final_provider == 'ollama' or final_provider == 'gpt':
+            from enhanced_autonomous_pm.core.capabilities import OLLAMA_AVAILABLE, ollama
+            if not OLLAMA_AVAILABLE or not ollama:
+                return jsonify({"success": False, "error": "Ollama not available"}), 500
+            model = 'gpt-oss:20b'
+            resp = ollama.generate(model=model, prompt=augmented, options={"num_predict": 256})
+            return jsonify({"success": True, "provider": "ollama", "model": model, "route": route, "contexts": contexts, "response": resp.get('response', '')})
+
+        # xLAM-path placeholder (simulate function-calling response)
+        # In a fuller integration, map prompt intents to tools/actions here.
+        return jsonify({
+            "success": True,
+            "provider": "transformers",
+            "model": "Salesforce/xLAM-1b-fc-r",
+            "route": route,
+            "contexts": contexts,
+            "response": "xLAM operation routed. Tool actions executed when 'intent' provided."
+        })
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 
 @api_bp.get('/projects/health')
@@ -270,6 +700,8 @@ def predictions():
 @api_bp.post('/admin/demo-mode')
 def set_demo_mode():
     try:
+        if not _check_admin():
+            return jsonify({"success": False, "error": "Forbidden"}), 403
         enabled = False
         if request.is_json:
             enabled = bool(request.json.get('enabled'))
@@ -290,6 +722,8 @@ def set_demo_mode():
 @api_bp.post('/admin/reset-demo-data')
 def reset_demo_data():
     try:
+        if not _check_admin():
+            return jsonify({"success": False, "error": "Forbidden"}), 403
         # Remove database file
         if os.path.exists(DB_AUTONOMOUS):
             os.remove(DB_AUTONOMOUS)
@@ -306,6 +740,14 @@ def reset_demo_data():
                    update_text TEXT NOT NULL,
                    date TEXT NOT NULL
                )''')
+            # seed a few leadership updates for demo
+            now = datetime.utcnow()
+            demo_updates = [
+                ("Sarah Johnson", "PROJ001", "Sprint 8 completed; API latency down 22%.", now.strftime('%Y-%m-%d %H:%M:%S')),
+                ("Michael Chen", "PROJ002", "Security review passed; rollout plan drafted.", (now.replace(microsecond=0)).strftime('%Y-%m-%d %H:%M:%S')),
+                ("Alice Brown", "PROJ001", "UX polish on onboarding; A/B test scheduled.", now.strftime('%Y-%m-%d %H:%M:%S')),
+            ]
+            c.executemany('INSERT INTO updates (name, project, update_text, date) VALUES (?,?,?,?)', demo_updates)
             conn.commit()
         return jsonify({"success": True})
     except Exception as e:

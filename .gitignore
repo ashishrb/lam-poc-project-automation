@@ -1,0 +1,32 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Databases and state
+*.db
+*.sqlite
+autonomous_projects.db
+project_updates.db
+enterprise.db
+enterprise_data.db
+
+# Vector store, uploads, ops files
+enhanced_autonomous_pm/data/vector_store/
+enhanced_autonomous_pm/data/uploads/
+enhanced_autonomous_pm/data/ops/
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Logs
+*.log
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+

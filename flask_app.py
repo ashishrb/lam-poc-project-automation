@@ -4,6 +4,13 @@ from datetime import datetime
 from typing import Any, Dict
 import os
 
+# Load environment from .env if present (for SMTP, tokens, etc.)
+try:
+    from dotenv import load_dotenv  # type: ignore
+    load_dotenv()
+except Exception:
+    pass
+
 # Project modules
 try:
     from autonomous_manager import AutonomousProjectManager, DatabaseManager, FullyAutonomousManager
@@ -25,6 +32,31 @@ app = Flask(__name__, template_folder='enhanced_autonomous_pm/web/templates', st
 from enhanced_autonomous_pm.core.config import Config
 DB_AUTONOMOUS = Config.DATABASE_URL
 app.secret_key = os.getenv('SECRET_KEY', 'dev-key')
+
+
+def _send_email(subject: str, body: str, to_addresses: list[str]) -> bool:
+    try:
+        import smtplib
+        from email.mime.text import MIMEText
+        host = os.getenv('SMTP_HOST')
+        port = int(os.getenv('SMTP_PORT', '587'))
+        user = os.getenv('SMTP_USER')
+        password = os.getenv('SMTP_PASS')
+        from_addr = os.getenv('FROM_EMAIL', user or 'noreply@example.com')
+        if not host or not to_addresses:
+            return False
+        msg = MIMEText(body)
+        msg['Subject'] = subject
+        msg['From'] = from_addr
+        msg['To'] = ', '.join(to_addresses)
+        with smtplib.SMTP(host, port, timeout=10) as server:
+            server.starttls()
+            if user and password:
+                server.login(user, password)
+            server.sendmail(from_addr, to_addresses, msg.as_string())
+        return True
+    except Exception:
+        return False
 
 
 def init_db():
@@ -111,6 +143,16 @@ def update():
                 (name, project, update_text, date),
             )
             conn.commit()
+        # fire-and-forget email notification if configured
+        recipients = [e.strip() for e in os.getenv('LEADERSHIP_EMAILS', '').split(',') if e.strip()]
+        if recipients:
+            try:
+                import threading
+                subject = f"Project Update: {project} by {name}"
+                body = f"Date: {date}\nProject: {project}\nBy: {name}\n\nUpdate:\n{update_text}"
+                threading.Thread(target=_send_email, args=(subject, body, recipients), daemon=True).start()
+            except Exception:
+                pass
         flash('Update submitted successfully and visible on Leadership Dashboard.', 'success')
         return redirect(url_for('dashboard'))
     return render_template('forms/update.html')
