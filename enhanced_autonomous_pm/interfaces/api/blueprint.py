@@ -14,11 +14,10 @@ try:
 except Exception:
     PredictiveAnalytics = None
 
-api_bp = Blueprint('api_bp', __name__, url_prefix='/api')
+api_bp = Blueprint('api_bp', __name__, url_prefix='/api/v1')
 
 
 DB_AUTONOMOUS = 'autonomous_projects.db'
-DB_NAME = 'project_updates.db'
 
 
 def _db():
@@ -203,4 +202,3 @@ def communications_generate():
         return jsonify(result)
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
-

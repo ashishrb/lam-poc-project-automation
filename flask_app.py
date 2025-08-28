@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, jsonify
 import sqlite3
 from datetime import datetime
 from typing import Any, Dict
+import os
 
 # Project modules
 try:
@@ -21,12 +22,13 @@ except Exception:
     employee_bp = manager_bp = executive_bp = client_bp = api_bp = None
 
 app = Flask(__name__, template_folder='enhanced_autonomous_pm/web/templates', static_folder='enhanced_autonomous_pm/web/static')
-DB_NAME = 'project_updates.db'
-DB_AUTONOMOUS = 'autonomous_projects.db'
+from enhanced_autonomous_pm.core.config import Config
+DB_AUTONOMOUS = Config.DATABASE_URL
 
 
 def init_db():
-    with sqlite3.connect(DB_NAME) as conn:
+    # Ensure unified 'updates' table exists in autonomous DB
+    with sqlite3.connect(DB_AUTONOMOUS) as conn:
         c = conn.cursor()
         c.execute(
             '''CREATE TABLE IF NOT EXISTS updates (
@@ -39,15 +41,43 @@ def init_db():
         )
         conn.commit()
 
+def migrate_updates_to_autonomous():
+    # Migrate records from legacy project_updates.db into autonomous DB
+    legacy = 'project_updates.db'
+    if not sqlite3 or not os.path.exists(legacy):
+        return
+    try:
+        with sqlite3.connect(legacy) as src, sqlite3.connect(DB_AUTONOMOUS) as dst:
+            sc = src.cursor(); dc = dst.cursor()
+            sc.execute('SELECT id, name, project, update, date FROM updates')
+            rows = sc.fetchall()
+            for _, name, project, update_text, date in rows:
+                dc.execute('INSERT INTO updates (name, project, update, date) VALUES (?,?,?,?)',
+                           (name, project, update_text, date))
+            dst.commit()
+    except Exception:
+        pass
+
 
 @app.route('/')
 def index():
     return redirect(url_for('manager_bp.manager_home') if manager_bp else '/manager')
 
 
+@app.errorhandler(Exception)
+def handle_api_error(e):
+    try:
+        path = request.path or ''
+        if path.startswith('/api/'):
+            return jsonify({"success": False, "error": str(e)}), 500
+    except Exception:
+        pass
+    return render_template('error.html', error=str(e)), 500
+
+
 @app.route('/dashboard')
 def dashboard():
-    with sqlite3.connect(DB_NAME) as conn:
+    with sqlite3.connect(DB_AUTONOMOUS) as conn:
         c = conn.cursor()
         c.execute(
             'SELECT date, project, name, update FROM updates ORDER BY date DESC'
@@ -63,7 +93,7 @@ def update():
         project = request.form['project']
         update_text = request.form['update']
         date = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-        with sqlite3.connect(DB_NAME) as conn:
+        with sqlite3.connect(DB_AUTONOMOUS) as conn:
             c = conn.cursor()
             c.execute(
                 'INSERT INTO updates (name, project, update, date) VALUES (?,?,?,?)',
@@ -91,5 +121,7 @@ if api_bp:
 
 
 if __name__ == '__main__':
+    import os
     init_db()
-    app.run(debug=True)
+    migrate_updates_to_autonomous()
+    app.run(debug=Config.DEBUG, port=Config.PORT)

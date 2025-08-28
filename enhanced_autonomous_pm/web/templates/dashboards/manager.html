@@ -32,7 +32,7 @@
 async function fetchJSON(url){ const r = await fetch(url); return await r.json(); }
 
 async function drawHealthHeatmap(){
-  const data = await fetchJSON('/api/projects/health');
+  const data = await fetchJSON('/api/v1/projects/health');
   if(!data.success) return;
   const projects = data.projects;
   const metrics = ['budget_health','schedule_health','team_health'];
@@ -44,13 +44,13 @@ async function drawHealthHeatmap(){
 }
 
 async function drawUtilization(){
-  const d = await fetchJSON('/api/projects/resource-utilization');
+  const d = await fetchJSON('/api/v1/projects/resource-utilization');
   const labels = Object.keys(d.utilization), vals = Object.values(d.utilization).map(v=>v*100);
   Plotly.newPlot('utilization-bar', [{type:'bar', x:labels, y:vals}], {yaxis:{title:'%'}});
 }
 
 async function drawBurndown(){
-  const d = await fetchJSON('/api/projects/budget-burndown');
+  const d = await fetchJSON('/api/v1/projects/budget-burndown');
   const dates = d.series.map(s=>s.date);
   const spent = d.series.map(s=>s.spent);
   const alloc = d.series.map(s=>s.allocated);
@@ -61,7 +61,7 @@ async function drawBurndown(){
 }
 
 async function drawTimeline(){
-  const d = await fetchJSON('/api/projects/timeline');
+  const d = await fetchJSON('/api/v1/projects/timeline');
   const fig = [
     {type:'indicator', mode:'gauge+number', value:d.actual, title:{text:'Actual %'}, gauge:{axis:{range:[0,100]},bar:{color:'#1f77b4'}}},
   ];
@@ -69,14 +69,14 @@ async function drawTimeline(){
 }
 
 async function drawTeamRadar(){
-  const d = await fetchJSON('/api/projects/team-performance');
+  const d = await fetchJSON('/api/v1/projects/team-performance');
   const cats = ['quality','collaboration','innovation'];
   const vals = cats.map(c=>d.averages[c]);
   Plotly.newPlot('team-radar', [{type:'scatterpolar', r:vals, theta:['Quality','Collaboration','Innovation'], fill:'toself'}], {polar:{radialaxis:{visible:true,range:[0,10]}}});
 }
 
 async function drawPredictive(){
-  const d = await fetchJSON('/api/analytics/predictions');
+  const d = await fetchJSON('/api/v1/analytics/predictions');
   const now = new Date();
   const xs = [...Array(12)].map((_,i)=>new Date(now.getTime()+i*86400000).toISOString().slice(0,10));
   const base = d.prediction || 0.8;

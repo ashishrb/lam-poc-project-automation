@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>Employee Self-Service Portal</h1>
-<form id="comprehensive-employee-form" method="post" action="{{ url_for('api_employee_submit') }}">
+<form id="comprehensive-employee-form" method="post" action="{{ url_for('api_bp.employee_submit') }}">
   <div class="grid">
     <section>
       <h3>Daily Task Tracking</h3>
@@ -42,4 +42,3 @@
   <button type="submit">Submit</button>
 </form>
 {% endblock %}
-
