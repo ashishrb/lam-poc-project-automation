@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Leadership Dashboard</h1>
+{% if updates %}
+<table>
+    <tr><th>Date</th><th>Project</th><th>Team Member</th><th>Update</th></tr>
+    {% for date, project, name, update in updates %}
+    <tr>
+        <td>{{ date }}</td>
+        <td>{{ project }}</td>
+        <td>{{ name }}</td>
+        <td>{{ update }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>No updates yet.</p>
+{% endif %}
+{% endblock %}
