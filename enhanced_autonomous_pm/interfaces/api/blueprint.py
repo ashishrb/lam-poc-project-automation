@@ -62,6 +62,60 @@ def employee_submit():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@api_bp.get('/health')
+def health():
+    """System health: DB, Ollama, Chroma, Torch/Transformers."""
+    status = {"success": True, "data": {}}
+    details = {}
+
+    # DB check: simple write/read roundtrip in a temp table
+    try:
+        with sqlite3.connect(DB_AUTONOMOUS) as conn:
+            c = conn.cursor()
+            c.execute("CREATE TABLE IF NOT EXISTS _healthcheck (id INTEGER PRIMARY KEY, ts TEXT)")
+            ts = datetime.utcnow().isoformat()
+            c.execute("INSERT INTO _healthcheck (ts) VALUES (?)", (ts,))
+            conn.commit()
+            c.execute("SELECT ts FROM _healthcheck ORDER BY id DESC LIMIT 1")
+            got = c.fetchone()
+            ok = bool(got and got[0])
+            details["database"] = {"ok": ok}
+    except Exception as e:
+        details["database"] = {"ok": False, "error": str(e)}
+        status["success"] = False
+
+    # Capability snapshot
+    try:
+        from enhanced_autonomous_pm.core import capabilities as caps
+        capsum = caps.summarize()
+        details["capabilities"] = capsum
+    except Exception as e:
+        details["capabilities"] = {"ok": False, "error": str(e)}
+
+    # Ollama reachability (non-blocking best effort)
+    try:
+        from enhanced_autonomous_pm.core.capabilities import OLLAMA_AVAILABLE, ollama
+        if OLLAMA_AVAILABLE and ollama:
+            # Listing models is lighter than embeddings
+            _ = ollama.list()
+            details.setdefault("ollama", {})["ok"] = True
+        else:
+            details.setdefault("ollama", {})["ok"] = False
+    except Exception as e:
+        details.setdefault("ollama", {})["ok"] = False
+        details["ollama"]["error"] = str(e)
+
+    # Chroma availability
+    try:
+        from enhanced_autonomous_pm.core.capabilities import CHROMADB_AVAILABLE
+        details["chromadb"] = {"ok": bool(CHROMADB_AVAILABLE)}
+    except Exception as e:
+        details["chromadb"] = {"ok": False, "error": str(e)}
+
+    status["data"] = details
+    return jsonify(status)
+
+
 @api_bp.get('/projects/health')
 def projects_health():
     try:
