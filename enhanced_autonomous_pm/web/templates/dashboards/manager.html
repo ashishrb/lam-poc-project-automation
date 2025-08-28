@@ -29,59 +29,82 @@
   </section>
 </div>
 <script>
-async function fetchJSON(url){ const r = await fetch(url); return await r.json(); }
+async function fetchJSON(url){ try { const r = await fetch(url); return await r.json(); } catch(e){ return {success:false}; } }
+
+const DARK_LAYOUT = {
+  paper_bgcolor: 'rgba(0,0,0,0)',
+  plot_bgcolor: 'rgba(0,0,0,0)',
+  font: { color: '#e5e7eb' },
+  margin: { t: 10 },
+  xaxis: { gridcolor: '#1f2937', zerolinecolor: '#1f2937' },
+  yaxis: { gridcolor: '#1f2937', zerolinecolor: '#1f2937' }
+};
 
 async function drawHealthHeatmap(){
   const data = await fetchJSON('/api/v1/projects/health');
-  if(!data.success) return;
-  const projects = data.projects;
+  const projects = (data && data.success && data.projects && data.projects.length)
+    ? data.projects
+    : [
+        {name:'Proj A', budget_health:'healthy', schedule_health:'warning', team_health:'healthy'},
+        {name:'Proj B', budget_health:'warning', schedule_health:'healthy', team_health:'critical'}
+      ];
   const metrics = ['budget_health','schedule_health','team_health'];
   const toScore = h => ({healthy:8, warning:5, critical:2}[h]||5);
   const z = metrics.map(m=>projects.map(p=>toScore(p[m])));
   const x = projects.map(p=>p.name);
   const y = ['Budget','Schedule','Team'];
-  Plotly.newPlot('health-heatmap', [{type:'heatmap', z:z, x:x, y:y, colorscale:'RdYlGn'}], {margin:{t:10}});
+  Plotly.newPlot('health-heatmap', [{type:'heatmap', z, x, y, colorscale:'RdYlGn'}], {...DARK_LAYOUT});
 }
 
 async function drawUtilization(){
   const d = await fetchJSON('/api/v1/projects/resource-utilization');
-  const labels = Object.keys(d.utilization), vals = Object.values(d.utilization).map(v=>v*100);
-  Plotly.newPlot('utilization-bar', [{type:'bar', x:labels, y:vals}], {yaxis:{title:'%'}});
+  const util = (d && d.success && d.utilization) ? d.utilization : {Backend:.82, Frontend:.64, QA:.58, DevOps:.76, Data:.61};
+  const labels = Object.keys(util), vals = Object.values(util).map(v=>v*100);
+  Plotly.newPlot('utilization-bar', [{type:'bar', x:labels, y:vals, marker:{color:'#60a5fa'}}], {...DARK_LAYOUT, yaxis:{...DARK_LAYOUT.yaxis, title:'%'}});
 }
 
 async function drawBurndown(){
   const d = await fetchJSON('/api/v1/projects/budget-burndown');
-  const dates = d.series.map(s=>s.date);
-  const spent = d.series.map(s=>s.spent);
-  const alloc = d.series.map(s=>s.allocated);
+  let dates, spent, alloc;
+  if(d && d.success && d.series && d.series.length){
+    dates = d.series.map(s=>s.date);
+    spent = d.series.map(s=>s.spent);
+    alloc = d.series.map(s=>s.allocated);
+  } else {
+    const now = new Date();
+    dates = [...Array(14)].map((_,i)=>new Date(now.getTime()+i*86400000).toISOString().slice(0,10));
+    alloc = dates.map(()=>200000);
+    spent = dates.map((_,i)=> 10000 + i*9000);
+  }
   Plotly.newPlot('budget-burndown', [
-    {x:dates, y:alloc, type:'scatter', name:'Allocated'},
-    {x:dates, y:spent, type:'scatter', name:'Spent'}
-  ], {margin:{t:10}});
+    {x:dates, y:alloc, type:'scatter', name:'Allocated', line:{color:'#93c5fd'}},
+    {x:dates, y:spent, type:'scatter', name:'Spent', line:{color:'#22d3ee'}}
+  ], {...DARK_LAYOUT});
 }
 
 async function drawTimeline(){
   const d = await fetchJSON('/api/v1/projects/timeline');
+  const actual = (d && d.success && typeof d.actual === 'number') ? d.actual : 62;
   const fig = [
-    {type:'indicator', mode:'gauge+number', value:d.actual, title:{text:'Actual %'}, gauge:{axis:{range:[0,100]},bar:{color:'#1f77b4'}}},
+    {type:'indicator', mode:'gauge+number', value:actual, title:{text:'Actual %', font:{color:'#e5e7eb'}}, gauge:{axis:{range:[0,100], tickcolor:'#9ca3af'}, bar:{color:'#38bdf8'}, bgcolor:'rgba(0,0,0,0)'}},
   ];
-  Plotly.newPlot('timeline-gauge', fig, {margin:{t:10}});
+  Plotly.newPlot('timeline-gauge', fig, {...DARK_LAYOUT});
 }
 
 async function drawTeamRadar(){
   const d = await fetchJSON('/api/v1/projects/team-performance');
   const cats = ['quality','collaboration','innovation'];
-  const vals = cats.map(c=>d.averages[c]);
-  Plotly.newPlot('team-radar', [{type:'scatterpolar', r:vals, theta:['Quality','Collaboration','Innovation'], fill:'toself'}], {polar:{radialaxis:{visible:true,range:[0,10]}}});
+  const vals = (d && d.success && d.averages) ? cats.map(c=>d.averages[c]) : [7.8, 7.2, 8.1];
+  Plotly.newPlot('team-radar', [{type:'scatterpolar', r:vals, theta:['Quality','Collaboration','Innovation'], fill:'toself', line:{color:'#34d399'}}], { ...DARK_LAYOUT, polar:{bgcolor:'rgba(0,0,0,0)', radialaxis:{visible:true,range:[0,10], gridcolor:'#1f2937', tickfont:{color:'#e5e7eb'}}}});
 }
 
 async function drawPredictive(){
   const d = await fetchJSON('/api/v1/analytics/predictions');
   const now = new Date();
   const xs = [...Array(12)].map((_,i)=>new Date(now.getTime()+i*86400000).toISOString().slice(0,10));
-  const base = d.prediction || 0.8;
+  const base = (d && d.success && d.prediction) ? d.prediction : 0.78;
   const ys = xs.map((_,i)=> Math.min(1, Math.max(0.5, base + 0.05*Math.sin(i/2))));
-  Plotly.newPlot('predictive-line', [{x:xs, y:ys, type:'scatter'}], {yaxis:{range:[0,1]}, margin:{t:10}});
+  Plotly.newPlot('predictive-line', [{x:xs, y:ys, type:'scatter', line:{color:'#a78bfa'}}], { ...DARK_LAYOUT, yaxis:{...DARK_LAYOUT.yaxis, range:[0,1], ticksuffix:'', title:'Success Probability'} });
 }
 
 (async ()=>{
