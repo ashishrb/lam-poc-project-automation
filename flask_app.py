@@ -93,6 +93,50 @@ def migrate_updates_to_autonomous():
         pass
 
 
+def _is_demo_mode_startup() -> bool:
+    if os.getenv('DEMO_MODE', '').lower() in ('1', 'true', 'yes', 'on'):
+        return True
+    try:
+        sentinel = os.path.join('enhanced_autonomous_pm', 'data', 'DEMO_MODE_ON')
+        return os.path.exists(sentinel)
+    except Exception:
+        return False
+
+
+def ensure_demo_seed():
+    """If demo mode is enabled and there are no updates, seed a few.
+    Also ensure the autonomous DB is initialized by touching DatabaseManager.
+    """
+    try:
+        # Initialize core DB via DatabaseManager if available
+        if DatabaseManager:
+            _ = DatabaseManager(DB_AUTONOMOUS)
+        os.makedirs(os.path.dirname(DB_AUTONOMOUS) or '.', exist_ok=True)
+        with sqlite3.connect(DB_AUTONOMOUS) as conn:
+            c = conn.cursor()
+            c.execute('''CREATE TABLE IF NOT EXISTS updates (
+                   id INTEGER PRIMARY KEY AUTOINCREMENT,
+                   name TEXT NOT NULL,
+                   project TEXT NOT NULL,
+                   update_text TEXT NOT NULL,
+                   date TEXT NOT NULL
+               )''')
+            if _is_demo_mode_startup():
+                c.execute('SELECT COUNT(*) FROM updates')
+                cnt = c.fetchone()[0]
+                if cnt == 0:
+                    from datetime import datetime
+                    now = datetime.utcnow()
+                    demo_updates = [
+                        ("Sarah Johnson", "PROJ001", "Demo seed: Sprint completed; latency down.", now.strftime('%Y-%m-%d %H:%M:%S')),
+                        ("Michael Chen", "PROJ002", "Demo seed: Security review passed; rollout planned.", now.strftime('%Y-%m-%d %H:%M:%S')),
+                    ]
+                    c.executemany('INSERT INTO updates (name, project, update_text, date) VALUES (?,?,?,?)', demo_updates)
+            conn.commit()
+    except Exception:
+        pass
+
+
 @app.route('/')
 def index():
     return redirect(url_for('manager_bp.manager_home') if manager_bp else '/manager')
@@ -178,4 +222,5 @@ if __name__ == '__main__':
     import os
     init_db()
     migrate_updates_to_autonomous()
+    ensure_demo_seed()
     app.run(debug=Config.DEBUG, port=Config.PORT)

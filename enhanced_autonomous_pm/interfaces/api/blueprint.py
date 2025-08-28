@@ -593,6 +593,93 @@ def projects_health():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@api_bp.get('/projects/list')
+def projects_list():
+    """Return all projects with key fields for portfolio view."""
+    try:
+        # Demo mode quick data
+        if _is_demo_mode():
+            items = [
+                {
+                    'project_id': 'PROJ001', 'name': 'AI Customer Portal', 'status': 'in_progress',
+                    'start_date': (datetime.utcnow()-timedelta(days=45)).strftime('%Y-%m-%d'),
+                    'end_date': (datetime.utcnow()+timedelta(days=30)).strftime('%Y-%m-%d'),
+                    'budget_allocated': 175000, 'budget_used': 118500,
+                    'completion_percentage': 72, 'risk_level': 'medium', 'team_size': 10
+                },
+                {
+                    'project_id': 'PROJ002', 'name': 'Banking App Redesign', 'status': 'in_progress',
+                    'start_date': (datetime.utcnow()-timedelta(days=30)).strftime('%Y-%m-%d'),
+                    'end_date': (datetime.utcnow()+timedelta(days=60)).strftime('%Y-%m-%d'),
+                    'budget_allocated': 235000, 'budget_used': 96500,
+                    'completion_percentage': 48, 'risk_level': 'low', 'team_size': 12
+                }
+            ]
+            for it in items:
+                util = (it['budget_used']/max(1.0, it['budget_allocated']))*100.0
+                it['budget_utilization'] = round(util, 2)
+            return jsonify({"success": True, "projects": items})
+
+        if not DatabaseManager:
+            return jsonify({"success": False, "error": "DatabaseManager unavailable"}), 500
+        dbm = _db()
+        items = []
+        for p in dbm.get_all_projects():
+            util = (p.budget_used/max(1.0,p.budget_allocated))*100.0
+            items.append({
+                'project_id': p.project_id,
+                'name': p.name,
+                'status': p.status.value if hasattr(p.status,'value') else p.status,
+                'start_date': str(p.start_date.date()),
+                'end_date': str(p.end_date.date()),
+                'budget_allocated': float(p.budget_allocated),
+                'budget_used': float(p.budget_used),
+                'budget_utilization': round(util,2),
+                'completion_percentage': float(p.completion_percentage),
+                'risk_level': p.risk_level,
+                'team_size': int(p.team_size)
+            })
+        return jsonify({"success": True, "projects": items})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@api_bp.get('/employees/top-performance')
+def top_performance():
+    """Return top N employees by quality score."""
+    try:
+        limit = int(request.args.get('limit','10'))
+        with sqlite3.connect(DB_AUTONOMOUS) as conn:
+            c = conn.cursor()
+            c.execute('''CREATE TABLE IF NOT EXISTS employee_performance (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                employee_id TEXT NOT NULL,
+                employee_name TEXT NOT NULL,
+                project_id TEXT,
+                quarter TEXT,
+                hours_worked REAL,
+                tasks_completed INTEGER,
+                quality_score REAL,
+                collaboration_score REAL,
+                innovation_score REAL,
+                performance_trend TEXT,
+                skill_gaps TEXT,
+                achievements TEXT,
+                development_goals TEXT,
+                last_review_date TEXT,
+                next_review_date TEXT
+            )''')
+            c.execute('SELECT employee_id, employee_name, project_id, quality_score, collaboration_score, innovation_score FROM employee_performance ORDER BY quality_score DESC LIMIT ?', (limit,))
+            rows = c.fetchall()
+        items = [{
+            'employee_id': r[0], 'employee_name': r[1], 'project_id': r[2],
+            'quality_score': float(r[3] or 0), 'collaboration_score': float(r[4] or 0), 'innovation_score': float(r[5] or 0)
+        } for r in rows]
+        return jsonify({"success": True, "employees": items})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
 @api_bp.get('/projects/resource-utilization')
 def resource_utilization():
     # Utilization snapshot

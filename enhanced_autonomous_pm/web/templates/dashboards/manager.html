@@ -142,6 +142,13 @@
 </div>
 <script>
 async function fetchJSON(url){ try { const r = await fetch(url); return await r.json(); } catch(e){ return {success:false}; } }
+function safeGet(obj, path, fallback){
+  try {
+    let cur = obj;
+    for(const k of path){ if(cur && (k in cur)) cur = cur[k]; else return fallback; }
+    return (cur === undefined || cur === null) ? fallback : cur;
+  } catch(e){ return fallback; }
+}
 
 const DARK_LAYOUT = {
   paper_bgcolor: 'rgba(0,0,0,0)',
@@ -223,7 +230,7 @@ async function drawPredictive(){
   // Demo controls wiring
   try {
     const health = await fetchJSON('/api/v1/health');
-    const enabled = health?.data?.demo_mode?.enabled === true;
+    const enabled = safeGet(health, ['data','demo_mode','enabled'], false) === true;
     document.getElementById('demo-indicator').textContent = enabled ? 'Demo Mode: ON' : 'Demo Mode: OFF';
     document.getElementById('demo-indicator').className = enabled ? 'badge rounded-pill text-bg-success' : 'badge rounded-pill text-bg-secondary';
   } catch(e) {}
@@ -317,7 +324,7 @@ document.getElementById('rag-ask').addEventListener('click', async ()=>{
     const r = await fetch('/api/v1/rag/query', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({query:q})});
     const j = await r.json();
     if(!j.success){ out.textContent = 'Error: ' + (j.error||'failed'); return; }
-    const ctx = (j.contexts||[]).map(c=>`- ${c.metadata?.title||c.metadata?.project||c.id}`).join('\n');
+    const ctx = (j.contexts||[]).map(c=>{ const m=c.metadata||{}; const label=m.title||m.project||c.id; return `- ${label}`; }).join('\n');
     out.textContent = (j.augmented_query||q) + '\n\nContexts:\n' + ctx;
   }catch(e){ out.textContent = 'Query failed'; }
 });
