@@ -1,0 +1,43 @@
+# Core Machine Learning and AI
+torch>=2.0.0
+transformers>=4.35.0
+accelerate>=1.10.0
+numpy>=1.24.0
+scikit-learn>=1.3.0
+
+# Web Framework and UI
+streamlit>=1.28.0
+plotly>=5.15.0
+
+# Data Processing and Analysis
+pandas>=2.0.0
+openpyxl>=3.1.0
+
+# HTTP Requests and Web Scraping
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
+# Environment and Configuration
+python-dotenv>=1.0.0
+
+# Email and Communication
+# Note: smtplib is built into Python standard library
+
+# Database
+# Note: sqlite3 is built into Python standard library
+
+# Additional utilities for enhanced features
+python-dateutil>=2.8.0
+pytz>=2023.3
+
+# Optional: For advanced autonomous features (install if needed)
+# joblib>=1.3.0  # For model serialization
+# nltk>=3.8.0    # For advanced NLP features
+# spacy>=3.7.0   # For advanced text processing
+# matplotlib>=3.7.0  # For additional plotting capabilities
+
+# Development and Testing (optional)
+# pytest>=7.4.0
+# black>=23.0.0
+# flake8>=6.0.0
