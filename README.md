@@ -42,6 +42,16 @@ pip install -r requirements.txt
 python flask_app.py
 ```
 
+### **Demo Data & Theming**
+- Pre-seeded demo now includes:
+  - 2 active projects with ad‑hoc budget allocations
+  - 20 employee profiles with realistic performance data
+  - Leadership and Manager dashboards styled with a professional theme
+- To reseed fresh demo data, remove the database then start the app:
+  - macOS/Linux: `rm -f autonomous_projects.db`
+  - Windows (PowerShell): `Remove-Item autonomous_projects.db -Force`
+  - Then run: `python flask_app.py`
+
 ### **First Launch**
 - Navigate to `http://localhost:5000`
 - Submit updates and view the leadership dashboard
@@ -57,6 +67,11 @@ The Streamlit interface has been replaced by a lightweight HTML dashboard powere
 
 - **Leadership Dashboard** – consolidates project updates for executives.
 - **Developer Portal** – simple form where team members submit daily updates.
+
+### Professional Theme
+- Modern gradient navbar, dark executive palette, and polished cards
+- Enhanced readability and contrast for charts and tables
+- Built with Bootstrap 5 + custom CSS in `enhanced_autonomous_pm/web/static/css/enhanced.css`
 
 ## 🌟 **Key Features Demonstrated**
 

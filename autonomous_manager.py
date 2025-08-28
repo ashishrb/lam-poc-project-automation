@@ -359,7 +359,7 @@ class DatabaseManager:
     
     def _insert_sample_data(self, cursor):
         """Insert sample data for demonstration"""
-        # Sample projects
+        # Sample projects (2 projects with ad-hoc budgets)
         sample_projects = [
             {
                 "project_id": "PROJ001",
@@ -368,11 +368,11 @@ class DatabaseManager:
                 "status": "in_progress",
                 "start_date": (datetime.now() - timedelta(days=45)).isoformat(),
                 "end_date": (datetime.now() + timedelta(days=30)).isoformat(),
-                "budget_allocated": 150000,
-                "budget_used": 120000,
-                "completion_percentage": 75,
+                "budget_allocated": 175000,
+                "budget_used": 118500,
+                "completion_percentage": 72,
                 "risk_level": "medium",
-                "team_size": 8,
+                "team_size": 10,
                 "client_name": "TechCorp Inc",
                 "project_manager": "Sarah Johnson",
                 "created_at": datetime.now().isoformat(),
@@ -384,31 +384,14 @@ class DatabaseManager:
                 "description": "Complete redesign of mobile banking application with enhanced security",
                 "status": "in_progress",
                 "start_date": (datetime.now() - timedelta(days=30)).isoformat(),
-                "end_date": (datetime.now() + timedelta(days=45)).isoformat(),
-                "budget_allocated": 200000,
-                "budget_used": 85000,
-                "completion_percentage": 45,
+                "end_date": (datetime.now() + timedelta(days=60)).isoformat(),
+                "budget_allocated": 235000,
+                "budget_used": 96500,
+                "completion_percentage": 48,
                 "risk_level": "low",
                 "team_size": 12,
                 "client_name": "SecureBank Ltd",
                 "project_manager": "Michael Chen",
-                "created_at": datetime.now().isoformat(),
-                "last_updated": datetime.now().isoformat()
-            },
-            {
-                "project_id": "PROJ003",
-                "name": "E-commerce Platform Migration",
-                "description": "Migrate legacy e-commerce platform to cloud-native architecture",
-                "status": "planning",
-                "start_date": datetime.now().isoformat(),
-                "end_date": (datetime.now() + timedelta(days=90)).isoformat(),
-                "budget_allocated": 300000,
-                "budget_used": 15000,
-                "completion_percentage": 10,
-                "risk_level": "high",
-                "team_size": 15,
-                "client_name": "ShopGlobal Corp",
-                "project_manager": "Emily Rodriguez",
                 "created_at": datetime.now().isoformat(),
                 "last_updated": datetime.now().isoformat()
             }
@@ -509,59 +492,43 @@ class DatabaseManager:
             ''', tuple(task.values()))
         
         # Sample employee performance data
-        sample_employees = [
-            {
-                "employee_id": "EMP001",
-                "employee_name": "John Smith",
-                "project_id": "PROJ001",
-                "quarter": "Q4_2024",
-                "hours_worked": 160,
-                "tasks_completed": 15,
-                "quality_score": 8.5,
-                "collaboration_score": 9.0,
-                "innovation_score": 7.5,
-                "performance_trend": "improving",
-                "skill_gaps": json.dumps(["Advanced Python", "Cloud Architecture"]),
-                "achievements": json.dumps(["Completed API development ahead of schedule", "Mentored junior developer"]),
-                "development_goals": json.dumps(["Obtain AWS certification", "Lead a small team project"]),
-                "last_review_date": (datetime.now() - timedelta(days=30)).isoformat(),
-                "next_review_date": (datetime.now() + timedelta(days=60)).isoformat()
-            },
-            {
-                "employee_id": "EMP002",
-                "employee_name": "Alice Brown",
-                "project_id": "PROJ001",
-                "quarter": "Q4_2024",
-                "hours_worked": 155,
-                "tasks_completed": 12,
-                "quality_score": 9.2,
-                "collaboration_score": 8.8,
-                "innovation_score": 9.5,
-                "performance_trend": "excellent",
-                "skill_gaps": json.dumps(["Backend Development"]),
-                "achievements": json.dumps(["Exceptional UI design", "Improved team workflow", "Client praise"]),
-                "development_goals": json.dumps(["Learn full-stack development", "Design leadership role"]),
-                "last_review_date": (datetime.now() - timedelta(days=25)).isoformat(),
-                "next_review_date": (datetime.now() + timedelta(days=65)).isoformat()
-            },
-            {
-                "employee_id": "EMP003",
-                "employee_name": "Bob Johnson",
-                "project_id": "PROJ002",
-                "quarter": "Q4_2024",
-                "hours_worked": 145,
-                "tasks_completed": 8,
-                "quality_score": 6.5,
-                "collaboration_score": 7.0,
-                "innovation_score": 6.0,
-                "performance_trend": "needs_improvement",
-                "skill_gaps": json.dumps(["Mobile Development", "Testing Frameworks", "Communication Skills"]),
-                "achievements": json.dumps(["Completed basic mobile app features"]),
-                "development_goals": json.dumps(["Mobile development training", "Communication workshop", "Increase task completion rate"]),
-                "last_review_date": (datetime.now() - timedelta(days=20)).isoformat(),
-                "next_review_date": (datetime.now() + timedelta(days=30)).isoformat()
-            }
+        # Sample employees (20 employees across 2 projects)
+        names = [
+            "John Smith","Alice Brown","Bob Johnson","Emily Davis","Michael Chen",
+            "Sarah Johnson","David Wilson","Laura Martinez","James Anderson","Olivia Taylor",
+            "Liam Thompson","Emma White","Noah Harris","Ava Clark","William Lewis",
+            "Sophia Walker","Mason Hall","Isabella Young","Ethan King","Mia Wright"
         ]
+        depts = ["Engineering","Product","QA","Data","DevOps"]
+        roles = ["Backend Engineer","Frontend Engineer","QA Engineer","Data Analyst","DevOps Engineer"]
+        sample_employees = []
+        for i in range(20):
+            emp_id = f"EMP{(i+1):03d}"
+            name = names[i]
+            pid = "PROJ001" if i % 2 == 0 else "PROJ002"
+            hours = 140 + (i % 8) * 5
+            tasks = 8 + (i % 7)
+            quality = round(6.5 + (i % 5) * 0.8, 1)
+            collab = round(6.8 + ((i+2) % 5) * 0.7, 1)
+            innov = round(6.0 + ((i+1) % 5) * 0.9, 1)
+            trend = ["improving","excellent","steady","needs_improvement"][i % 4]
+            sample_employees.append({
+                "employee_id": emp_id,
+                "employee_name": name,
+                "project_id": pid,
+                "quarter": f"Q3_{datetime.now().year}",
+                "hours_worked": hours,
+                "tasks_completed": tasks,
+                "quality_score": quality,
+                "collaboration_score": collab,
+                "innovation_score": innov,
+                "performance_trend": trend,
+                "skill_gaps": json.dumps(["Cloud Architecture", "Testing Frameworks"][0: (i % 2) + 1]),
+                "achievements": json.dumps(["Closed critical bugs", "Optimized service latency"][: (i % 2) + 1]),
+                "development_goals": json.dumps(["AWS certification", "Lead a feature area"][: (i % 2) + 1]),
+                "last_review_date": (datetime.now() - timedelta(days=20 + i)).isoformat(),
+                "next_review_date": (datetime.now() + timedelta(days=30 + i)).isoformat()
+            })
         
         for emp in sample_employees:
             cursor.execute('''
@@ -571,7 +538,27 @@ class DatabaseManager:
                                                 skill_gaps, achievements, development_goals,
                                                 last_review_date, next_review_date)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', tuple(emp.values()))
+            ''', (
+                emp["employee_id"], emp["employee_name"], emp["project_id"], emp["quarter"],
+                emp["hours_worked"], emp["tasks_completed"], emp["quality_score"], emp["collaboration_score"],
+                emp["innovation_score"], emp["performance_trend"], emp["skill_gaps"], emp["achievements"],
+                emp["development_goals"], emp["last_review_date"], emp["next_review_date"]
+            ))
+
+        # Ensure employee_profiles have 20 entries matching performance data
+        for i, name in enumerate(names):
+            emp_id = f"EMP{(i+1):03d}"
+            email = f"{name.split()[0].lower()}.{name.split()[1].lower()}@company.com"
+            department = depts[i % len(depts)]
+            role = roles[i % len(roles)]
+            skills = json.dumps(["Python","SQL","APIs"][0: (i % 3) + 1])
+            hire_date = (datetime.now() - timedelta(days=365 + i*7)).isoformat()
+            availability = 80 + (i % 5) * 4
+            last_updated = datetime.now().isoformat()
+            cursor.execute('''
+                INSERT OR REPLACE INTO employee_profiles (employee_id, name, email, department, role, manager_id, skills, hire_date, availability_percentage, last_updated)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (emp_id, name, email, department, role, None, skills, hire_date, availability, last_updated))
     
     def get_project(self, project_id: str) -> Optional[Project]:
         """Get project by ID"""
