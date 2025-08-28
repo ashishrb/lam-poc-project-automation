@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Manager Dashboard</h1>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<div class="grid">
+  <section>
+    <h3>Project Health Heatmap</h3>
+    <div id="health-heatmap" style="height:320px;"></div>
+  </section>
+  <section>
+    <h3>Resource Utilization</h3>
+    <div id="utilization-bar" style="height:320px;"></div>
+  </section>
+  <section>
+    <h3>Budget Burn-down</h3>
+    <div id="budget-burndown" style="height:320px;"></div>
+  </section>
+  <section>
+    <h3>Timeline Adherence</h3>
+    <div id="timeline-gauge" style="height:320px;"></div>
+  </section>
+  <section>
+    <h3>Team Performance (Radar)</h3>
+    <div id="team-radar" style="height:320px;"></div>
+  </section>
+  <section>
+    <h3>Predictive Trend</h3>
+    <div id="predictive-line" style="height:320px;"></div>
+  </section>
+</div>
+<script>
+async function fetchJSON(url){ const r = await fetch(url); return await r.json(); }
+
+async function drawHealthHeatmap(){
+  const data = await fetchJSON('/api/projects/health');
+  if(!data.success) return;
+  const projects = data.projects;
+  const metrics = ['budget_health','schedule_health','team_health'];
+  const toScore = h => ({healthy:8, warning:5, critical:2}[h]||5);
+  const z = metrics.map(m=>projects.map(p=>toScore(p[m])));
+  const x = projects.map(p=>p.name);
+  const y = ['Budget','Schedule','Team'];
+  Plotly.newPlot('health-heatmap', [{type:'heatmap', z:z, x:x, y:y, colorscale:'RdYlGn'}], {margin:{t:10}});
+}
+
+async function drawUtilization(){
+  const d = await fetchJSON('/api/projects/resource-utilization');
+  const labels = Object.keys(d.utilization), vals = Object.values(d.utilization).map(v=>v*100);
+  Plotly.newPlot('utilization-bar', [{type:'bar', x:labels, y:vals}], {yaxis:{title:'%'}});
+}
+
+async function drawBurndown(){
+  const d = await fetchJSON('/api/projects/budget-burndown');
+  const dates = d.series.map(s=>s.date);
+  const spent = d.series.map(s=>s.spent);
+  const alloc = d.series.map(s=>s.allocated);
+  Plotly.newPlot('budget-burndown', [
+    {x:dates, y:alloc, type:'scatter', name:'Allocated'},
+    {x:dates, y:spent, type:'scatter', name:'Spent'}
+  ], {margin:{t:10}});
+}
+
+async function drawTimeline(){
+  const d = await fetchJSON('/api/projects/timeline');
+  const fig = [
+    {type:'indicator', mode:'gauge+number', value:d.actual, title:{text:'Actual %'}, gauge:{axis:{range:[0,100]},bar:{color:'#1f77b4'}}},
+  ];
+  Plotly.newPlot('timeline-gauge', fig, {margin:{t:10}});
+}
+
+async function drawTeamRadar(){
+  const d = await fetchJSON('/api/projects/team-performance');
+  const cats = ['quality','collaboration','innovation'];
+  const vals = cats.map(c=>d.averages[c]);
+  Plotly.newPlot('team-radar', [{type:'scatterpolar', r:vals, theta:['Quality','Collaboration','Innovation'], fill:'toself'}], {polar:{radialaxis:{visible:true,range:[0,10]}}});
+}
+
+async function drawPredictive(){
+  const d = await fetchJSON('/api/analytics/predictions');
+  const now = new Date();
+  const xs = [...Array(12)].map((_,i)=>new Date(now.getTime()+i*86400000).toISOString().slice(0,10));
+  const base = d.prediction || 0.8;
+  const ys = xs.map((_,i)=> Math.min(1, Math.max(0.5, base + 0.05*Math.sin(i/2))));
+  Plotly.newPlot('predictive-line', [{x:xs, y:ys, type:'scatter'}], {yaxis:{range:[0,1]}, margin:{t:10}});
+}
+
+(async ()=>{
+  await drawHealthHeatmap();
+  await drawUtilization();
+  await drawBurndown();
+  await drawTimeline();
+  await drawTeamRadar();
+  await drawPredictive();
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Submit Daily Update</h1>
+<form method="post">
+    <label>Name:<br><input type="text" name="name" required></label><br>
+    <label>Project:<br><input type="text" name="project" required></label><br>
+    <label>Update:<br><textarea name="update" rows="4" cols="50" required></textarea></label><br>
+    <button type="submit">Submit</button>
+{% endblock %}
+

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Manager Dashboard</h1>
+<div class="grid">
+  <section>
+    <h3>Project Planning</h3>
+    <p>Plan upcoming milestones, scope and timelines.</p>
+  </section>
+  <section>
+    <h3>Team Performance</h3>
+    <div id="team-performance">Use /api/analytics/predictive-insights for insights.</div>
+  </section>
+  <section>
+    <h3>Resource Allocation</h3>
+    <p>Submit reallocation requests and approvals.</p>
+  </section>
+  <section>
+    <h3>Budget Tracking</h3>
+    <p>Monitor spend vs budget.</p>
+  </section>
+  <section>
+    <h3>Risk Assessment</h3>
+    <p>Track risks and mitigation actions.</p>
+  </section>
+  <section>
+    <h3>Run Autonomous Analysis</h3>
+    <form method="post" action="{{ url_for('api_projects_autonomous_analysis') }}">
+      <label>Project ID<input name="project_id" placeholder="PROJ001"></label>
+      <button type="submit">Analyze</button>
+    </form>
+  </section>
+{% endblock %}
+

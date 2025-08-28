@@ -6,6 +6,7 @@ Optimized for AMD Ryzen 9 9950X + RTX 4090 + 128GB RAM
 """
 
 import json
+import logging
 import torch
 import requests
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -19,6 +20,13 @@ import random
 import time
 from dataclasses import dataclass
 from enum import Enum
+
+# Optional external integrations
+try:
+    import ollama  # Python client for local Ollama server
+    _ollama_available = True
+except Exception:
+    _ollama_available = False
 
 # Import system configuration
 try:
@@ -398,6 +406,80 @@ class AutonomousDecisionEngine:
         
         return "; ".join(summary_parts) if summary_parts else "General context"
 
+
+class EnhancedAIOrchestrator:
+    """Routes queries to appropriate local models and embeddings via Ollama.
+
+    - Uses xLAM for tool-use and function-style tasks
+    - Uses gpt-oss:20b for complex strategic analysis
+    - Uses nomic-embed-text:v1.5 embeddings for RAG
+    """
+
+    def __init__(self):
+        # Keep existing xLAM model
+        self.xlam_model = "Salesforce/xLAM-1b-fc-r"
+
+        # Add new Ollama models
+        self.strategic_model = "gpt-oss:20b"
+        self.embedding_model = "nomic-embed-text:v1.5"
+
+        self.ollama_available = _ollama_available
+        if not self.ollama_available:
+            logging.warning("Ollama client not available. Falling back to xLAM-only mode.")
+
+    def _score_complexity(self, query: str) -> int:
+        """Very lightweight heuristic for complexity scoring (1-10)."""
+        q = query.lower()
+        indicators = [
+            ("strategy", 3), ("plan", 2), ("predict", 2), ("analysis", 2),
+            ("optimize", 2), ("risk", 1), ("budget", 1), ("stakeholder", 1),
+            ("lifecycle", 2), ("autonomous", 1)
+        ]
+        base = 3 if len(q) > 120 else 2
+        return min(10, base + sum(w for k, w in indicators if k in q))
+
+    def get_embedding(self, text: str) -> Optional[List[float]]:
+        """Return embedding vector using Ollama nomic-embed model if available."""
+        if not self.ollama_available:
+            return None
+        try:
+            resp = ollama.embeddings(model=self.embedding_model, prompt=text)
+            return resp.get("embedding")
+        except Exception as e:
+            logging.warning(f"Embedding generation failed: {e}")
+            return None
+
+    def route_query_to_appropriate_model(self, query: str, complexity_level: Optional[int] = None) -> Dict[str, Any]:
+        """Decide which model to use and return a routing plan.
+
+        - For simple or tool-oriented requests → xLAM
+        - For complex, strategic analysis → gpt-oss:20b (if Ollama available)
+        - Embeddings can be requested by callers via get_embedding
+        """
+        score = complexity_level if complexity_level is not None else self._score_complexity(query)
+        route = {
+            "complexity_score": score,
+            "use_embeddings": score >= 5 and self.ollama_available,
+            "selected_model": self.xlam_model,
+            "provider": "transformers"
+        }
+
+        if self.ollama_available and score >= 6:
+            route.update({
+                "selected_model": self.strategic_model,
+                "provider": "ollama"
+            })
+
+        # Simple function-call style triggers → bias towards xLAM
+        simple_triggers = [
+            "write file", "read file", "generate report", "get weather",
+            "tool", "function", "call", "api"
+        ]
+        if any(t in query.lower() for t in simple_triggers):
+            route.update({"selected_model": self.xlam_model, "provider": "transformers"})
+
+        return route
+
 class EnhancedTrueLAMInterface:
     """Enhanced True LAM Interface with Autonomous Capabilities"""
     
@@ -410,6 +492,11 @@ class EnhancedTrueLAMInterface:
         self.memory = AutonomousMemory()
         self.strategic_planner = StrategicPlanner(self.memory)
         self.decision_engine = AutonomousDecisionEngine(self.memory)
+        try:
+            from enhanced_autonomous_pm.core.ai_orchestrator import EnhancedAIOrchestrator as CoreOrchestrator
+            self.ai_orchestrator = CoreOrchestrator()
+        except Exception:
+            self.ai_orchestrator = EnhancedAIOrchestrator()
         
         try:
             # Use system configuration for optimal model loading

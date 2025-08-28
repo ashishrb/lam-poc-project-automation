@@ -1,0 +1,206 @@
+from flask import Blueprint, request, jsonify
+from datetime import datetime, timedelta
+import sqlite3
+
+try:
+    from autonomous_manager import AutonomousProjectManager, DatabaseManager, FullyAutonomousManager
+except Exception:
+    AutonomousProjectManager = None
+    DatabaseManager = None
+    FullyAutonomousManager = None
+
+try:
+    from enhanced_autonomous_pm.automation.predictive_analytics import PredictiveAnalytics
+except Exception:
+    PredictiveAnalytics = None
+
+api_bp = Blueprint('api_bp', __name__, url_prefix='/api')
+
+
+DB_AUTONOMOUS = 'autonomous_projects.db'
+DB_NAME = 'project_updates.db'
+
+
+def _db():
+    return DatabaseManager(DB_AUTONOMOUS) if DatabaseManager else None
+
+
+@api_bp.post('/employee/submit-data')
+def employee_submit():
+    data = request.get_json() if request.is_json else request.form.to_dict()
+    emp_id = data.get('employee_id') or f"EMP_{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+    name = data.get('name', '')
+    email = data.get('email', '')
+    department = data.get('department', '')
+    role = data.get('role', '')
+    availability = float(data.get('availability', data.get('availability_percentage', 100) or 100))
+    skills = data.get('skills', '')
+    project_id = data.get('project_id')
+    now = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+    try:
+        dbm = _db()
+        if dbm:
+            with sqlite3.connect(DB_AUTONOMOUS) as conn:
+                c = conn.cursor()
+                c.execute('''INSERT OR REPLACE INTO employee_profiles (employee_id, name, email, department, role, manager_id, skills, hire_date, availability_percentage, last_updated)
+                             VALUES (?,?,?,?,?,?,?,?,?,?)''',
+                          (emp_id, name, email, department, role, data.get('manager_id'), skills, now, availability, now))
+                for metric in ['quality_score', 'collaboration_score', 'innovation_score']:
+                    if metric in data and data[metric] != "":
+                        c.execute('''INSERT INTO performance_history (employee_id, metric_name, metric_value, recorded_at)
+                                     VALUES (?,?,?,?)''', (emp_id, metric, float(data[metric]), now))
+                conn.commit()
+        # Also log a daily update if provided
+        if data.get('tasks_completed') or data.get('innovation_suggestion'):
+            with sqlite3.connect(DB_NAME) as conn:
+                c = conn.cursor()
+                c.execute('INSERT INTO updates (name, project, update, date) VALUES (?,?,?,?)',
+                          (name or emp_id, project_id or 'N/A',
+                           f"Tasks Completed: {data.get('tasks_completed', '0')}; Suggestion: {data.get('innovation_suggestion', '-')}", now))
+                conn.commit()
+        return jsonify({"success": True, "employee_id": emp_id})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@api_bp.get('/projects/health')
+def projects_health():
+    try:
+        if not DatabaseManager:
+            return jsonify({"success": False, "error": "DatabaseManager unavailable"}), 500
+        dbm = _db()
+        projects = dbm.get_all_projects()
+        apm = AutonomousProjectManager(dbm)
+        items = []
+        for p in projects:
+            res = apm.analyze_project_health(p.project_id)
+            if res.get('success'):
+                hm = res['health_metrics']
+                items.append({
+                    'project_id': p.project_id,
+                    'name': p.name,
+                    'budget_health': hm['budget_health'],
+                    'schedule_health': hm['schedule_health'],
+                    'team_health': hm['team_health'],
+                    'overall_risk': hm['overall_risk']
+                })
+        return jsonify({"success": True, "projects": items})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@api_bp.get('/projects/resource-utilization')
+def resource_utilization():
+    # Demo utilization; replace with live data as available
+    data = {"Backend": 0.92, "Frontend": 0.68, "QA": 0.55, "DevOps": 0.83, "Data": 0.49}
+    return jsonify({"success": True, "utilization": data})
+
+
+@api_bp.get('/projects/budget-burndown')
+def budget_burndown():
+    try:
+        if not DatabaseManager:
+            return jsonify({"success": False}), 500
+        dbm = _db()
+        projects = dbm.get_all_projects()
+        if not projects:
+            return jsonify({"success": True, "series": []})
+        p = projects[0]
+        # simple linear-ish burn
+        start = datetime.fromisoformat(p.start_date)
+        end = datetime.fromisoformat(p.end_date)
+        days = max(1, (end - start).days)
+        series = []
+        for i in range(days + 1):
+            day = (start + timedelta(days=i)).strftime('%Y-%m-%d')
+            spent = min(p.budget_allocated, p.budget_used * (i / max(1, (datetime.now() - start).days or 1)))
+            series.append({'date': day, 'spent': float(spent), 'allocated': float(p.budget_allocated)})
+        return jsonify({"success": True, "series": series, "project": p.project_id})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@api_bp.get('/projects/timeline')
+def timeline_adherence():
+    try:
+        dbm = _db()
+        p = dbm.get_all_projects()[0]
+        start = datetime.fromisoformat(p.start_date)
+        total_days = (datetime.fromisoformat(p.end_date) - start).days
+        days_passed = (datetime.now() - start).days
+        expected = max(0, min(100, (days_passed / max(1, total_days)) * 100))
+        actual = p.completion_percentage
+        return jsonify({"success": True, "expected": expected, "actual": actual, "project": p.project_id})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@api_bp.get('/projects/team-performance')
+def team_performance():
+    try:
+        apm = AutonomousProjectManager(_db())
+        res = apm.analyze_team_performance()
+        if not res.get('success'):
+            return jsonify({"success": False, "error": res.get('error')}), 500
+        perf = {
+            'quality': float(res['performance_data']['quality_score'].mean()),
+            'collaboration': float(res['performance_data']['collaboration_score'].mean()),
+            'innovation': float(res['performance_data']['innovation_score'].mean()),
+        }
+        return jsonify({"success": True, "averages": perf})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@api_bp.get('/analytics/predictions')
+def predictions():
+    try:
+        apm = AutonomousProjectManager(_db())
+        prj = apm.db.get_all_projects()[0]
+        days_total = (datetime.fromisoformat(prj.end_date) - datetime.fromisoformat(prj.start_date)).days
+        days_passed = (datetime.now() - datetime.fromisoformat(prj.start_date)).days
+        schedule_progress = (days_passed / max(1, days_total))
+        features = {
+            'budget_utilization': prj.budget_used / max(1.0, prj.budget_allocated),
+            'schedule_progress': schedule_progress,
+            'avg_quality': 8.0,
+            'risk_level': 0.4 if prj.risk_level == 'low' else 0.6
+        }
+        if not PredictiveAnalytics:
+            return jsonify({"success": True, "prediction": 0.8})
+        pa = PredictiveAnalytics()
+        res = pa.project_success_modeling(features)
+        return jsonify({"success": True, "prediction": res['success_probability']})
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@api_bp.post('/projects/autonomous-analysis')
+@api_bp.get('/projects/autonomous-analysis')
+def autonomous_analysis():
+    project_id = request.values.get('project_id')
+    try:
+        if FullyAutonomousManager:
+            fam = FullyAutonomousManager(_db())
+            result = fam.complete_project_lifecycle_automation(project_id)
+        elif AutonomousProjectManager:
+            apm = AutonomousProjectManager(_db())
+            result = apm.execute_autonomous_project_workflow(project_id)
+        else:
+            return jsonify({"success": False, "error": "Autonomous modules unavailable"}), 500
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@api_bp.post('/communications/generate')
+def communications_generate():
+    audience = request.json.get('audience', 'team') if request.is_json else request.form.get('audience', 'team')
+    try:
+        from enhanced_autonomous_pm.automation.communication_engine import IntelligentCommunicationEngine
+        ice = IntelligentCommunicationEngine()
+        result = ice.generate_personalized_updates(audience=audience)
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+

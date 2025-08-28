@@ -247,6 +247,85 @@ class DatabaseManager:
                 FOREIGN KEY (project_id) REFERENCES projects (project_id)
             )
         ''')
+
+        # Employee detailed profiles
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS employee_profiles (
+                employee_id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                email TEXT,
+                department TEXT,
+                role TEXT,
+                manager_id TEXT,
+                skills TEXT,
+                hire_date TEXT,
+                availability_percentage REAL DEFAULT 100,
+                last_updated TEXT
+            )
+        ''')
+
+        # Task dependencies (normalized)
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS task_dependencies (
+                task_id TEXT NOT NULL,
+                depends_on_task_id TEXT NOT NULL,
+                PRIMARY KEY (task_id, depends_on_task_id),
+                FOREIGN KEY (task_id) REFERENCES tasks (task_id)
+            )
+        ''')
+
+        # Financial tracking
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS project_financials (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                project_id TEXT NOT NULL,
+                entry_date TEXT NOT NULL,
+                category TEXT NOT NULL,
+                amount REAL NOT NULL,
+                description TEXT,
+                FOREIGN KEY (project_id) REFERENCES projects (project_id)
+            )
+        ''')
+
+        # Stakeholder communication logs
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS communication_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                stakeholder_id TEXT,
+                project_id TEXT,
+                channel TEXT,
+                subject TEXT,
+                message TEXT,
+                sent_at TEXT,
+                status TEXT,
+                FOREIGN KEY (project_id) REFERENCES projects (project_id)
+            )
+        ''')
+
+        # Performance metrics history
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS performance_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                employee_id TEXT NOT NULL,
+                metric_name TEXT NOT NULL,
+                metric_value REAL NOT NULL,
+                recorded_at TEXT NOT NULL
+            )
+        ''')
+
+        # Learning and development records
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS learning_development (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                employee_id TEXT NOT NULL,
+                course_name TEXT NOT NULL,
+                provider TEXT,
+                start_date TEXT,
+                completion_date TEXT,
+                status TEXT,
+                notes TEXT
+            )
+        ''')
         
         # Employee performance table (enhanced)
         cursor.execute('''
@@ -1368,6 +1447,87 @@ For immediate concerns, please contact {project.project_manager} directly.
             
         except Exception as e:
             return f"Summary generation error: {str(e)}"
+
+
+# ============================
+# Fully Autonomous Manager
+# ============================
+try:
+    from enhanced_autonomous_pm.core.rag_engine import RAGKnowledgeEngine
+except Exception:
+    RAGKnowledgeEngine = None
+
+try:
+    from enhanced_autonomous_pm.core.ai_orchestrator import EnhancedAIOrchestrator
+except Exception:
+    EnhancedAIOrchestrator = None
+
+
+class FullyAutonomousManager:
+    """Extended autonomous manager with RAG + model orchestration."""
+
+    def __init__(self, db_manager: DatabaseManager = None):
+        self.db = db_manager or DatabaseManager()
+        self.rag_engine = RAGKnowledgeEngine() if RAGKnowledgeEngine else None
+        self.ai_orchestrator = EnhancedAIOrchestrator() if EnhancedAIOrchestrator else None
+        self.core = AutonomousProjectManager(self.db)
+
+        # Index on first run
+        if self.rag_engine:
+            try:
+                self.rag_engine.index_existing_project_data()
+            except Exception:
+                pass
+
+    def complete_project_lifecycle_automation(self, project_id: str = None) -> Dict[str, Any]:
+        """End-to-end automation: initiation → daily ops → closure."""
+        # Use existing workflow, augment reports with RAG context
+        base = self.core.execute_autonomous_project_workflow(project_id)
+        if not base.get("success"):
+            return base
+
+        augmented_summary = base["data"]
+        if self.rag_engine:
+            ctx = self.rag_engine.enhance_query_with_context("project lifecycle best practices", top_k=3)
+            if ctx.get("success"):
+                augmented_summary += "\n\n📚 Contextual Best Practices (RAG):\n" + "\n".join(
+                    f"- {c['metadata'].get('type','doc')}: {c['text'][:180]}..." for c in ctx["contexts"]
+                )
+
+        return {"success": True, "data": augmented_summary, "workflow_results": base.get("workflow_results")}
+
+    def predictive_problem_resolution(self, project_id: str = None) -> Dict[str, Any]:
+        """Identify issues early and propose mitigations."""
+        # Simple heuristics using current project health and historical actions
+        health = self.core.analyze_project_health(project_id)
+        if not health.get("success"):
+            return health
+
+        metrics = health.get("health_metrics", {})
+        risks = metrics.get("critical_issues", [])
+        recs = metrics.get("recommendations", [])
+
+        # RAG suggestions
+        rag_notes = []
+        if self.rag_engine:
+            q = "risk mitigation strategies for software projects"
+            ctx = self.rag_engine.enhance_query_with_context(q, top_k=3)
+            if ctx.get("success"):
+                rag_notes = [c["text"][:200] for c in ctx["contexts"]]
+
+        result = {
+            "identified_risks": risks,
+            "base_recommendations": recs,
+            "rag_context_samples": rag_notes,
+            "proposed_actions": [
+                "Increase testing cadence and code reviews",
+                "Rebalance resources to critical tasks",
+                "Schedule stakeholder checkpoint",
+                "Initiate focused training for low-score areas"
+            ]
+        }
+
+        return {"success": True, "data": "🔮 Predictive resolution prepared", "details": result}
 
 def main():
     """Test the Autonomous Project Manager"""
