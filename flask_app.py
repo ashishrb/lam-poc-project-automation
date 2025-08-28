@@ -76,6 +76,12 @@ def handle_api_error(e):
     return render_template('error.html', error=str(e)), 500
 
 
+@app.route('/favicon.ico')
+def favicon():
+    # Avoid noisy 404s for missing favicon
+    return ('', 204)
+
+
 @app.route('/dashboard')
 def dashboard():
     with sqlite3.connect(DB_AUTONOMOUS) as conn:

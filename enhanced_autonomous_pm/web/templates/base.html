@@ -10,13 +10,12 @@
 <nav>
     <a href="{{ url_for('dashboard') }}">Leadership Dashboard</a>
     <a href="{{ url_for('update') }}">Submit Daily Update</a>
-    <a href="{{ url_for('employee_portal') }}">Employee Portal</a>
-    <a href="{{ url_for('manager_dashboard') }}">Manager</a>
-    <a href="{{ url_for('executive_dashboard') }}">Executive</a>
+    <a href="{{ url_for('employee_bp.employee_home') }}">Employee Portal</a>
+    <a href="{{ url_for('manager_bp.manager_home') }}">Manager</a>
+    <a href="{{ url_for('executive_bp.executive_home') }}">Executive</a>
 </nav>
 <hr>
 {% block content %}{% endblock %}
 <script src="{{ url_for('static', filename='js/automation.js') }}"></script>
 </body>
 </html>
-
