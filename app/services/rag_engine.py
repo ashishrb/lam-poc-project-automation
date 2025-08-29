@@ -17,13 +17,20 @@ class RAGEngine:
     """RAG (Retrieval-Augmented Generation) engine for document processing and search"""
     
     def __init__(self):
-        self.chroma_client = chromadb.HttpClient(
-            host=settings.CHROMA_HOST,
-            port=settings.CHROMA_PORT
-        )
+        self.chroma_client = None
         self.collection_name = "project_documents"
-        self.collection = self._get_or_create_collection()
-        self.ollama_client = httpx.AsyncClient(base_url=settings.OLLAMA_BASE_URL)
+        self.collection = None
+        self.ollama_client = None
+    
+    def _initialize_clients(self):
+        """Initialize clients lazily when needed"""
+        if self.chroma_client is None:
+            self.chroma_client = chromadb.HttpClient(
+                host=settings.CHROMA_HOST,
+                port=settings.CHROMA_PORT
+            )
+            self.collection = self._get_or_create_collection()
+            self.ollama_client = httpx.AsyncClient(base_url=settings.OLLAMA_BASE_URL)
     
     def _get_or_create_collection(self):
         """Get or create the document collection"""
@@ -49,6 +56,7 @@ class RAGEngine:
     ) -> Dict[str, Any]:
         """Ingest a document into the RAG system"""
         try:
+            self._initialize_clients()
             # Read document content
             content = await self._read_document(file_path)
             
@@ -189,6 +197,7 @@ class RAGEngine:
     ) -> Dict[str, Any]:
         """Search documents using semantic similarity"""
         try:
+            self._initialize_clients()
             # Generate query embedding
             query_embedding = await self._generate_embeddings([query])
             

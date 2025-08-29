@@ -7,7 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
 from app.core.config import settings
-from app.models.project import Project, Task, Risk
+from app.models.project import Project, Task
+from app.models.risk import Risk
 from app.models.resource import Resource, Evaluation
 from app.models.finance import Budget, Actual, Forecast
 from app.services.rag_engine import RAGEngine

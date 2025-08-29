@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects - Project Portfolio Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">🚀 PPM System</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/web/dashboard">Dashboard</a>
+                <a class="nav-link active" href="/web/projects">Projects</a>
+                <a class="nav-link" href="/web/resources">Resources</a>
+                <a class="nav-link" href="/web/finance">Finance</a>
+                <a class="nav-link" href="/web/ai-copilot">AI Copilot</a>
+                <a class="nav-link" href="/web/alerts">Alerts</a>
+                <a class="nav-link" href="/web/reports">Reports</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1>📋 Projects</h1>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newProjectModal">
+                <i class="fas fa-plus"></i> New Project
+            </button>
+        </div>
+        
+        <!-- Project List -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Project List</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="projectList">
+                            <p class="text-muted">No projects found. Create your first project to get started.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Project Modal -->
+    <div class="modal fade" id="newProjectModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create New Project</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="newProjectForm">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label class="form-label">Project Name *</label>
+                                    <input type="text" class="form-control" name="projectName" required>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label">Project Code</label>
+                                    <input type="text" class="form-control" name="projectCode" placeholder="e.g., PRJ-001">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Start Date *</label>
+                                    <input type="date" class="form-control" name="startDate" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">End Date</label>
+                                    <input type="date" class="form-control" name="endDate">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Project Manager *</label>
+                                    <input type="text" class="form-control" name="projectManager" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Priority</label>
+                                    <select class="form-select" name="priority">
+                                        <option value="low">Low</option>
+                                        <option value="medium" selected>Medium</option>
+                                        <option value="high">High</option>
+                                        <option value="critical">Critical</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Budget ($)</label>
+                                    <input type="number" class="form-control" name="budget" min="0" step="1000">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Status</label>
+                                    <select class="form-select" name="status">
+                                        <option value="planning">Planning</option>
+                                        <option value="active" selected>Active</option>
+                                        <option value="on_hold">On Hold</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="cancelled">Cancelled</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" name="description" rows="3" placeholder="Project description and objectives..."></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Key Stakeholders (comma separated)</label>
+                            <input type="text" class="form-control" name="stakeholders" placeholder="e.g., Client, Sponsor, Team Lead">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Technologies & Tools</label>
+                            <input type="text" class="form-control" name="technologies" placeholder="e.g., Python, React, AWS, Docker">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveProject()">Create Project</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Details Modal -->
+    <div class="modal fade" id="projectDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Project Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="projectDetailsContent">
+                        <!-- Content will be populated dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let projects = [];
+        let currentProjectId = 0;
+
+        function saveProject() {
+            const form = document.getElementById('newProjectForm');
+            const formData = new FormData(form);
+            
+            const project = {
+                id: ++currentProjectId,
+                name: formData.get('projectName'),
+                code: formData.get('projectCode') || `PRJ-${String(currentProjectId).padStart(3, '0')}`,
+                startDate: formData.get('startDate'),
+                endDate: formData.get('endDate'),
+                projectManager: formData.get('projectManager'),
+                priority: formData.get('priority'),
+                budget: parseFloat(formData.get('budget')) || 0,
+                status: formData.get('status'),
+                description: formData.get('description'),
+                stakeholders: formData.get('stakeholders').split(',').map(s => s.trim()).filter(s => s),
+                technologies: formData.get('technologies').split(',').map(t => t.trim()).filter(t => t),
+                createdAt: new Date().toISOString(),
+                tasks: [],
+                risks: [],
+                milestones: []
+            };
+            
+            projects.push(project);
+            updateProjectList();
+            
+            // Close modal and reset form
+            bootstrap.Modal.getInstance(document.getElementById('newProjectModal')).hide();
+            form.reset();
+            
+            // Show success message
+            showAlert('Project created successfully!', 'success');
+        }
+
+        function updateProjectList() {
+            const container = document.getElementById('projectList');
+            
+            if (projects.length === 0) {
+                container.innerHTML = '<p class="text-muted">No projects found. Create your first project to get started.</p>';
+                return;
+            }
+            
+            let html = '<div class="table-responsive"><table class="table table-hover">';
+            html += '<thead><tr><th>Project</th><th>Manager</th><th>Status</th><th>Priority</th><th>Progress</th><th>Actions</th></tr></thead><tbody>';
+            
+            projects.forEach(project => {
+                const progress = calculateProgress(project);
+                const statusClass = getStatusClass(project.status);
+                const priorityClass = getPriorityClass(project.priority);
+                
+                html += `
+                    <tr>
+                        <td>
+                            <strong>${project.name}</strong><br>
+                            <small class="text-muted">${project.code}</small>
+                        </td>
+                        <td>${project.projectManager}</td>
+                        <td><span class="badge ${statusClass}">${project.status}</span></td>
+                        <td><span class="badge ${priorityClass}">${project.priority}</span></td>
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                <div class="progress-bar" role="progressbar" style="width: ${progress}%">${progress}%</div>
+                            </div>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewProjectDetails(${project.id})">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            <button class="btn btn-sm btn-outline-success" onclick="addTask(${project.id})">
+                                <i class="fas fa-plus"></i> Task
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+
+        function calculateProgress(project) {
+            if (project.tasks.length === 0) return 0;
+            const completedTasks = project.tasks.filter(task => task.status === 'completed').length;
+            return Math.round((completedTasks / project.tasks.length) * 100);
+        }
+
+        function getStatusClass(status) {
+            const classes = {
+                'planning': 'bg-secondary',
+                'active': 'bg-primary',
+                'on_hold': 'bg-warning',
+                'completed': 'bg-success',
+                'cancelled': 'bg-danger'
+            };
+            return classes[status] || 'bg-secondary';
+        }
+
+        function getPriorityClass(priority) {
+            const classes = {
+                'low': 'bg-success',
+                'medium': 'bg-primary',
+                'high': 'bg-warning',
+                'critical': 'bg-danger'
+            };
+            return classes[priority] || 'bg-secondary';
+        }
+
+        function viewProjectDetails(projectId) {
+            const project = projects.find(p => p.id === projectId);
+            if (!project) return;
+            
+            const modal = document.getElementById('projectDetailsModal');
+            const content = document.getElementById('projectDetailsContent');
+            
+            content.innerHTML = `
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6>Project Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Name:</strong> ${project.name}</p>
+                                <p><strong>Code:</strong> ${project.code}</p>
+                                <p><strong>Manager:</strong> ${project.projectManager}</p>
+                                <p><strong>Status:</strong> <span class="badge ${getStatusClass(project.status)}">${project.status}</span></p>
+                                <p><strong>Priority:</strong> <span class="badge ${getPriorityClass(project.priority)}">${project.priority}</span></p>
+                                <p><strong>Budget:</strong> $${project.budget.toLocaleString()}</p>
+                                <p><strong>Start Date:</strong> ${project.startDate}</p>
+                                <p><strong>End Date:</strong> ${project.endDate || 'Not specified'}</p>
+                            </div>
+                        </div>
+                        
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h6>Progress Overview</h6>
+                            </div>
+                            <div class="card-body text-center">
+                                <h2 class="text-primary">${calculateProgress(project)}%</h2>
+                                <p class="text-muted">Complete</p>
+                                <div class="row text-center">
+                                    <div class="col-4">
+                                        <h5>${project.tasks.length}</h5>
+                                        <small>Total Tasks</small>
+                                    </div>
+                                    <div class="col-4">
+                                        <h5>${project.tasks.filter(t => t.status === 'completed').length}</h5>
+                                        <small>Completed</small>
+                                    </div>
+                                    <div class="col-4">
+                                        <h5>${project.risks.length}</h5>
+                                        <small>Risks</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6>Tasks</h6>
+                                <button class="btn btn-sm btn-primary" onclick="addTask(${project.id})">
+                                    <i class="fas fa-plus"></i> Add Task
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div id="tasks-${project.id}">
+                                    ${renderTasks(project.tasks)}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6>Risks & Issues</h6>
+                                <button class="btn btn-sm btn-warning" onclick="addRisk(${project.id})">
+                                    <i class="fas fa-plus"></i> Add Risk
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div id="risks-${project.id}">
+                                    ${renderRisks(project.risks)}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <h6>Description</h6>
+                            </div>
+                            <div class="card-body">
+                                <p>${project.description || 'No description provided.'}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            bootstrap.Modal.getInstance(modal).show();
+        }
+
+        function renderTasks(tasks) {
+            if (tasks.length === 0) {
+                return '<p class="text-muted">No tasks created yet.</p>';
+            }
+            
+            let html = '';
+            tasks.forEach(task => {
+                const statusClass = task.status === 'completed' ? 'bg-success' : 
+                                  task.status === 'in_progress' ? 'bg-primary' : 'bg-secondary';
+                
+                html += `
+                    <div class="border-bottom pb-2 mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>${task.title}</strong>
+                            <span class="badge ${statusClass}">${task.status}</span>
+                        </div>
+                        <p class="mb-1">${task.description}</p>
+                        <small class="text-muted">Assigned to: ${task.assignedTo || 'Unassigned'} | Due: ${task.dueDate || 'No due date'}</small>
+                    </div>
+                `;
+            });
+            return html;
+        }
+
+        function renderRisks(risks) {
+            if (risks.length === 0) {
+                return '<p class="text-muted">No risks identified yet.</p>';
+            }
+            
+            let html = '';
+            risks.forEach(risk => {
+                const severityClass = risk.severity === 'high' ? 'bg-danger' : 
+                                    risk.severity === 'medium' ? 'bg-warning' : 'bg-info';
+                
+                html += `
+                    <div class="border-bottom pb-2 mb-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <strong>${risk.title}</strong>
+                            <span class="badge ${severityClass}">${risk.severity}</span>
+                        </div>
+                        <p class="mb-1">${risk.description}</p>
+                        <small class="text-muted">Mitigation: ${risk.mitigation || 'No mitigation plan'}</small>
+                    </div>
+                `;
+            });
+            return html;
+        }
+
+        function addTask(projectId) {
+            const project = projects.find(p => p.id === projectId);
+            if (!project) return;
+            
+            const title = prompt('Enter task title:');
+            if (!title) return;
+            
+            const description = prompt('Enter task description:');
+            if (!description) return;
+            
+            const assignedTo = prompt('Assign to (name):');
+            const dueDate = prompt('Due date (YYYY-MM-DD):');
+            
+            const task = {
+                id: Date.now(),
+                title: title,
+                description: description,
+                assignedTo: assignedTo,
+                dueDate: dueDate,
+                status: 'pending',
+                createdAt: new Date().toISOString()
+            };
+            
+            project.tasks.push(task);
+            
+            // Update the display if modal is open
+            const tasksDiv = document.getElementById(`tasks-${projectId}`);
+            if (tasksDiv) {
+                tasksDiv.innerHTML = renderTasks(project.tasks);
+            }
+            
+            // Update project list
+            updateProjectList();
+            
+            showAlert('Task added successfully!', 'success');
+        }
+
+        function addRisk(projectId) {
+            const project = projects.find(p => p.id === projectId);
+            if (!project) return;
+            
+            const title = prompt('Enter risk title:');
+            if (!title) return;
+            
+            const description = prompt('Enter risk description:');
+            if (!description) return;
+            
+            const severity = prompt('Severity (low/medium/high):');
+            if (!severity || !['low', 'medium', 'high'].includes(severity.toLowerCase())) return;
+            
+            const mitigation = prompt('Mitigation strategy:');
+            
+            const risk = {
+                id: Date.now(),
+                title: title,
+                description: description,
+                severity: severity.toLowerCase(),
+                mitigation: mitigation,
+                createdAt: new Date().toISOString()
+            };
+            
+            project.risks.push(risk);
+            
+            // Update the display if modal is open
+            const risksDiv = document.getElementById(`risks-${projectId}`);
+            if (risksDiv) {
+                risksDiv.innerHTML = renderRisks(project.risks);
+            }
+            
+            showAlert('Risk added successfully!', 'success');
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.top = '20px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 3000);
+        }
+
+        // Initialize
+        updateProjectList();
+    </script>
+</body>
+</html>

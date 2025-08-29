@@ -1,0 +1,77 @@
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.ext.asyncio import AsyncSession
+from typing import List
+from app.core.database import get_db
+from app.schemas.resource import ResourceCreate, ResourceUpdate, ResourceResponse, ResourceListResponse
+from app.models.resource import Resource
+
+router = APIRouter()
+
+
+@router.get("/", response_model=ResourceListResponse)
+async def list_resources(
+    skip: int = 0,
+    limit: int = 100,
+    db: AsyncSession = Depends(get_db)
+):
+    """List all resources with pagination"""
+    # Simplified implementation
+    return ResourceListResponse(
+        resources=[],
+        total=0,
+        page=skip // limit + 1,
+        size=limit
+    )
+
+
+@router.post("/", response_model=ResourceResponse)
+async def create_resource(
+    resource: ResourceCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """Create a new resource"""
+    # Simplified implementation
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail="Resource creation not implemented yet"
+    )
+
+
+@router.get("/{resource_id}", response_model=ResourceResponse)
+async def get_resource(
+    resource_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """Get a specific resource by ID"""
+    # Simplified implementation
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail="Resource retrieval not implemented yet"
+    )
+
+
+@router.put("/{resource_id}", response_model=ResourceResponse)
+async def update_resource(
+    resource_id: int,
+    resource: ResourceUpdate,
+    db: AsyncSession = Depends(get_db)
+):
+    """Update a resource"""
+    # Simplified implementation
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail="Resource update not implemented yet"
+    )
+
+
+@router.delete("/{resource_id}")
+async def delete_resource(
+    resource_id: int,
+    db: AsyncSession = Depends(get_db)
+):
+    """Delete a resource"""
+    # Simplified implementation
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail="Resource deletion not implemented yet"
+    )

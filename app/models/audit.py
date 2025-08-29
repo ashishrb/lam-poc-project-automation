@@ -48,7 +48,7 @@ class AuditLog(Base):
     response_data = Column(JSON)  # JSON response data
     error_message = Column(Text)
     duration_ms = Column(Integer)  # request duration in milliseconds
-    metadata = Column(JSON)  # Additional metadata
+    audit_metadata = Column(JSON)  # Additional metadata
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     

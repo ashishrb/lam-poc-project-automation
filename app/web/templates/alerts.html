@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alerts - Project Portfolio Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .alert-item {
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+        .alert-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .alert-critical { border-left-color: #dc3545; }
+        .alert-high { border-left-color: #fd7e14; }
+        .alert-medium { border-left-color: #ffc107; }
+        .alert-low { border-left-color: #17a2b8; }
+        .alert-info { border-left-color: #6f42c1; }
+        
+        .notification-badge {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+        
+        .alert-rule-card {
+            border: 1px solid #dee2e6;
+            transition: all 0.3s ease;
+        }
+        .alert-rule-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 2px 8px rgba(0,123,255,0.1);
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">🚀 PPM System</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/web/dashboard">Dashboard</a>
+                <a class="nav-link" href="/web/projects">Projects</a>
+                <a class="nav-link" href="/web/resources">Resources</a>
+                <a class="nav-link" href="/web/finance">Finance</a>
+                <a class="nav-link" href="/web/ai-copilot">AI Copilot</a>
+                <a class="nav-link active" href="/web/alerts">Alerts</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1>🚨 Alerts Center</h1>
+            <div>
+                <button class="btn btn-warning me-2" onclick="createAlertRule()">
+                    <i class="fas fa-plus"></i> Alert Rule
+                </button>
+                <button class="btn btn-primary" onclick="testAlert()">
+                    <i class="fas fa-bell"></i> Test Alert
+                </button>
+            </div>
+        </div>
+        
+        <!-- Alert Statistics -->
+        <div class="row mt-4">
+            <div class="col-md-2">
+                <div class="card text-white bg-danger">
+                    <div class="card-body text-center">
+                        <h4 id="criticalCount">0</h4>
+                        <small>Critical</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card text-white bg-warning">
+                    <div class="card-body text-center">
+                        <h4 id="highCount">0</h4>
+                        <small>High</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card text-white bg-info">
+                    <div class="card-body text-center">
+                        <h4 id="mediumCount">0</h4>
+                        <small>Medium</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card text-white bg-secondary">
+                    <div class="card-body text-center">
+                        <h4 id="lowCount">0</h4>
+                        <small>Low</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card text-white bg-success">
+                    <div class="card-body text-center">
+                        <h4 id="resolvedCount">0</h4>
+                        <small>Resolved</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="card text-white bg-primary">
+                    <div class="card-body text-center">
+                        <h4 id="totalCount">0</h4>
+                        <small>Total</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Active Alerts -->
+        <div class="row mt-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5>Active Alerts</h5>
+                        <div>
+                            <button class="btn btn-sm btn-outline-secondary" onclick="refreshAlerts()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                            <button class="btn btn-sm btn-outline-success" onclick="resolveAllAlerts()">
+                                <i class="fas fa-check-double"></i> Resolve All
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="activeAlerts">
+                            <p class="text-muted">No active alerts at the moment.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-outline-primary w-100 mb-2" onclick="createAlertRule()">
+                            <i class="fas fa-cog"></i> Create Alert Rule
+                        </button>
+                        <button class="btn btn-outline-warning w-100 mb-2" onclick="viewAlertHistory()">
+                            <i class="fas fa-history"></i> View History
+                        </button>
+                        <button class="btn btn-outline-info w-100 mb-2" onclick="configureNotifications()">
+                            <i class="fas fa-bell"></i> Notifications
+                        </button>
+                        <button class="btn btn-outline-success w-100 mb-2" onclick="exportAlerts()">
+                            <i class="fas fa-download"></i> Export Alerts
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5>Alert Rules</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="alertRules">
+                            <p class="text-muted">No alert rules configured.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Alert Rule Modal -->
+    <div class="modal fade" id="alertRuleModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Create Alert Rule</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="alertRuleForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Rule Name *</label>
+                                    <input type="text" class="form-control" name="ruleName" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Severity *</label>
+                                    <select class="form-select" name="severity" required>
+                                        <option value="">Select Severity</option>
+                                        <option value="critical">Critical</option>
+                                        <option value="high">High</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="low">Low</option>
+                                        <option value="info">Info</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Trigger Type *</label>
+                                    <select class="form-select" name="triggerType" required onchange="updateTriggerFields()">
+                                        <option value="">Select Type</option>
+                                        <option value="threshold">Threshold</option>
+                                        <option value="schedule">Schedule</option>
+                                        <option value="event">Event</option>
+                                        <option value="condition">Condition</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Category</label>
+                                    <select class="form-select" name="category">
+                                        <option value="">Select Category</option>
+                                        <option value="project">Project</option>
+                                        <option value="resource">Resource</option>
+                                        <option value="budget">Budget</option>
+                                        <option value="schedule">Schedule</option>
+                                        <option value="quality">Quality</option>
+                                        <option value="risk">Risk</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="thresholdFields" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Metric</label>
+                                        <select class="form-select" name="metric">
+                                            <option value="budget_variance">Budget Variance</option>
+                                            <option value="schedule_variance">Schedule Variance</option>
+                                            <option value="resource_utilization">Resource Utilization</option>
+                                            <option value="risk_count">Risk Count</option>
+                                            <option value="issue_count">Issue Count</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Threshold Value</label>
+                                        <input type="number" class="form-control" name="thresholdValue" step="0.1">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div id="scheduleFields" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Frequency</label>
+                                        <select class="form-select" name="frequency">
+                                            <option value="daily">Daily</option>
+                                            <option value="weekly">Weekly</option>
+                                            <option value="monthly">Monthly</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Time</label>
+                                        <input type="time" class="form-control" name="scheduleTime">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control" name="description" rows="3" placeholder="Describe what this alert rule monitors..."></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Actions</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="actions[]" value="email" id="actionEmail">
+                                <label class="form-check-label" for="actionEmail">Send Email</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="actions[]" value="notification" id="actionNotification" checked>
+                                <label class="form-check-label" for="actionNotification">Show Notification</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="actions[]" value="dashboard" id="actionDashboard" checked>
+                                <label class="form-check-label" for="actionDashboard">Display on Dashboard</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveAlertRule()">Create Rule</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Details Modal -->
+    <div class="modal fade" id="alertDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Alert Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="alertDetailsContent">
+                        <!-- Content will be populated dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let alerts = [];
+        let alertRules = [];
+        let currentAlertId = 0;
+        let currentRuleId = 0;
+
+        // Initialize with some sample data
+        function initializeSampleData() {
+            // Sample alert rules
+            alertRules = [
+                {
+                    id: 1,
+                    name: "Budget Overrun Alert",
+                    severity: "critical",
+                    triggerType: "threshold",
+                    category: "budget",
+                    description: "Alert when project budget exceeds 90%",
+                    active: true
+                },
+                {
+                    id: 2,
+                    name: "Schedule Delay Warning",
+                    severity: "high",
+                    triggerType: "threshold",
+                    category: "schedule",
+                    description: "Alert when project is behind schedule by more than 1 week",
+                    active: true
+                },
+                {
+                    id: 3,
+                    name: "Resource Overload",
+                    severity: "medium",
+                    triggerType: "threshold",
+                    category: "resource",
+                    description: "Alert when resource utilization exceeds 120%",
+                    active: true
+                }
+            ];
+
+            // Sample alerts
+            alerts = [
+                {
+                    id: 1,
+                    title: "Budget Variance Exceeded",
+                    message: "Project Alpha has exceeded 95% of allocated budget",
+                    severity: "critical",
+                    category: "budget",
+                    source: "Project Alpha",
+                    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+                    status: "active",
+                    assignee: "Finance Team"
+                },
+                {
+                    id: 2,
+                    title: "Schedule Delay Detected",
+                    message: "Project Beta is running 2 weeks behind schedule",
+                    severity: "high",
+                    category: "schedule",
+                    source: "Project Beta",
+                    timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+                    status: "active",
+                    assignee: "Project Manager"
+                }
+            ];
+
+            updateAlertCounts();
+            updateActiveAlerts();
+            updateAlertRules();
+        }
+
+        function updateTriggerFields() {
+            const triggerType = document.querySelector('select[name="triggerType"]').value;
+            
+            // Hide all fields
+            document.getElementById('thresholdFields').style.display = 'none';
+            document.getElementById('scheduleFields').style.display = 'none';
+            
+            // Show relevant fields
+            if (triggerType === 'threshold') {
+                document.getElementById('thresholdFields').style.display = 'block';
+            } else if (triggerType === 'schedule') {
+                document.getElementById('scheduleFields').style.display = 'block';
+            }
+        }
+
+        function createAlertRule() {
+            document.getElementById('alertRuleForm').reset();
+            document.getElementById('thresholdFields').style.display = 'none';
+            document.getElementById('scheduleFields').style.display = 'none';
+            
+            const modal = new bootstrap.Modal(document.getElementById('alertRuleModal'));
+            modal.show();
+        }
+
+        function saveAlertRule() {
+            const form = document.getElementById('alertRuleForm');
+            const formData = new FormData(form);
+            
+            const rule = {
+                id: ++currentRuleId,
+                name: formData.get('ruleName'),
+                severity: formData.get('severity'),
+                triggerType: formData.get('triggerType'),
+                category: formData.get('category'),
+                description: formData.get('description'),
+                actions: formData.getAll('actions[]'),
+                active: true,
+                createdAt: new Date().toISOString()
+            };
+            
+            // Add specific fields based on trigger type
+            if (rule.triggerType === 'threshold') {
+                rule.metric = formData.get('metric');
+                rule.thresholdValue = parseFloat(formData.get('thresholdValue'));
+            } else if (rule.triggerType === 'schedule') {
+                rule.frequency = formData.get('frequency');
+                rule.scheduleTime = formData.get('scheduleTime');
+            }
+            
+            alertRules.push(rule);
+            updateAlertRules();
+            
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById('alertRuleModal')).hide();
+            
+            showAlert('Alert rule created successfully!', 'success');
+        }
+
+        function updateAlertRules() {
+            const container = document.getElementById('alertRules');
+            
+            if (alertRules.length === 0) {
+                container.innerHTML = '<p class="text-muted">No alert rules configured.</p>';
+                return;
+            }
+            
+            let html = '';
+            alertRules.forEach(rule => {
+                const severityClass = getSeverityClass(rule.severity);
+                const statusClass = rule.active ? 'bg-success' : 'bg-secondary';
+                
+                html += `
+                    <div class="alert-rule-card p-2 mb-2">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <strong>${rule.name}</strong>
+                                <br><small class="text-muted">${rule.description}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge ${severityClass} me-1">${rule.severity}</span>
+                                <span class="badge ${statusClass}">${rule.active ? 'Active' : 'Inactive'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function updateActiveAlerts() {
+            const container = document.getElementById('activeAlerts');
+            const activeAlerts = alerts.filter(alert => alert.status === 'active');
+            
+            if (activeAlerts.length === 0) {
+                container.innerHTML = '<p class="text-muted">No active alerts at the moment.</p>';
+                return;
+            }
+            
+            let html = '';
+            activeAlerts.forEach(alert => {
+                const severityClass = getSeverityClass(alert.severity);
+                const timeAgo = getTimeAgo(alert.timestamp);
+                
+                html += `
+                    <div class="alert-item alert-${alert.severity} p-3 mb-3 border rounded">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="badge ${severityClass} me-2">${alert.severity.toUpperCase()}</span>
+                                    <span class="badge bg-secondary me-2">${alert.category}</span>
+                                    <small class="text-muted">${timeAgo}</small>
+                                </div>
+                                <h6 class="mb-1">${alert.title}</h6>
+                                <p class="mb-2">${alert.message}</p>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small class="text-muted">Source: ${alert.source}</small>
+                                    <small class="text-muted">Assignee: ${alert.assignee}</small>
+                                </div>
+                            </div>
+                            <div class="ms-3">
+                                <button class="btn btn-sm btn-outline-primary me-1" onclick="viewAlertDetails(${alert.id})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-success" onclick="resolveAlert(${alert.id})">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function updateAlertCounts() {
+            const critical = alerts.filter(a => a.severity === 'critical' && a.status === 'active').length;
+            const high = alerts.filter(a => a.severity === 'high' && a.status === 'active').length;
+            const medium = alerts.filter(a => a.severity === 'medium' && a.status === 'active').length;
+            const low = alerts.filter(a => a.severity === 'low' && a.status === 'active').length;
+            const resolved = alerts.filter(a => a.status === 'resolved').length;
+            const total = alerts.length;
+            
+            document.getElementById('criticalCount').textContent = critical;
+            document.getElementById('highCount').textContent = high;
+            document.getElementById('mediumCount').textContent = medium;
+            document.getElementById('lowCount').textContent = low;
+            document.getElementById('resolvedCount').textContent = resolved;
+            document.getElementById('totalCount').textContent = total;
+        }
+
+        function getSeverityClass(severity) {
+            const classes = {
+                'critical': 'bg-danger',
+                'high': 'bg-warning',
+                'medium': 'bg-info',
+                'low': 'bg-secondary',
+                'info': 'bg-primary'
+            };
+            return classes[severity] || 'bg-secondary';
+        }
+
+        function getTimeAgo(timestamp) {
+            const now = new Date();
+            const alertTime = new Date(timestamp);
+            const diffMs = now - alertTime;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+            if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+            return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+        }
+
+        function viewAlertDetails(alertId) {
+            const alert = alerts.find(a => a.id === alertId);
+            if (!alert) return;
+            
+            const modal = document.getElementById('alertDetailsModal');
+            const content = document.getElementById('alertDetailsContent');
+            
+            content.innerHTML = `
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6>Alert Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <h5>${alert.title}</h5>
+                                <p class="text-muted">${alert.message}</p>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Severity:</strong> <span class="badge ${getSeverityClass(alert.severity)}">${alert.severity.toUpperCase()}</span></p>
+                                        <p><strong>Category:</strong> ${alert.category}</p>
+                                        <p><strong>Source:</strong> ${alert.source}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Status:</strong> <span class="badge bg-${alert.status === 'active' ? 'warning' : 'success'}">${alert.status}</span></p>
+                                        <p><strong>Assignee:</strong> ${alert.assignee}</p>
+                                        <p><strong>Created:</strong> ${new Date(alert.timestamp).toLocaleString()}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6>Actions</h6>
+                            </div>
+                            <div class="card-body">
+                                <button class="btn btn-success w-100 mb-2" onclick="resolveAlert(${alert.id})">
+                                    <i class="fas fa-check"></i> Resolve Alert
+                                </button>
+                                <button class="btn btn-primary w-100 mb-2" onclick="assignAlert(${alert.id})">
+                                    <i class="fas fa-user"></i> Reassign
+                                </button>
+                                <button class="btn btn-info w-100 mb-2" onclick="addNote(${alert.id})">
+                                    <i class="fas fa-sticky-note"></i> Add Note
+                                </button>
+                                <button class="btn btn-warning w-100" onclick="escalateAlert(${alert.id})">
+                                    <i class="fas fa-arrow-up"></i> Escalate
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            bootstrap.Modal.getInstance(modal).show();
+        }
+
+        function resolveAlert(alertId) {
+            const alert = alerts.find(a => a.id === alertId);
+            if (alert) {
+                alert.status = 'resolved';
+                alert.resolvedAt = new Date().toISOString();
+                updateActiveAlerts();
+                updateAlertCounts();
+                showAlert('Alert resolved successfully!', 'success');
+                
+                // Close modal if open
+                const modal = bootstrap.Modal.getInstance(document.getElementById('alertDetailsModal'));
+                if (modal) modal.hide();
+            }
+        }
+
+        function testAlert() {
+            const testAlert = {
+                id: ++currentAlertId,
+                title: "Test Alert Generated",
+                message: "This is a test alert to verify the alert system is working correctly.",
+                severity: "info",
+                category: "system",
+                source: "Alert System",
+                timestamp: new Date().toISOString(),
+                status: "active",
+                assignee: "System Admin"
+            };
+            
+            alerts.push(testAlert);
+            updateActiveAlerts();
+            updateAlertCounts();
+            showAlert('Test alert created successfully!', 'info');
+        }
+
+        function refreshAlerts() {
+            // Simulate refreshing alerts
+            showAlert('Alerts refreshed!', 'info');
+        }
+
+        function resolveAllAlerts() {
+            if (confirm('Are you sure you want to resolve all active alerts?')) {
+                alerts.forEach(alert => {
+                    if (alert.status === 'active') {
+                        alert.status = 'resolved';
+                        alert.resolvedAt = new Date().toISOString();
+                    }
+                });
+                updateActiveAlerts();
+                updateAlertCounts();
+                showAlert('All alerts resolved!', 'success');
+            }
+        }
+
+        function viewAlertHistory() {
+            showAlert('Alert history feature coming soon!', 'info');
+        }
+
+        function configureNotifications() {
+            showAlert('Notification settings feature coming soon!', 'info');
+        }
+
+        function exportAlerts() {
+            showAlert('Export feature coming soon!', 'info');
+        }
+
+        function assignAlert(alertId) {
+            const newAssignee = prompt('Enter new assignee name:');
+            if (newAssignee) {
+                const alert = alerts.find(a => a.id === alertId);
+                if (alert) {
+                    alert.assignee = newAssignee;
+                    showAlert('Alert reassigned successfully!', 'success');
+                }
+            }
+        }
+
+        function addNote(alertId) {
+            const note = prompt('Enter note:');
+            if (note) {
+                showAlert('Note added successfully!', 'success');
+            }
+        }
+
+        function escalateAlert(alertId) {
+            showAlert('Alert escalated to management!', 'warning');
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.top = '20px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 3000);
+        }
+
+        // Initialize
+        initializeSampleData();
+        
+        // Simulate real-time alerts
+        setInterval(() => {
+            // Random chance to generate a new alert
+            if (Math.random() < 0.1) { // 10% chance every interval
+                const alertTypes = [
+                    { title: "Resource Utilization High", message: "Team member utilization has exceeded 90%", severity: "medium", category: "resource" },
+                    { title: "Project Milestone Approaching", message: "Upcoming milestone deadline in 3 days", severity: "low", category: "schedule" },
+                    { title: "Budget Threshold Warning", message: "Project spending approaching budget limit", severity: "high", category: "budget" }
+                ];
+                
+                const randomAlert = alertTypes[Math.floor(Math.random() * alertTypes.length)];
+                const newAlert = {
+                    id: ++currentAlertId,
+                    title: randomAlert.title,
+                    message: randomAlert.message,
+                    severity: randomAlert.severity,
+                    category: randomAlert.category,
+                    source: "System Monitor",
+                    timestamp: new Date().toISOString(),
+                    status: "active",
+                    assignee: "Auto-Assigned"
+                };
+                
+                alerts.push(newAlert);
+                updateActiveAlerts();
+                updateAlertCounts();
+                
+                // Show notification
+                if (Notification.permission === "granted") {
+                    new Notification("New Alert", {
+                        body: randomAlert.title,
+                        icon: "/favicon.ico"
+                    });
+                }
+            }
+        }, 30000); // Check every 30 seconds
+    </script>
+</body>
+</html>

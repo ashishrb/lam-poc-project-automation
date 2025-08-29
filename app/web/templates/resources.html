@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resources - Project Portfolio Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">🚀 PPM System</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/web/dashboard">Dashboard</a>
+                <a class="nav-link" href="/web/projects">Projects</a>
+                <a class="nav-link active" href="/web/resources">Resources</a>
+                <a class="nav-link" href="/web/finance">Finance</a>
+                <a class="nav-link" href="/web/ai-copilot">AI Copilot</a>
+                <a class="nav-link" href="/web/alerts">Alerts</a>
+                <a class="nav-link" href="/web/reports">Reports</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1>👥 Resources</h1>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newResourceModal">
+                <i class="fas fa-plus"></i> Add Resource
+            </button>
+        </div>
+        
+        <!-- Resource List -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Team Members</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="resourceList">
+                            <p class="text-muted">No resources found. Add your first team member to get started.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Resource Modal -->
+    <div class="modal fade" id="newResourceModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add New Resource</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="newResourceForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Full Name *</label>
+                                    <input type="text" class="form-control" name="fullName" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Email *</label>
+                                    <input type="email" class="form-control" name="email" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Role *</label>
+                                    <select class="form-select" name="role" required>
+                                        <option value="">Select Role</option>
+                                        <option value="developer">Developer</option>
+                                        <option value="designer">Designer</option>
+                                        <option value="project_manager">Project Manager</option>
+                                        <option value="analyst">Business Analyst</option>
+                                        <option value="tester">QA Tester</option>
+                                        <option value="devops">DevOps Engineer</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Department</label>
+                                    <input type="text" class="form-control" name="department">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Daily Rate ($)</label>
+                                    <input type="number" class="form-control" name="dailyRate" min="0" step="0.01">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Start Date</label>
+                                    <input type="date" class="form-control" name="startDate">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Skills (comma separated)</label>
+                            <input type="text" class="form-control" name="skills" placeholder="e.g., Python, React, Agile, Leadership">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Notes</label>
+                            <textarea class="form-control" name="notes" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveResource()">Save Resource</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resource Details Modal -->
+    <div class="modal fade" id="resourceDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Resource Details & Updates</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="resourceDetailsContent">
+                        <!-- Content will be populated dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let resources = [];
+        let currentResourceId = 0;
+
+        function saveResource() {
+            const form = document.getElementById('newResourceForm');
+            const formData = new FormData(form);
+            
+            const resource = {
+                id: ++currentResourceId,
+                fullName: formData.get('fullName'),
+                email: formData.get('email'),
+                role: formData.get('role'),
+                department: formData.get('department'),
+                dailyRate: parseFloat(formData.get('dailyRate')) || 0,
+                startDate: formData.get('startDate'),
+                skills: formData.get('skills').split(',').map(s => s.trim()).filter(s => s),
+                notes: formData.get('notes'),
+                createdAt: new Date().toISOString(),
+                dailyUpdates: [],
+                attendance: [],
+                projectCompletions: [],
+                skillsUpdates: []
+            };
+            
+            resources.push(resource);
+            updateResourceList();
+            
+            // Close modal and reset form
+            bootstrap.Modal.getInstance(document.getElementById('newResourceModal')).hide();
+            form.reset();
+            
+            // Show success message
+            showAlert('Resource added successfully!', 'success');
+        }
+
+        function updateResourceList() {
+            const container = document.getElementById('resourceList');
+            
+            if (resources.length === 0) {
+                container.innerHTML = '<p class="text-muted">No resources found. Add your first team member to get started.</p>';
+                return;
+            }
+            
+            let html = '<div class="table-responsive"><table class="table table-hover">';
+            html += '<thead><tr><th>Name</th><th>Role</th><th>Department</th><th>Skills</th><th>Actions</th></tr></thead><tbody>';
+            
+            resources.forEach(resource => {
+                html += `
+                    <tr>
+                        <td><strong>${resource.fullName}</strong><br><small class="text-muted">${resource.email}</small></td>
+                        <td><span class="badge bg-primary">${resource.role}</span></td>
+                        <td>${resource.department || '-'}</td>
+                        <td>${resource.skills.map(s => `<span class="badge bg-light text-dark me-1">${s}</span>`).join('')}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewResourceDetails(${resource.id})">
+                                <i class="fas fa-eye"></i> View
+                            </button>
+                            <button class="btn btn-sm btn-outline-success" onclick="addDailyUpdate(${resource.id})">
+                                <i class="fas fa-plus"></i> Update
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+
+        function viewResourceDetails(resourceId) {
+            const resource = resources.find(r => r.id === resourceId);
+            if (!resource) return;
+            
+            const modal = document.getElementById('resourceDetailsModal');
+            const content = document.getElementById('resourceDetailsContent');
+            
+            content.innerHTML = `
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6>Basic Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Name:</strong> ${resource.fullName}</p>
+                                <p><strong>Email:</strong> ${resource.email}</p>
+                                <p><strong>Role:</strong> ${resource.role}</p>
+                                <p><strong>Department:</strong> ${resource.department || 'Not specified'}</p>
+                                <p><strong>Daily Rate:</strong> $${resource.dailyRate}</p>
+                                <p><strong>Start Date:</strong> ${resource.startDate || 'Not specified'}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <div class="card mb-3">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h6>Daily Work Updates</h6>
+                                <button class="btn btn-sm btn-primary" onclick="addDailyUpdate(${resource.id})">
+                                    <i class="fas fa-plus"></i> Add Update
+                                </button>
+                            </div>
+                            <div class="card-body">
+                                <div id="dailyUpdates-${resource.id}">
+                                    ${renderDailyUpdates(resource.dailyUpdates)}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6>Skills & Competencies</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="skillsSection-${resource.id}">
+                                    ${renderSkillsSection(resource)}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <h6>Project Completions</h6>
+                            </div>
+                            <div class="card-body">
+                                <div id="projectCompletions-${resource.id}">
+                                    ${renderProjectCompletions(resource.projectCompletions)}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            bootstrap.Modal.getInstance(modal).show();
+        }
+
+        function renderDailyUpdates(updates) {
+            if (updates.length === 0) {
+                return '<p class="text-muted">No daily updates recorded yet.</p>';
+            }
+            
+            let html = '';
+            updates.slice(-5).reverse().forEach(update => {
+                html += `
+                    <div class="border-bottom pb-2 mb-2">
+                        <div class="d-flex justify-content-between">
+                            <strong>${update.date}</strong>
+                            <small class="text-muted">${update.hours} hours</small>
+                        </div>
+                        <p class="mb-1">${update.description}</p>
+                        <small class="text-muted">Projects: ${update.projects.join(', ')}</small>
+                    </div>
+                `;
+            });
+            return html;
+        }
+
+        function renderSkillsSection(resource) {
+            let html = '<div class="mb-3">';
+            resource.skills.forEach(skill => {
+                html += `<span class="badge bg-primary me-2 mb-2">${skill}</span>`;
+            });
+            html += '</div>';
+            
+            html += `
+                <button class="btn btn-sm btn-outline-primary" onclick="addSkillUpdate(${resource.id})">
+                    <i class="fas fa-plus"></i> Add Skill
+                </button>
+            `;
+            return html;
+        }
+
+        function renderProjectCompletions(completions) {
+            if (completions.length === 0) {
+                return '<p class="text-muted">No project completions recorded yet.</p>';
+            }
+            
+            let html = '';
+            completions.forEach(completion => {
+                html += `
+                    <div class="border-bottom pb-2 mb-2">
+                        <div class="d-flex justify-content-between">
+                            <strong>${completion.projectName}</strong>
+                            <span class="badge bg-success">Completed</span>
+                        </div>
+                        <p class="mb-1">${completion.description}</p>
+                        <small class="text-muted">Completed: ${completion.completionDate}</small>
+                    </div>
+                `;
+            });
+            return html;
+        }
+
+        function addDailyUpdate(resourceId) {
+            const resource = resources.find(r => r.id === resourceId);
+            if (!resource) return;
+            
+            const description = prompt('Enter daily work update:');
+            if (!description) return;
+            
+            const hours = prompt('Enter hours worked (1-12):');
+            if (!hours || isNaN(hours) || hours < 1 || hours > 12) return;
+            
+            const projects = prompt('Enter project names (comma separated):');
+            
+            const update = {
+                date: new Date().toLocaleDateString(),
+                description: description,
+                hours: parseInt(hours),
+                projects: projects ? projects.split(',').map(p => p.trim()) : []
+            };
+            
+            resource.dailyUpdates.push(update);
+            
+            // Update the display if modal is open
+            const dailyUpdatesDiv = document.getElementById(`dailyUpdates-${resourceId}`);
+            if (dailyUpdatesDiv) {
+                dailyUpdatesDiv.innerHTML = renderDailyUpdates(resource.dailyUpdates);
+            }
+            
+            showAlert('Daily update added successfully!', 'success');
+        }
+
+        function addSkillUpdate(resourceId) {
+            const resource = resources.find(r => r.id === resourceId);
+            if (!resource) return;
+            
+            const newSkill = prompt('Enter new skill:');
+            if (!newSkill) return;
+            
+            if (!resource.skills.includes(newSkill)) {
+                resource.skills.push(newSkill);
+                
+                // Update the display
+                const skillsSection = document.getElementById(`skillsSection-${resourceId}`);
+                if (skillsSection) {
+                    skillsSection.innerHTML = renderSkillsSection(resource);
+                }
+                
+                showAlert('Skill added successfully!', 'success');
+            } else {
+                showAlert('Skill already exists!', 'warning');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.top = '20px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 3000);
+        }
+
+        // Initialize
+        updateResourceList();
+    </script>
+</body>
+</html>

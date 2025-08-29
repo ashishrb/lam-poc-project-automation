@@ -50,7 +50,7 @@ class Alert(Base):
     resolved_by = Column(Integer, ForeignKey("users.id"))
     resolved_at = Column(DateTime(timezone=True))
     resolution_notes = Column(Text)
-    metadata = Column(JSON)  # JSON metadata about the alert
+    alert_metadata = Column(JSON)  # JSON metadata about the alert
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - Project Portfolio Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .report-card {
+            transition: all 0.3s ease;
+            border: 1px solid #dee2e6;
+        }
+        .report-card:hover {
+            border-color: #007bff;
+            box-shadow: 0 4px 8px rgba(0,123,255,0.1);
+            transform: translateY(-2px);
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+        .email-template {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">🚀 PPM System</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/web/dashboard">Dashboard</a>
+                <a class="nav-link" href="/web/projects">Projects</a>
+                <a class="nav-link" href="/web/resources">Resources</a>
+                <a class="nav-link" href="/web/finance">Finance</a>
+                <a class="nav-link" href="/web/ai-copilot">AI Copilot</a>
+                <a class="nav-link" href="/web/alerts">Alerts</a>
+                <a class="nav-link active" href="/web/reports">Reports</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <h1>📊 Reports & Analytics</h1>
+            <div>
+                <button class="btn btn-success me-2" onclick="generateReport()">
+                    <i class="fas fa-plus"></i> Generate Report
+                </button>
+                <button class="btn btn-primary" onclick="scheduleReport()">
+                    <i class="fas fa-clock"></i> Schedule Report
+                </button>
+            </div>
+        </div>
+        
+        <!-- Report Categories -->
+        <div class="row mt-4">
+            <div class="col-md-3">
+                <div class="card report-card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-project-diagram fa-3x text-primary mb-3"></i>
+                        <h5>Portfolio Reports</h5>
+                        <p class="text-muted">Project overview and status</p>
+                        <button class="btn btn-outline-primary btn-sm" onclick="generatePortfolioReport()">Generate</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card report-card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-users fa-3x text-success mb-3"></i>
+                        <h5>Resource Reports</h5>
+                        <p class="text-muted">Team utilization and skills</p>
+                        <button class="btn btn-outline-success btn-sm" onclick="generateResourceReport()">Generate</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card report-card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-dollar-sign fa-3x text-warning mb-3"></i>
+                        <h5>Financial Reports</h5>
+                        <p class="text-muted">Budget and cost analysis</p>
+                        <button class="btn btn-outline-warning btn-sm" onclick="generateFinancialReport()">Generate</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <div class="card report-card text-center">
+                    <div class="card-body">
+                        <i class="fas fa-chart-line fa-3x text-info mb-3"></i>
+                        <h5>Performance Reports</h5>
+                        <p class="text-muted">KPIs and metrics</p>
+                        <button class="btn btn-outline-info btn-sm" onclick="generatePerformanceReport()">Generate</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Report Generation and Mailing -->
+        <div class="row mt-4">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Report Generation</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="reportForm">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Report Type *</label>
+                                        <select class="form-select" name="reportType" required onchange="updateReportFields()">
+                                            <option value="">Select Report Type</option>
+                                            <option value="portfolio">Portfolio Overview</option>
+                                            <option value="project_status">Project Status</option>
+                                            <option value="resource_utilization">Resource Utilization</option>
+                                            <option value="budget_variance">Budget Variance</option>
+                                            <option value="risk_assessment">Risk Assessment</option>
+                                            <option value="performance_metrics">Performance Metrics</option>
+                                            <option value="custom">Custom Report</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Format *</label>
+                                        <select class="form-select" name="format" required>
+                                            <option value="pdf">PDF</option>
+                                            <option value="excel">Excel</option>
+                                            <option value="html">HTML</option>
+                                            <option value="csv">CSV</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Date Range</label>
+                                        <select class="form-select" name="dateRange">
+                                            <option value="current_month">Current Month</option>
+                                            <option value="last_month">Last Month</option>
+                                            <option value="current_quarter">Current Quarter</option>
+                                            <option value="last_quarter">Last Quarter</option>
+                                            <option value="current_year">Current Year</option>
+                                            <option value="custom">Custom Range</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Priority</label>
+                                        <select class="form-select" name="priority">
+                                            <option value="normal">Normal</option>
+                                            <option value="high">High</option>
+                                            <option value="urgent">Urgent</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="customFields" style="display: none;">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Start Date</label>
+                                            <input type="date" class="form-control" name="startDate">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">End Date</label>
+                                            <input type="date" class="form-control" name="endDate">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Report Description</label>
+                                <textarea class="form-control" name="description" rows="3" placeholder="Describe what this report should contain..."></textarea>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="includeCharts" id="includeCharts" checked>
+                                <label class="form-check-label" for="includeCharts">
+                                    Include Charts and Visualizations
+                                </label>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="includeExecutiveSummary" id="includeExecutiveSummary" checked>
+                                <label class="form-check-label" for="includeExecutiveSummary">
+                                    Include Executive Summary
+                                </label>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Email Configuration -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5>Email Configuration</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" name="sendEmail" id="sendEmail" onchange="toggleEmailConfig()">
+                            <label class="form-check-label" for="sendEmail">
+                                Send Report via Email
+                            </label>
+                        </div>
+                        
+                        <div id="emailConfig" style="display: none;">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Recipient Email *</label>
+                                        <input type="email" class="form-control" name="recipientEmail" placeholder="recipient@company.com">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">CC Email</label>
+                                        <input type="email" class="form-control" name="ccEmail" placeholder="cc@company.com">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Subject Line</label>
+                                <input type="text" class="form-control" name="emailSubject" placeholder="Report Subject">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Email Message</label>
+                                <textarea class="form-control" name="emailMessage" rows="4" placeholder="Custom email message..."></textarea>
+                            </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" name="scheduleEmail" id="scheduleEmail" onchange="toggleScheduleConfig()">
+                                <label class="form-check-label" for="scheduleEmail">
+                                    Schedule Email Delivery
+                                </label>
+                            </div>
+                            
+                            <div id="scheduleConfig" style="display: none;">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Send Date</label>
+                                            <input type="date" class="form-control" name="sendDate">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Send Time</label>
+                                            <input type="time" class="form-control" name="sendTime">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" name="recurring" id="recurring" onchange="toggleRecurringConfig()">
+                                    <label class="form-check-label" for="recurring">
+                                        Recurring Report
+                                    </label>
+                                </div>
+                                
+                                <div id="recurringConfig" style="display: none;">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Frequency</label>
+                                                <select class="form-select" name="frequency">
+                                                    <option value="daily">Daily</option>
+                                                    <option value="weekly">Weekly</option>
+                                                    <option value="monthly">Monthly</option>
+                                                    <option value="quarterly">Quarterly</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label class="form-label">Day of Week/Month</label>
+                                                <input type="text" class="form-control" name="recurringDay" placeholder="e.g., Monday, 1st">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <!-- Report Templates -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Report Templates</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <button class="btn btn-outline-secondary w-100 mb-2" onclick="loadTemplate('executive')">
+                                <i class="fas fa-chart-pie"></i> Executive Summary
+                            </button>
+                            <button class="btn btn-outline-secondary w-100 mb-2" onclick="loadTemplate('project')">
+                                <i class="fas fa-tasks"></i> Project Status
+                            </button>
+                            <button class="btn btn-outline-secondary w-100 mb-2" onclick="loadTemplate('resource')">
+                                <i class="fas fa-users"></i> Resource Overview
+                            </button>
+                            <button class="btn btn-outline-secondary w-100 mb-2" onclick="loadTemplate('financial')">
+                                <i class="fas fa-dollar-sign"></i> Financial Summary
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Reports -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5>Recent Reports</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="recentReports">
+                            <p class="text-muted">No recent reports generated.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="card mt-3">
+                    <div class="card-header">
+                        <h5>Quick Actions</h5>
+                    </div>
+                    <div class="card-body">
+                        <button class="btn btn-outline-primary w-100 mb-2" onclick="exportAllReports()">
+                            <i class="fas fa-download"></i> Export All
+                        </button>
+                        <button class="btn btn-outline-warning w-100 mb-2" onclick="configureAutoReports()">
+                            <i class="fas fa-cog"></i> Auto Reports
+                        </button>
+                        <button class="btn btn-outline-info w-100 mb-2" onclick="viewReportHistory()">
+                            <i class="fas fa-history"></i> Report History
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Generated Reports Display -->
+        <div class="row mt-4">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Generated Reports</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="generatedReports">
+                            <p class="text-muted">No reports generated yet. Use the form above to create your first report.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Preview Modal -->
+    <div class="modal fade" id="reportPreviewModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Report Preview</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="reportPreviewContent">
+                        <!-- Content will be populated dynamically -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="downloadReport()">Download</button>
+                    <button type="button" class="btn btn-success" onclick="sendReportEmail()">Send Email</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let reports = [];
+        let currentReportId = 0;
+
+        function updateReportFields() {
+            const reportType = document.querySelector('select[name="reportType"]').value;
+            const customFields = document.getElementById('customFields');
+            
+            if (reportType === 'custom') {
+                customFields.style.display = 'block';
+            } else {
+                customFields.style.display = 'none';
+            }
+        }
+
+        function toggleEmailConfig() {
+            const emailConfig = document.getElementById('emailConfig');
+            const sendEmail = document.getElementById('sendEmail');
+            
+            if (sendEmail.checked) {
+                emailConfig.style.display = 'block';
+            } else {
+                emailConfig.style.display = 'none';
+            }
+        }
+
+        function toggleScheduleConfig() {
+            const scheduleConfig = document.getElementById('scheduleConfig');
+            const scheduleEmail = document.getElementById('scheduleEmail');
+            
+            if (scheduleEmail.checked) {
+                scheduleConfig.style.display = 'block';
+            } else {
+                scheduleConfig.style.display = 'none';
+            }
+        }
+
+        function toggleRecurringConfig() {
+            const recurringConfig = document.getElementById('recurringConfig');
+            const recurring = document.getElementById('recurring');
+            
+            if (recurring.checked) {
+                recurringConfig.style.display = 'block';
+            } else {
+                recurringConfig.style.display = 'none';
+            }
+        }
+
+        function generateReport() {
+            const form = document.getElementById('reportForm');
+            const formData = new FormData(form);
+            
+            const report = {
+                id: ++currentReportId,
+                type: formData.get('reportType'),
+                format: formData.get('format'),
+                dateRange: formData.get('dateRange'),
+                priority: formData.get('priority'),
+                description: formData.get('description'),
+                includeCharts: formData.get('includeCharts') === 'on',
+                includeExecutiveSummary: formData.get('includeExecutiveSummary') === 'on',
+                sendEmail: formData.get('sendEmail') === 'on',
+                recipientEmail: formData.get('recipientEmail'),
+                ccEmail: formData.get('ccEmail'),
+                emailSubject: formData.get('emailSubject'),
+                emailMessage: formData.get('emailMessage'),
+                scheduleEmail: formData.get('scheduleEmail') === 'on',
+                sendDate: formData.get('sendDate'),
+                sendTime: formData.get('sendTime'),
+                recurring: formData.get('recurring') === 'on',
+                frequency: formData.get('frequency'),
+                recurringDay: formData.get('recurringDay'),
+                createdAt: new Date().toISOString(),
+                status: 'generated'
+            };
+            
+            reports.push(report);
+            updateGeneratedReports();
+            updateRecentReports();
+            
+            showAlert('Report generated successfully!', 'success');
+            
+            // Show preview
+            showReportPreview(report);
+        }
+
+        function generatePortfolioReport() {
+            loadTemplate('portfolio');
+            document.querySelector('select[name="reportType"]').value = 'portfolio';
+            generateReport();
+        }
+
+        function generateResourceReport() {
+            loadTemplate('resource');
+            document.querySelector('select[name="reportType"]').value = 'resource_utilization';
+            generateReport();
+        }
+
+        function generateFinancialReport() {
+            loadTemplate('financial');
+            document.querySelector('select[name="reportType"]').value = 'budget_variance';
+            generateReport();
+        }
+
+        function generatePerformanceReport() {
+            loadTemplate('performance');
+            document.querySelector('select[name="reportType"]').value = 'performance_metrics';
+            generateReport();
+        }
+
+        function loadTemplate(templateType) {
+            const templates = {
+                'executive': {
+                    description: 'High-level executive summary with key metrics and insights',
+                    includeCharts: true,
+                    includeExecutiveSummary: true
+                },
+                'project': {
+                    description: 'Comprehensive project status and progress report',
+                    includeCharts: true,
+                    includeExecutiveSummary: false
+                },
+                'resource': {
+                    description: 'Resource utilization and capacity planning report',
+                    includeCharts: true,
+                    includeExecutiveSummary: true
+                },
+                'financial': {
+                    description: 'Financial performance and budget variance analysis',
+                    includeCharts: true,
+                    includeExecutiveSummary: true
+                },
+                'performance': {
+                    description: 'KPI and performance metrics dashboard',
+                    includeCharts: true,
+                    includeExecutiveSummary: true
+                }
+            };
+            
+            const template = templates[templateType];
+            if (template) {
+                document.querySelector('textarea[name="description"]').value = template.description;
+                document.getElementById('includeCharts').checked = template.includeCharts;
+                document.getElementById('includeExecutiveSummary').checked = template.includeExecutiveSummary;
+            }
+        }
+
+        function updateGeneratedReports() {
+            const container = document.getElementById('generatedReports');
+            
+            if (reports.length === 0) {
+                container.innerHTML = '<p class="text-muted">No reports generated yet. Use the form above to create your first report.</p>';
+                return;
+            }
+            
+            let html = '<div class="table-responsive"><table class="table table-hover">';
+            html += '<thead><tr><th>Report</th><th>Type</th><th>Format</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody>';
+            
+            reports.forEach(report => {
+                const statusClass = report.status === 'generated' ? 'bg-success' : 'bg-warning';
+                
+                html += `
+                    <tr>
+                        <td>
+                            <strong>${report.type.replace('_', ' ').toUpperCase()}</strong><br>
+                            <small class="text-muted">${report.description}</small>
+                        </td>
+                        <td><span class="badge bg-primary">${report.type}</span></td>
+                        <td><span class="badge bg-info">${report.format.toUpperCase()}</span></td>
+                        <td><span class="badge ${statusClass}">${report.status}</span></td>
+                        <td>${new Date(report.createdAt).toLocaleDateString()}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="showReportPreview(${report.id})">
+                                <i class="fas fa-eye"></i> Preview
+                            </button>
+                            <button class="btn btn-sm btn-outline-success me-1" onclick="downloadReport(${report.id})">
+                                <i class="fas fa-download"></i> Download
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning" onclick="sendReportEmail(${report.id})">
+                                <i class="fas fa-envelope"></i> Email
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+
+        function updateRecentReports() {
+            const container = document.getElementById('recentReports');
+            
+            if (reports.length === 0) {
+                container.innerHTML = '<p class="text-muted">No recent reports generated.</p>';
+                return;
+            }
+            
+            let html = '';
+            reports.slice(-5).reverse().forEach(report => {
+                html += `
+                    <div class="border-bottom pb-2 mb-2">
+                        <div class="d-flex justify-content-between">
+                            <strong>${report.type.replace('_', ' ').toUpperCase()}</strong>
+                            <small class="text-muted">${new Date(report.createdAt).toLocaleDateString()}</small>
+                        </div>
+                        <p class="mb-1 small">${report.description}</p>
+                        <div class="d-flex">
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="showReportPreview(${report.id})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-success" onclick="downloadReport(${report.id})">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+
+        function showReportPreview(reportId) {
+            const report = reports.find(r => r.id === reportId);
+            if (!report) return;
+            
+            const modal = document.getElementById('reportPreviewModal');
+            const content = document.getElementById('reportPreviewContent');
+            
+            content.innerHTML = `
+                <div class="row">
+                    <div class="col-md-8">
+                        <h4>${report.type.replace('_', ' ').toUpperCase()} Report</h4>
+                        <p class="text-muted">${report.description}</p>
+                        
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6>Report Details</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Type:</strong> ${report.type}</p>
+                                        <p><strong>Format:</strong> ${report.format.toUpperCase()}</p>
+                                        <p><strong>Date Range:</strong> ${report.dateRange}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Priority:</strong> ${report.priority}</p>
+                                        <p><strong>Charts:</strong> ${report.includeCharts ? 'Yes' : 'No'}</p>
+                                        <p><strong>Executive Summary:</strong> ${report.includeExecutiveSummary ? 'Yes' : 'No'}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card">
+                            <div class="card-header">
+                                <h6>Sample Charts</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="chart-container">
+                                    <canvas id="sampleChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6>Email Configuration</h6>
+                            </div>
+                            <div class="card-body">
+                                ${report.sendEmail ? `
+                                    <p><strong>Recipient:</strong> ${report.recipientEmail}</p>
+                                    <p><strong>Subject:</strong> ${report.emailSubject || 'Report Subject'}</p>
+                                    <p><strong>Message:</strong> ${report.emailMessage || 'Default message'}</p>
+                                ` : '<p class="text-muted">Email not configured</p>'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Initialize sample chart
+            setTimeout(() => {
+                const ctx = document.getElementById('sampleChart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+                        datasets: [{
+                            label: 'Sample Data',
+                            data: [12, 19, 3, 5],
+                            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            }, 100);
+            
+            bootstrap.Modal.getInstance(modal).show();
+        }
+
+        function downloadReport(reportId) {
+            const report = reports.find(r => r.id === reportId);
+            if (!report) return;
+            
+            // Simulate download
+            showAlert(`Downloading ${report.type} report in ${report.format.toUpperCase()} format...`, 'info');
+        }
+
+        function sendReportEmail(reportId) {
+            const report = reports.find(r => r.id === reportId);
+            if (!report) return;
+            
+            if (!report.sendEmail) {
+                showAlert('Please configure email settings first!', 'warning');
+                return;
+            }
+            
+            // Simulate email sending
+            showAlert(`Sending ${report.type} report to ${report.recipientEmail}...`, 'success');
+        }
+
+        function scheduleReport() {
+            showAlert('Report scheduling feature coming soon!', 'info');
+        }
+
+        function exportAllReports() {
+            showAlert('Exporting all reports...', 'info');
+        }
+
+        function configureAutoReports() {
+            showAlert('Auto-report configuration coming soon!', 'info');
+        }
+
+        function viewReportHistory() {
+            showAlert('Report history feature coming soon!', 'info');
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.top = '20px';
+            alertDiv.style.right = '20px';
+            alertDiv.style.zIndex = '9999';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.parentNode.removeChild(alertDiv);
+                }
+            }, 3000);
+        }
+
+        // Initialize
+        updateGeneratedReports();
+        updateRecentReports();
+    </script>
+</body>
+</html>

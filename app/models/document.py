@@ -42,7 +42,7 @@ class Document(Base):
     uploaded_by = Column(Integer, ForeignKey("users.id"), nullable=False)
     tenant_id = Column(Integer, ForeignKey("tenants.id"), nullable=False)
     tags = Column(JSON)  # JSON array of tags
-    metadata = Column(JSON)  # JSON metadata
+    document_metadata = Column(JSON)  # JSON metadata
     sensitivity_level = Column(String(20), default="public")  # public, internal, confidential, restricted
     embedding_status = Column(String(20), default="pending")  # pending, processing, completed, failed
     last_processed = Column(DateTime(timezone=True))
@@ -65,7 +65,7 @@ class DocumentChunk(Base):
     content = Column(Text, nullable=False)
     content_hash = Column(String(64), index=True)  # SHA-256 hash
     embedding_id = Column(String(100))  # Chroma embedding ID
-    metadata = Column(JSON)  # JSON metadata for the chunk
+    chunk_metadata = Column(JSON)  # JSON metadata for the chunk
     page_number = Column(Integer)  # if applicable
     line_start = Column(Integer)  # if applicable
     line_end = Column(Integer)  # if applicable

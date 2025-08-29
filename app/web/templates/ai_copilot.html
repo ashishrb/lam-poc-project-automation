@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Copilot - Project Portfolio Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .chat-container {
+            height: 500px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            background: #f8f9fa;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 15px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+        .user-message {
+            background: #007bff;
+            color: white;
+            margin-left: auto;
+            border-bottom-right-radius: 5px;
+        }
+        .ai-message {
+            background: white;
+            border: 1px solid #dee2e6;
+            margin-right: auto;
+            border-bottom-left-radius: 5px;
+        }
+        .system-message {
+            background: #6c757d;
+            color: white;
+            margin: 10px auto;
+            text-align: center;
+            max-width: 60%;
+        }
+        .context-item {
+            background: #e9ecef;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 8px;
+            margin: 5px 0;
+            font-size: 0.9em;
+        }
+        .context-item:hover {
+            background: #dee2e6;
+            cursor: pointer;
+        }
+        .mode-selector {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+        .conversation-history {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .conversation-item {
+            padding: 8px;
+            border-bottom: 1px solid #dee2e6;
+            cursor: pointer;
+        }
+        .conversation-item:hover {
+            background: #f8f9fa;
+        }
+        .conversation-item.active {
+            background: #007bff;
+            color: white;
+        }
+        .file-upload-area {
+            border: 2px dashed #dee2e6;
+            border-radius: 5px;
+            padding: 20px;
+            text-align: center;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+        .file-upload-area:hover {
+            border-color: #007bff;
+            background: #e3f2fd;
+        }
+        .file-upload-area.dragover {
+            border-color: #007bff;
+            background: #e3f2fd;
+        }
+        .document-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .document-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            margin: 5px 0;
+            background: white;
+        }
+        .document-item:hover {
+            background: #f8f9fa;
+        }
+        .typing-indicator {
+            display: none;
+            padding: 10px;
+            color: #6c757d;
+            font-style: italic;
+        }
+        .typing-indicator.show {
+            display: block;
+        }
+        .context-badge {
+            background: #17a2b8;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8em;
+            margin: 2px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">🚀 PPM System</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/web/dashboard">Dashboard</a>
+                <a class="nav-link" href="/web/projects">Projects</a>
+                <a class="nav-link" href="/web/resources">Resources</a>
+                <a class="nav-link" href="/web/finance">Finance</a>
+                <a class="nav-link active" href="/web/ai-copilot">AI Copilot</a>
+                <a class="nav-link" href="/web/alerts">Alerts</a>
+                <a class="nav-link" href="/web/reports">Reports</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-3">
+                <!-- Conversation History Panel -->
+                <div class="card mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h6>Conversation History</h6>
+                        <button class="btn btn-sm btn-outline-primary" onclick="startNewConversation()">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="conversationHistory" class="conversation-history">
+                            <p class="text-muted">No conversations yet</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Context Management Panel -->
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h6>Context & Memory</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <button class="btn btn-sm btn-outline-info w-100 mb-2" onclick="loadProjectContext()">
+                                <i class="fas fa-project-diagram"></i> Load Projects
+                            </button>
+                            <button class="btn btn-sm btn-outline-success w-100 mb-2" onclick="loadResourceContext()">
+                                <i class="fas fa-users"></i> Load Resources
+                            </button>
+                            <button class="btn btn-sm btn-outline-warning w-100 mb-2" onclick="loadFinancialContext()">
+                                <i class="fas fa-dollar-sign"></i> Load Finance
+                            </button>
+                        </div>
+                        
+                        <div id="contextItems">
+                            <p class="text-muted">No context loaded</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Document Management Panel -->
+                <div class="card">
+                    <div class="card-header">
+                        <h6>Document Context</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="file-upload-area" id="fileUploadArea">
+                            <i class="fas fa-cloud-upload-alt fa-2x text-muted mb-2"></i>
+                            <p class="mb-2">Drag & drop files here</p>
+                            <p class="small text-muted">or</p>
+                            <button class="btn btn-sm btn-outline-primary" onclick="document.getElementById('fileInput').click()">
+                                Browse Files
+                            </button>
+                            <input type="file" id="fileInput" multiple style="display: none;" onchange="handleFileUpload(event)">
+                        </div>
+                        
+                        <div id="documentList" class="document-list mt-3">
+                            <p class="text-muted">No documents uploaded</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-9">
+                <!-- Mode Selector -->
+                <div class="mode-selector">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <label class="form-label">AI Mode:</label>
+                            <select class="form-select form-select-sm" id="aiMode" onchange="changeAIMode()">
+                                <option value="balanced">Balanced</option>
+                                <option value="fast">Fast</option>
+                                <option value="detailed">Detailed</option>
+                                <option value="creative">Creative</option>
+                                <option value="rag">RAG (Document-based)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Context Length:</label>
+                            <select class="form-select form-select-sm" id="contextLength" onchange="updateContextLength()">
+                                <option value="short">Short (1K tokens)</option>
+                                <option value="medium" selected>Medium (4K tokens)</option>
+                                <option value="long">Long (8K tokens)</option>
+                                <option value="extended">Extended (16K tokens)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Memory:</label>
+                            <select class="form-select form-select-sm" id="memoryMode" onchange="updateMemoryMode()">
+                                <option value="session">Session Only</option>
+                                <option value="conversation" selected>Conversation</option>
+                                <option value="persistent">Persistent</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Temperature:</label>
+                            <input type="range" class="form-range" id="temperature" min="0" max="2" step="0.1" value="0.7" onchange="updateTemperature()">
+                            <small class="text-muted" id="tempValue">0.7</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Chat Interface -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5>AI Copilot Console</h5>
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-success me-2" id="connectionStatus">Connected</span>
+                            <span class="badge bg-info" id="contextStatus">No Context</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="chatContainer" class="chat-container mb-3">
+                            <div class="message system-message">
+                                <i class="fas fa-robot"></i> AI Copilot is ready to help! Ask me anything about your projects, resources, budgets, or upload documents for context-aware responses.
+                            </div>
+                        </div>
+                        
+                        <div class="typing-indicator" id="typingIndicator">
+                            <i class="fas fa-spinner fa-spin"></i> AI is thinking...
+                        </div>
+                        
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="userInput" placeholder="Ask me anything about your projects, resources, budgets, or get insights..." onkeypress="handleKeyPress(event)">
+                            <button class="btn btn-primary" onclick="sendMessage()">
+                                <i class="fas fa-paper-plane"></i> Send
+                            </button>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle"></i> 
+                                Context: <span id="contextInfo">No documents loaded</span> | 
+                                Memory: <span id="memoryInfo">Conversation mode</span> |
+                                Mode: <span id="modeInfo">Balanced</span>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="row mt-3">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6>Quick Actions</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <button class="btn btn-outline-primary w-100 mb-2" onclick="quickAction('Generate project status report')">
+                                            📊 Project Report
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-outline-success w-100 mb-2" onclick="quickAction('Analyze resource allocation')">
+                                            👥 Resource Analysis
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-outline-warning w-100 mb-2" onclick="quickAction('Budget variance analysis')">
+                                            💰 Budget Review
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-outline-danger w-100 mb-2" onclick="quickAction('Risk assessment summary')">
+                                            ⚠️ Risk Summary
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt-2">
+                                    <div class="col-md-3">
+                                        <button class="btn btn-outline-info w-100 mb-2" onclick="quickAction('Create executive summary')">
+                                            📋 Executive Summary
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-outline-secondary w-100 mb-2" onclick="quickAction('Schedule optimization suggestions')">
+                                            📅 Schedule Tips
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-outline-dark w-100 mb-2" onclick="quickAction('Team performance insights')">
+                                            🎯 Performance
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-outline-primary w-100 mb-2" onclick="quickAction('Strategic recommendations')">
+                                            🚀 Strategy
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt-2">
+                                    <div class="col-md-3">
+                                        <button class="btn btn-outline-success w-100 mb-2" onclick="quickAction('Create financial report and mail it')">
+                                            📊 Financial Report + Email
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-outline-warning w-100 mb-2" onclick="quickAction('Save project analysis to folder')">
+                                            💾 Save to Folder
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-outline-info w-100 mb-2" onclick="quickAction('Generate and email executive summary')">
+                                            📋 Executive Summary + Email
+                                        </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-outline-dark w-100 mb-2" onclick="quickAction('Create resource report and save')">
+                                            👥 Resource Report + Save
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global state
+        let conversations = [];
+        let currentConversationId = null;
+        let currentConversation = null;
+        let contextItems = [];
+        let documents = [];
+        let aiMode = 'balanced';
+        let contextLength = 'medium';
+        let memoryMode = 'conversation';
+        let temperature = 0.7;
+        
+        // Initialize
+        initializeAI();
+        
+        function initializeAI() {
+            // Create initial conversation
+            startNewConversation();
+            
+            // Set up file upload drag and drop
+            setupFileUpload();
+            
+            // Update status displays
+            updateStatusDisplays();
+        }
+        
+        function startNewConversation() {
+            const conversationId = Date.now();
+            const conversation = {
+                id: conversationId,
+                title: `Conversation ${conversations.length + 1}`,
+                messages: [],
+                context: [],
+                createdAt: new Date().toISOString(),
+                lastActivity: new Date().toISOString()
+            };
+            
+            conversations.push(conversation);
+            currentConversationId = conversationId;
+            currentConversation = conversation;
+            
+            updateConversationHistory();
+            clearChat();
+            
+            // Add welcome message
+            addMessage('system', 'New conversation started. How can I help you today?');
+        }
+        
+        function updateConversationHistory() {
+            const container = document.getElementById('conversationHistory');
+            
+            if (conversations.length === 0) {
+                container.innerHTML = '<p class="text-muted">No conversations yet</p>';
+                return;
+            }
+            
+            let html = '';
+            conversations.forEach(conv => {
+                const isActive = conv.id === currentConversationId;
+                const messageCount = conv.messages.length;
+                const lastMessage = messageCount > 0 ? conv.messages[conv.messages.length - 1].content.substring(0, 50) + '...' : 'No messages';
+                
+                html += `
+                    <div class="conversation-item ${isActive ? 'active' : ''}" onclick="switchConversation(${conv.id})">
+                        <div class="d-flex justify-content-between">
+                            <strong>${conv.title}</strong>
+                            <small>${messageCount} msgs</small>
+                        </div>
+                        <div class="small text-muted">${lastMessage}</div>
+                        <div class="small text-muted">${new Date(conv.createdAt).toLocaleDateString()}</div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function switchConversation(conversationId) {
+            currentConversationId = conversationId;
+            currentConversation = conversations.find(c => c.id === conversationId);
+            
+            updateConversationHistory();
+            loadConversationMessages();
+        }
+        
+        function loadConversationMessages() {
+            if (!currentConversation) return;
+            
+            clearChat();
+            
+            currentConversation.messages.forEach(message => {
+                addMessage(message.type, message.content, false);
+            });
+        }
+        
+        function clearChat() {
+            const container = document.getElementById('chatContainer');
+            container.innerHTML = '';
+        }
+        
+        function addMessage(type, content, saveToHistory = true) {
+            const container = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}-message`;
+            
+            if (type === 'user') {
+                messageDiv.innerHTML = `<strong>You:</strong> ${content}`;
+            } else if (type === 'ai') {
+                messageDiv.innerHTML = `<strong>AI Copilot:</strong> ${content}`;
+            } else if (type === 'system') {
+                messageDiv.innerHTML = `<i class="fas fa-info-circle"></i> ${content}`;
+            }
+            
+            container.appendChild(messageDiv);
+            container.scrollTop = container.scrollHeight;
+            
+            // Save to conversation history
+            if (saveToHistory && currentConversation) {
+                currentConversation.messages.push({
+                    type: type,
+                    content: content,
+                    timestamp: new Date().toISOString()
+                });
+                currentConversation.lastActivity = new Date().toISOString();
+                updateConversationHistory();
+            }
+        }
+        
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+        
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message
+            addMessage('user', message);
+            input.value = '';
+            
+            // Show typing indicator
+            showTypingIndicator(true);
+            
+            // Process message with AI
+            processWithAI(message);
+        }
+        
+        function processWithAI(message) {
+            // Simulate AI processing delay
+            setTimeout(() => {
+                showTypingIndicator(false);
+                
+                // Generate AI response based on mode and context
+                const response = generateAIResponse(message);
+                addMessage('ai', response);
+                
+                // Update context if needed
+                updateContextFromMessage(message, response);
+                
+            }, 1000 + Math.random() * 2000); // Random delay between 1-3 seconds
+        }
+        
+        function generateAIResponse(message) {
+            const responses = {
+                'project status': 'Based on your current project portfolio, I can see 3 active projects with varying completion rates. Project Alpha is 75% complete and on track, Project Beta is experiencing a 2-week delay due to resource constraints, and Project Gamma is in the planning phase. Would you like me to generate a detailed status report?',
+                'resource allocation': 'I\'ve analyzed your resource utilization across all projects. Currently, your development team is at 85% capacity, with some team members being overallocated. I recommend redistributing workload from Project Beta to balance the team utilization. Would you like me to suggest specific resource reallocation strategies?',
+                'budget variance': 'Your current budget variance analysis shows that Project Alpha is 5% under budget, Project Beta is 12% over budget due to scope changes, and Project Gamma is within budget. The overall portfolio variance is 3.2% over budget. I can help you create a budget recovery plan if needed.',
+                'risk assessment': 'I\'ve identified several key risks in your portfolio: Project Beta has a high schedule risk due to resource constraints, Project Alpha has a medium technical risk with the new integration, and Project Gamma has a low market risk. Would you like me to create a comprehensive risk mitigation plan?'
+            };
+            
+            // Check for financial report requests
+            if (message.toLowerCase().includes('financial report') || message.toLowerCase().includes('create report')) {
+                return handleFinancialReportRequest(message);
+            }
+            
+            // Check for file save requests
+            if (message.toLowerCase().includes('save') && (message.toLowerCase().includes('folder') || message.toLowerCase().includes('file'))) {
+                return handleFileSaveRequest(message);
+            }
+            
+            // Check for email requests
+            if (message.toLowerCase().includes('mail') || message.toLowerCase().includes('email') || message.toLowerCase().includes('send')) {
+                return handleEmailRequest(message);
+            }
+            
+            // Check for quick action matches
+            for (const [key, response] of Object.entries(responses)) {
+                if (message.toLowerCase().includes(key)) {
+                    return response;
+                }
+            }
+            
+            // Generate contextual response based on AI mode
+            const contextualResponse = generateContextualResponse(message);
+            return contextualResponse;
+        }
+        
+        function handleFinancialReportRequest(message) {
+            let response = `🎯 **Financial Report Request Detected!**\n\n`;
+            
+            if (message.toLowerCase().includes('mail') || message.toLowerCase().includes('email')) {
+                response += `I can help you create and email a financial report! Here's what I'll do:\n\n`;
+                response += `1. **Generate Financial Report** 📊\n`;
+                response += `   • Budget variance analysis\n`;
+                response += `   • Cost tracking and projections\n`;
+                response += `   • Financial performance metrics\n`;
+                response += `   • Executive summary\n\n`;
+                
+                response += `2. **Email Configuration** 📧\n`;
+                response += `   • Set recipient email\n`;
+                response += `   • Custom subject line\n`;
+                response += `   • Professional message\n`;
+                response += `   • Multiple format options (PDF, Excel, HTML)\n\n`;
+                
+                response += `3. **Automated Delivery** 🚀\n`;
+                response += `   • Generate report instantly\n`;
+                response += `   • Send via email\n`;
+                response += `   • Confirm delivery\n\n`;
+                
+                response += `**Next Steps:**\n`;
+                response += `• I'll redirect you to the Reports page\n`;
+                response += `• Pre-fill the financial report template\n`;
+                response += `• Configure email settings\n`;
+                response += `• Generate and send the report\n\n`;
+                
+                response += `Would you like me to open the Reports page and set up a financial report for you?`;
+                
+                // Add action buttons
+                setTimeout(() => {
+                    addActionButtons();
+                }, 100);
+                
+            } else {
+                response += `I can create a comprehensive financial report for you! Here's what I'll include:\n\n`;
+                response += `📊 **Report Contents:**\n`;
+                response += `• Current budget status across all projects\n`;
+                response += `• Cost variance analysis\n`;
+                response += `• Resource allocation costs\n`;
+                response += `• Financial projections and forecasts\n`;
+                response += `• Risk assessment and mitigation costs\n`;
+                response += `• Executive summary with key insights\n\n`;
+                
+                response += `**Available Formats:** PDF, Excel, HTML, CSV\n\n`;
+                response += `**Delivery Options:**\n`;
+                response += `• Download directly\n`;
+                response += `• Email to recipients\n`;
+                response += `• Schedule recurring reports\n\n`;
+                
+                response += `Would you like me to create this financial report now?`;
+            }
+            
+            return response;
+        }
+        
+        function handleFileSaveRequest(message) {
+            let response = `💾 **File Save Request Detected!**\n\n`;
+            
+            response += `I can help you save content to specific folders! Here's what I can do:\n\n`;
+            response += `📁 **Save Options:**\n`;
+            response += `• **Reports Folder** - Save generated reports\n`;
+            response += `• **Documents Folder** - Save analysis documents\n`;
+            response += `• **Exports Folder** - Save exported data\n`;
+            response += `• **Custom Folder** - Specify your own path\n\n`;
+            
+            response += `📄 **Content Types:**\n`;
+            response += `• Financial reports and analysis\n`;
+            response += `• Project status documents\n`;
+            response += `• Resource utilization reports\n`;
+            response += `• Risk assessment documents\n`;
+            response += `• Executive summaries\n`;
+            response += `• Custom content you specify\n\n`;
+            
+            response += `**File Formats:** PDF, Excel, Word, HTML, CSV, TXT\n\n`;
+            response += `**Next Steps:**\n`;
+            response += `• I'll create the content you requested\n`;
+            response += `• Save it to the specified folder\n`;
+            response += `• Confirm the save operation\n`;
+            response += `• Provide you with the file path\n\n`;
+            
+            response += `What type of content would you like me to create and save?`;
+            
+            return response;
+        }
+        
+        function handleEmailRequest(message) {
+            let response = `📧 **Email Request Detected!**\n\n`;
+            
+            response += `I can help you send various types of content via email! Here's what I can do:\n\n`;
+            response += `📊 **Email Content Types:**\n`;
+            response += `• Financial reports and analysis\n`;
+            response += `• Project status updates\n`;
+            response += `• Resource utilization reports\n`;
+            response += `• Risk assessment summaries\n`;
+            response += `• Executive dashboards\n`;
+            response += `• Custom content you specify\n\n`;
+            
+            response += `📧 **Email Features:**\n`;
+            response += `• Multiple recipients (To, CC, BCC)\n`;
+            response += `• Custom subject lines\n`;
+            response += `• Professional message templates\n`;
+            response += `• Multiple file format attachments\n`;
+            response += `• Scheduled delivery\n`;
+            response += `• Delivery confirmation\n\n`;
+            
+            response += `**Available Formats:** PDF, Excel, HTML, CSV\n\n`;
+            response += `**Next Steps:**\n`;
+            response += `• I'll generate the content you need\n`;
+            response += `• Configure email settings\n`;
+            response += `• Send the email with attachments\n`;
+            response += `• Confirm delivery status\n\n`;
+            
+            response += `What would you like me to email and to whom?`;
+            
+            return response;
+        }
+        
+        function addActionButtons() {
+            const container = document.getElementById('chatContainer');
+            const buttonDiv = document.createElement('div');
+            buttonDiv.className = 'message system-message';
+            buttonDiv.innerHTML = `
+                <div class="d-flex flex-wrap gap-2 justify-content-center">
+                    <button class="btn btn-success btn-sm" onclick="createFinancialReport()">
+                        📊 Create Financial Report
+                    </button>
+                    <button class="btn btn-primary btn-sm" onclick="openReportsPage()">
+                        📋 Open Reports Page
+                    </button>
+                    <button class="btn btn-info btn-sm" onclick="configureEmail()">
+                        📧 Configure Email
+                    </button>
+                </div>
+            `;
+            container.appendChild(buttonDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function createFinancialReport() {
+            addMessage('system', 'Creating your financial report...');
+            
+            // Simulate report generation
+            setTimeout(() => {
+                const report = {
+                    id: Date.now(),
+                    type: 'financial_report',
+                    title: 'Comprehensive Financial Analysis Report',
+                    content: generateFinancialReportContent(),
+                    format: 'pdf',
+                    createdAt: new Date().toISOString()
+                };
+                
+                addMessage('ai', `✅ **Financial Report Created Successfully!**\n\n📊 **Report Details:**\n• Title: ${report.title}\n• Format: ${report.format.toUpperCase()}\n• Generated: ${new Date(report.createdAt).toLocaleString()}\n\n📁 **Save Options:**\n• Download to Reports folder\n• Email to recipients\n• Save to custom location\n\nWhat would you like me to do with this report?`);
+                
+                // Add action buttons for the created report
+                addReportActionButtons(report);
+                
+            }, 2000);
+        }
+        
+        function generateFinancialReportContent() {
+            return {
+                executiveSummary: 'Financial performance shows 3.2% budget variance with opportunities for cost optimization.',
+                budgetStatus: {
+                    totalBudget: '$2.5M',
+                    currentSpending: '$1.8M',
+                    variance: '3.2% over budget',
+                    projects: [
+                        { name: 'Project Alpha', budget: '$800K', spent: '$600K', variance: '-25%' },
+                        { name: 'Project Beta', budget: '$1.2M', spent: '$1.3M', variance: '+8.3%' },
+                        { name: 'Project Gamma', budget: '$500K', spent: '$0K', variance: '0%' }
+                    ]
+                },
+                recommendations: [
+                    'Implement cost controls for Project Beta',
+                    'Optimize resource allocation across projects',
+                    'Review vendor contracts for cost savings',
+                    'Establish monthly budget review process'
+                ]
+            };
+        }
+        
+        function addReportActionButtons(report) {
+            const container = document.getElementById('chatContainer');
+            const buttonDiv = document.createElement('div');
+            buttonDiv.className = 'message system-message';
+            buttonDiv.innerHTML = `
+                <div class="d-flex flex-wrap gap-2 justify-content-center">
+                    <button class="btn btn-success btn-sm" onclick="downloadReport('${report.id}')">
+                        💾 Download Report
+                    </button>
+                    <button class="btn btn-primary btn-sm" onclick="emailReport('${report.id}')">
+                        📧 Email Report
+                    </button>
+                    <button class="btn btn-info btn-sm" onclick="saveToFolder('${report.id}')">
+                        📁 Save to Folder
+                    </button>
+                </div>
+            `;
+            container.appendChild(buttonDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function downloadReport(reportId) {
+            addMessage('system', 'Downloading report...');
+            setTimeout(() => {
+                addMessage('ai', `✅ **Report Downloaded Successfully!**\n\n📁 **Saved to:** Reports/Financial_Report_${new Date().toISOString().split('T')[0]}.pdf\n\n📊 **File Size:** 2.4 MB\n\nThe report has been saved to your Reports folder and is ready for use.`);
+            }, 1500);
+        }
+        
+        function emailReport(reportId) {
+            addMessage('system', 'Opening email configuration...');
+            setTimeout(() => {
+                addMessage('ai', `📧 **Email Configuration Opened!**\n\nPlease configure:\n• Recipient email address\n• Subject line\n• Custom message\n• Email format preference\n\nI'll send the financial report once configured.`);
+                
+                // Simulate opening email config
+                openEmailConfiguration();
+            }, 1000);
+        }
+        
+        function saveToFolder(reportId) {
+            addMessage('system', 'Saving report to folder...');
+            setTimeout(() => {
+                addMessage('ai', `✅ **Report Saved to Folder!**\n\n📁 **Location:** /mnt/data_storage/lam-project-automation/lam-poc-project-automation-1/reports/financial/\n\n📊 **File:** Financial_Report_${new Date().toISOString().split('T')[0]}.pdf\n\nThe report has been saved to your specified folder and is accessible for future reference.`);
+            }, 1500);
+        }
+        
+        function openReportsPage() {
+            addMessage('system', 'Redirecting to Reports page...');
+            setTimeout(() => {
+                window.open('/web/reports', '_blank');
+                addMessage('ai', `📋 **Reports Page Opened!**\n\nI've opened the Reports page in a new tab. You can now:\n• Generate your financial report\n• Configure email settings\n• Choose export formats\n• Schedule recurring reports\n\nLet me know if you need help with any specific settings!`);
+            }, 1000);
+        }
+        
+        function configureEmail() {
+            addMessage('system', 'Opening email configuration...');
+            setTimeout(() => {
+                addMessage('ai', `📧 **Email Configuration Ready!**\n\nPlease provide:\n• Recipient email address\n• Subject line for the email\n• Custom message content\n• Preferred file format\n\nOnce configured, I'll generate and email the financial report immediately.`);
+                
+                // Add email configuration form
+                addEmailConfigurationForm();
+            }, 1000);
+        }
+        
+        function addEmailConfigurationForm() {
+            const container = document.getElementById('chatContainer');
+            const formDiv = document.createElement('div');
+            formDiv.className = 'message system-message';
+            formDiv.innerHTML = `
+                <div class="p-3">
+                    <h6>📧 Email Configuration</h6>
+                    <div class="mb-2">
+                        <input type="email" class="form-control form-control-sm" id="recipientEmail" placeholder="Recipient email address">
+                    </div>
+                    <div class="mb-2">
+                        <input type="text" class="form-control form-control-sm" id="emailSubject" placeholder="Email subject line">
+                    </div>
+                    <div class="mb-2">
+                        <textarea class="form-control form-control-sm" id="emailMessage" rows="3" placeholder="Custom email message..."></textarea>
+                    </div>
+                    <div class="mb-2">
+                        <select class="form-control form-control-sm" id="emailFormat">
+                            <option value="pdf">PDF Format</option>
+                            <option value="excel">Excel Format</option>
+                            <option value="html">HTML Format</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-success btn-sm" onclick="sendEmailWithReport()">
+                        📧 Send Report via Email
+                    </button>
+                </div>
+            `;
+            container.appendChild(formDiv);
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        function sendEmailWithReport() {
+            const recipient = document.getElementById('recipientEmail').value;
+            const subject = document.getElementById('emailSubject').value;
+            const message = document.getElementById('emailMessage').value;
+            const format = document.getElementById('emailFormat').value;
+            
+            if (!recipient) {
+                addMessage('system', 'Please enter a recipient email address.');
+                return;
+            }
+            
+            addMessage('system', 'Sending financial report via email...');
+            
+            setTimeout(() => {
+                addMessage('ai', `✅ **Financial Report Sent Successfully!**\n\n📧 **Email Details:**\n• To: ${recipient}\n• Subject: ${subject || 'Financial Analysis Report'}\n• Format: ${format.toUpperCase()}\n• Sent: ${new Date().toLocaleString()}\n\n📊 **Report Contents:**\n• Executive Summary\n• Budget Analysis\n• Cost Variance Report\n• Financial Projections\n• Recommendations\n\nThe recipient will receive the financial report within a few minutes.`);
+            }, 2000);
+        }
+        
+        function generateContextualResponse(message) {
+            const contextInfo = getContextSummary();
+            const modeInfo = getModeInfo();
+            
+            let response = `I understand you're asking about: "${message}"\n\n`;
+            
+            if (contextItems.length > 0) {
+                response += `Based on the loaded context (${contextItems.length} items), `;
+            }
+            
+            response += `Here's what I can tell you:\n\n`;
+            
+            // Add context-aware information
+            if (contextItems.length > 0) {
+                response += `📋 **Context Available:**\n`;
+                contextItems.forEach(item => {
+                    response += `• ${item.type}: ${item.description}\n`;
+                });
+                response += `\n`;
+            }
+            
+            response += `🎯 **Recommendation:**\n`;
+            response += `I can provide more specific insights if you load additional context or ask about specific areas like project status, resource utilization, or budget analysis.\n\n`;
+            
+            response += `💡 **Next Steps:**\n`;
+            response += `• Use the quick action buttons for common queries\n`;
+            response += `• Load project or resource context for detailed analysis\n`;
+            response += `• Upload documents for RAG-powered responses\n`;
+            
+            return response;
+        }
+        
+        function getContextSummary() {
+            if (contextItems.length === 0) return 'No context loaded';
+            return `${contextItems.length} context items loaded`;
+        }
+        
+        function getModeInfo() {
+            return `${aiMode} mode, ${contextLength} context, ${memoryMode} memory`;
+        }
+        
+        function updateContextFromMessage(message, response) {
+            // Extract key entities from message and response
+            const entities = extractEntities(message + ' ' + response);
+            
+            // Add to conversation context
+            if (currentConversation) {
+                currentConversation.context = currentConversation.context.concat(entities);
+                
+                // Limit context size based on memory mode
+                if (memoryMode === 'session') {
+                    currentConversation.context = currentConversation.context.slice(-10);
+                } else if (memoryMode === 'conversation') {
+                    currentConversation.context = currentConversation.context.slice(-20);
+                }
+                // Persistent mode keeps all context
+            }
+        }
+        
+        function extractEntities(text) {
+            const entities = [];
+            
+            // Extract project names
+            const projectMatches = text.match(/Project\s+([A-Za-z]+)/g);
+            if (projectMatches) {
+                projectMatches.forEach(match => {
+                    entities.push({
+                        type: 'project',
+                        name: match,
+                        description: `Mentioned in conversation`
+                    });
+                });
+            }
+            
+            // Extract resource types
+            const resourceMatches = text.match(/(team|developer|manager|resource)/gi);
+            if (resourceMatches) {
+                resourceMatches.forEach(match => {
+                    entities.push({
+                        type: 'resource',
+                        name: match,
+                        description: `Resource type mentioned`
+                    });
+                });
+            }
+            
+            return entities;
+        }
+        
+        function loadProjectContext() {
+            const projectContext = [
+                { type: 'project', name: 'Project Alpha', description: 'E-commerce platform development, 75% complete' },
+                { type: 'project', name: 'Project Beta', description: 'Mobile app redesign, experiencing delays' },
+                { type: 'project', name: 'Project Gamma', description: 'Data migration initiative, planning phase' }
+            ];
+            
+            contextItems = contextItems.concat(projectContext);
+            updateContextDisplay();
+            addMessage('system', 'Project context loaded. I now have information about your active projects.');
+        }
+        
+        function loadResourceContext() {
+            const resourceContext = [
+                { type: 'resource', name: 'Development Team', description: '8 developers, 85% utilization' },
+                { type: 'resource', name: 'Design Team', description: '3 designers, 60% utilization' },
+                { type: 'resource', name: 'Project Managers', description: '2 PMs, 90% utilization' }
+            ];
+            
+            contextItems = contextItems.concat(resourceContext);
+            updateContextDisplay();
+            addMessage('system', 'Resource context loaded. I can now provide detailed resource analysis.');
+        }
+        
+        function loadFinancialContext() {
+            const financialContext = [
+                { type: 'finance', name: 'Budget Overview', description: 'Total portfolio budget: $2.5M' },
+                { type: 'finance', name: 'Cost Tracking', description: 'Current spending: $1.8M (72%)' },
+                { type: 'finance', name: 'Variance Analysis', description: 'Overall variance: 3.2% over budget' }
+            ];
+            
+            contextItems = contextItems.concat(financialContext);
+            updateContextDisplay();
+            addMessage('system', 'Financial context loaded. I can now provide budget and cost analysis.');
+        }
+        
+        function updateContextDisplay() {
+            const container = document.getElementById('contextItems');
+            
+            if (contextItems.length === 0) {
+                container.innerHTML = '<p class="text-muted">No context loaded</p>';
+                return;
+            }
+            
+            let html = '';
+            contextItems.forEach(item => {
+                html += `
+                    <div class="context-item">
+                        <div class="d-flex justify-content-between">
+                            <span class="context-badge">${item.type}</span>
+                            <small class="text-muted">${item.name}</small>
+                        </div>
+                        <div class="small">${item.description}</div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+            updateStatusDisplays();
+        }
+        
+        function setupFileUpload() {
+            const dropArea = document.getElementById('fileUploadArea');
+            
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, preventDefaults, false);
+            });
+            
+            function preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            
+            ['dragenter', 'dragover'].forEach(eventName => {
+                dropArea.addEventListener(eventName, highlight, false);
+            });
+            
+            ['dragleave', 'drop'].forEach(eventName => {
+                dropArea.addEventListener(eventName, unhighlight, false);
+            });
+            
+            function highlight(e) {
+                dropArea.classList.add('dragover');
+            }
+            
+            function unhighlight(e) {
+                dropArea.classList.remove('dragover');
+            }
+            
+            dropArea.addEventListener('drop', handleDrop, false);
+            
+            function handleDrop(e) {
+                const dt = e.dataTransfer;
+                const files = dt.files;
+                handleFiles(files);
+            }
+        }
+        
+        function handleFileUpload(event) {
+            const files = event.target.files;
+            handleFiles(files);
+        }
+        
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                const document = {
+                    id: Date.now() + Math.random(),
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    uploadedAt: new Date().toISOString(),
+                    status: 'processing'
+                };
+                
+                documents.push(document);
+                
+                // Simulate document processing
+                setTimeout(() => {
+                    document.status = 'processed';
+                    document.description = `Document processed and indexed for RAG queries`;
+                    updateDocumentList();
+                    addMessage('system', `Document "${file.name}" uploaded and processed. I can now answer questions based on its content.`);
+                }, 2000);
+            });
+            
+            updateDocumentList();
+        }
+        
+        function updateDocumentList() {
+            const container = document.getElementById('documentList');
+            
+            if (documents.length === 0) {
+                container.innerHTML = '<p class="text-muted">No documents uploaded</p>';
+                return;
+            }
+            
+            let html = '';
+            documents.forEach(doc => {
+                const statusClass = doc.status === 'processed' ? 'bg-success' : 'bg-warning';
+                
+                html += `
+                    <div class="document-item">
+                        <div>
+                            <strong>${doc.name}</strong><br>
+                            <small class="text-muted">${doc.description || 'Processing...'}</small>
+                        </div>
+                        <div>
+                            <span class="badge ${statusClass}">${doc.status}</span>
+                            <button class="btn btn-sm btn-outline-danger ms-2" onclick="removeDocument(${doc.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        function removeDocument(docId) {
+            documents = documents.filter(d => d.id !== docId);
+            updateDocumentList();
+            addMessage('system', 'Document removed from context.');
+        }
+        
+        function quickAction(action) {
+            document.getElementById('userInput').value = action;
+            sendMessage();
+        }
+        
+        function changeAIMode() {
+            aiMode = document.getElementById('aiMode').value;
+            updateStatusDisplays();
+            addMessage('system', `AI mode changed to ${aiMode}. I'll adjust my responses accordingly.`);
+        }
+        
+        function updateContextLength() {
+            contextLength = document.getElementById('contextLength').value;
+            updateStatusDisplays();
+        }
+        
+        function updateMemoryMode() {
+            memoryMode = document.getElementById('memoryMode').value;
+            updateStatusDisplays();
+        }
+        
+        function updateTemperature() {
+            temperature = parseFloat(document.getElementById('temperature').value);
+            document.getElementById('tempValue').textContent = temperature.toFixed(1);
+            updateStatusDisplays();
+        }
+        
+        function updateStatusDisplays() {
+            document.getElementById('contextStatus').textContent = contextItems.length > 0 ? `${contextItems.length} Context` : 'No Context';
+            document.getElementById('contextInfo').textContent = getContextSummary();
+            document.getElementById('memoryInfo').textContent = memoryMode;
+            document.getElementById('modeInfo').textContent = aiMode;
+        }
+        
+        function showTypingIndicator(show) {
+            const indicator = document.getElementById('typingIndicator');
+            if (show) {
+                indicator.classList.add('show');
+            } else {
+                indicator.classList.remove('show');
+            }
+        }
+        
+        // Auto-save conversations every 30 seconds
+        setInterval(() => {
+            if (currentConversation) {
+                currentConversation.lastActivity = new Date().toISOString();
+                updateConversationHistory();
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

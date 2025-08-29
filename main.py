@@ -19,11 +19,17 @@ async def lifespan(app: FastAPI):
     # Startup
     print("🚀 Starting Project Portfolio Management System...")
     
-    # Create database tables
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # Try to initialize database, but continue if it fails
+    try:
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        print("✅ Database initialized")
+        app.state.demo_mode = False
+    except Exception as e:
+        print(f"⚠️  Database connection failed: {e}")
+        print("🔄 Running in demo mode without database")
+        app.state.demo_mode = True
     
-    print("✅ Database initialized")
     print("✅ System ready")
     
     yield
@@ -62,12 +68,18 @@ app.mount("/static", StaticFiles(directory="web/static"), name="static")
 app.include_router(api_router, prefix="/api/v1")
 
 # Include web routes
-app.include_router(web_router)
+app.include_router(web_router, prefix="/web")
 
 # Health check endpoint
 @app.get("/health")
 async def health_check():
-    return {"status": "healthy", "service": "Project Portfolio Management System"}
+    demo_mode = getattr(app.state, "demo_mode", False)
+    return {
+        "status": "healthy", 
+        "service": "Project Portfolio Management System",
+        "demo_mode": demo_mode,
+        "database": "connected" if not demo_mode else "disconnected"
+    }
 
 # Root endpoint
 @app.get("/", response_class=HTMLResponse)
