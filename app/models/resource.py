@@ -135,7 +135,7 @@ class Timesheet(Base):
     
     # Relationships
     resource = relationship("Resource", back_populates="timesheets")
-    user = relationship("User", back_populates="timesheets")
+    user = relationship("User", foreign_keys=[user_id], back_populates="timesheets")
     task = relationship("Task", back_populates="timesheets")
     project = relationship("Project")
     approver = relationship("User", foreign_keys=[approved_by])

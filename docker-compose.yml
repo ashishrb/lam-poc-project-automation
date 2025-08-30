@@ -5,16 +5,16 @@ services:
   db:
     image: postgres:15-alpine
     environment:
-      POSTGRES_DB: ppm
-      POSTGRES_USER: ppm_user
-      POSTGRES_PASSWORD: ppm_pass
+      POSTGRES_DB: app
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app_password
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ppm_user -d ppm"]
+      test: ["CMD-SHELL", "pg_isready -U app -d app"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -55,7 +55,7 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      - DATABASE_URL=postgresql+psycopg://ppm_user:ppm_pass@db:5432/ppm
+      - DATABASE_URL=postgresql+psycopg://app:app_password@db:5432/app
       - REDIS_URL=redis://redis:6379/0
       - CHROMA_HOST=chroma
       - CHROMA_PORT=8001
@@ -92,7 +92,7 @@ services:
       dockerfile: Dockerfile
     command: ["python", "-m", "rq", "worker", "--url", "redis://redis:6379/0"]
     environment:
-      - DATABASE_URL=postgresql+psycopg://ppm_user:ppm_pass@db:5432/ppm
+      - DATABASE_URL=postgresql+psycopg://app:app_password@db:5432/app
       - REDIS_URL=redis://redis:6379/0
       - CHROMA_HOST=chroma
       - CHROMA_PORT=8001

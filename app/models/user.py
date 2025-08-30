@@ -5,6 +5,8 @@ from app.core.database import Base
 import enum
 
 
+
+
 class UserRole(str, enum.Enum):
     ADMIN = "admin"
     EXECUTIVE = "executive"
@@ -69,7 +71,7 @@ class User(Base):
     tenant = relationship("Tenant", back_populates="users")
     projects = relationship("Project", back_populates="project_manager")
     tasks = relationship("Task", back_populates="assigned_to")
-    timesheets = relationship("Timesheet", back_populates="user", foreign_keys="Timesheet.user_id")
-    evaluations = relationship("Evaluation", back_populates="evaluator", foreign_keys="Evaluation.evaluator_id")
-    alerts = relationship("Alert", back_populates="assignee")
+    timesheets = relationship("Timesheet", foreign_keys="[Timesheet.user_id]", back_populates="user")
+    evaluations = relationship("Evaluation", foreign_keys="[Evaluation.evaluator_id]", back_populates="evaluator")
+    alerts = relationship("Alert", foreign_keys="[Alert.assignee_id]", back_populates="assignee")
     audit_logs = relationship("AuditLog", back_populates="user")

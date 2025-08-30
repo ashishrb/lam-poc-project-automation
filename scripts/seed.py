@@ -9,7 +9,8 @@ import json
 import os
 import random
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
+from datetime import timezone
 from typing import Dict, List, Any, Optional
 from pathlib import Path
 
@@ -30,6 +31,7 @@ from app.models.document import Document, DocumentType
 from app.models.audit import AuditLog, AuditAction
 from app.models.finance import Budget, Actual
 from app.core.config import settings
+from app.core.security import get_password_hash
 
 # Set deterministic randomness for repeatable data
 random.seed(42)
@@ -111,7 +113,6 @@ class PPMSeedData:
         # Create new tenant
         tenant = Tenant(
             name="Demo Organization",
-            description="Demo organization for AI-First PPM system",
             domain="demo.local",
             settings=json.dumps({
                 "timezone": IST_TIMEZONE,
@@ -132,9 +133,9 @@ class PPMSeedData:
         print("👥 Seeding roles...")
         
         roles_data = [
-            {"name": "ADMIN", "description": "System Administrator", "permissions": {"*": ["*"]}},
-            {"name": "MANAGER", "description": "Project Manager", "permissions": {"projects": ["*"], "tasks": ["*"], "resources": ["read"]}},
-            {"name": "DEVELOPER", "description": "Team Developer", "permissions": {"tasks": ["read", "update"], "timesheets": ["*"]}}
+            {"name": "admin", "description": "System Administrator", "permissions": {"*": ["*"]}},
+            {"name": "pm", "description": "Project Manager", "permissions": {"projects": ["*"], "tasks": ["*"], "resources": ["read"]}},
+            {"name": "team_member", "description": "Team Developer", "permissions": {"tasks": ["read", "update"], "timesheets": ["*"]}}
         ]
         
         for role_data in roles_data:
@@ -160,49 +161,69 @@ class PPMSeedData:
         
         # Get roles
         admin_role = await self.session.execute(
-            select(Role).where(Role.name == "ADMIN")
+            select(Role).where(Role.name == "admin")
         )
         admin_role = admin_role.scalar_one()
         
         manager_role = await self.session.execute(
-            select(Role).where(Role.name == "MANAGER")
+            select(Role).where(Role.name == "pm")
         )
         manager_role = manager_role.scalar_one()
         
         dev_role = await self.session.execute(
-            select(Role).where(Role.name == "DEVELOPER")
+            select(Role).where(Role.name == "team_member")
         )
         dev_role = dev_role.scalar_one()
         
-        # Create admin user
-        admin_user = User(
-            username="admin",
-            email="admin@demo.local",
-            full_name="System Administrator",
-            role=Role.ADMIN,
-            tenant_id=self.tenant_id,
-            is_active=True,
-            created_at=datetime.now()
+        # Check if admin user exists
+        existing_admin_result = await self.session.execute(
+            select(User).where(User.username == "admin")
         )
-        admin_user.set_password("admin123")
-        self.session.add(admin_user)
-        await self.session.flush()
-        self.users["admin"] = admin_user.id
+        existing_admin = existing_admin_result.scalar_one_or_none()
+        if existing_admin:
+            admin_user = existing_admin
+            self.users["admin"] = admin_user.id
+            print("✅ Admin user already exists")
+        else:
+            # Create admin user
+            admin_user = User(
+                username="admin",
+                email="admin@demo.local",
+                full_name="System Administrator",
+                role_id=admin_role.id,
+                tenant_id=self.tenant_id,
+                is_active=True
+            )
+            admin_user.hashed_password = get_password_hash("admin123")
+            self.session.add(admin_user)
+            await self.session.flush()
+            self.users["admin"] = admin_user.id
+            print("✅ Created admin user")
         
-        # Create manager user
-        manager_user = User(
-            username="manager",
-            email="manager@demo.local",
-            full_name="Sarah Johnson",
-            role=Role.MANAGER,
-            tenant_id=self.tenant_id,
-            is_active=True,
-            created_at=datetime.now()
+        # Check if manager user exists
+        existing_manager_result = await self.session.execute(
+            select(User).where(User.username == "manager")
         )
-        manager_user.set_password("manager123")
-        self.session.add(manager_user)
-        await self.session.flush()
-        self.users["manager"] = manager_user.id
+        existing_manager = existing_manager_result.scalar_one_or_none()
+        if existing_manager:
+            manager_user = existing_manager
+            self.users["manager"] = manager_user.id
+            print("✅ Manager user already exists")
+        else:
+            # Create manager user
+            manager_user = User(
+                username="manager",
+                email="manager@demo.local",
+                full_name="Sarah Johnson",
+                role_id=manager_role.id,
+                tenant_id=self.tenant_id,
+                is_active=True
+            )
+            manager_user.hashed_password = get_password_hash("manager123")
+            self.session.add(manager_user)
+            await self.session.flush()
+            self.users["manager"] = manager_user.id
+            print("✅ Created manager user")
         
         # Create 20 developer users
         dev_names = [
@@ -216,19 +237,27 @@ class PPMSeedData:
             username = f"dev{i+1}"
             email = f"{username}@demo.local"
             
-            dev_user = User(
-                username=username,
-                email=email,
-                full_name=name,
-                role=Role.DEVELOPER,
-                tenant_id=self.tenant_id,
-                is_active=True,
-                created_at=datetime.now()
+            # Check if developer user exists
+            existing_dev_result = await self.session.execute(
+                select(User).where(User.username == username)
             )
-            dev_user.set_password("dev123")
-            self.session.add(dev_user)
-            await self.session.flush()
-            self.users[username] = dev_user.id
+            existing_dev = existing_dev_result.scalar_one_or_none()
+            if existing_dev:
+                dev_user = existing_dev
+                self.users[username] = dev_user.id
+            else:
+                dev_user = User(
+                    username=username,
+                    email=email,
+                    full_name=name,
+                    role_id=dev_role.id,
+                    tenant_id=self.tenant_id,
+                    is_active=True
+                )
+                dev_user.hashed_password = get_password_hash("dev123")
+                self.session.add(dev_user)
+                await self.session.flush()
+                self.users[username] = dev_user.id
         
         await self.session.commit()
         print(f"✅ Created {len(self.users)} users")
@@ -247,7 +276,12 @@ class PPMSeedData:
             result = await self.session.execute(
                 select(Skill).where(Skill.name == skill_name)
             )
-            if not result.scalar_one_or_none():
+            existing_skill = result.scalar_one_or_none()
+            if existing_skill:
+                # Skill already exists, add to dictionary
+                self.skills[skill_name] = existing_skill.id
+            else:
+                # Create new skill
                 skill = Skill(
                     name=skill_name,
                     description=f"Expertise in {skill_name}",
@@ -259,7 +293,7 @@ class PPMSeedData:
                 self.skills[skill_name] = skill.id
         
         await self.session.commit()
-        print(f"✅ Created {len(self.skills)} skills")
+        print(f"✅ Skills ready: {len(self.skills)} skills")
     
     async def _seed_resources(self):
         """Seed resource profiles"""
@@ -274,21 +308,40 @@ class PPMSeedData:
         # Create resource profiles for developers
         for username, user_id in self.users.items():
             if username.startswith("dev"):
-                # Assign random skills
-                user_skills = random.sample(list(self.skills.keys()), random.randint(2, 5))
-                
-                resource = Resource(
-                    user_id=user_id,
-                    resource_type="employee",
-                    status="active",
-                    hourly_rate=random.uniform(50.0, 120.0),
-                    capacity_hours_per_week=40.0,
-                    skills=json.dumps(user_skills),
-                    tenant_id=self.tenant_id
+                # Check if resource already exists
+                existing_resource_result = await self.session.execute(
+                    select(Resource).where(Resource.email == f"{username}@demo.local")
                 )
-                self.session.add(resource)
-                await self.session.flush()
-                self.resources[username] = resource.id
+                existing_resource = existing_resource_result.scalar_one_or_none()
+                
+                if existing_resource:
+                    # Resource already exists, add to dictionary
+                    self.resources[username] = existing_resource.id
+                    print(f"✅ Resource for {username} already exists")
+                else:
+                    # Assign random skills
+                    user_skills = random.sample(list(self.skills.keys()), random.randint(2, 5))
+                    
+                    # Get user info for resource creation
+                    user_result = await self.session.execute(
+                        select(User).where(User.id == user_id)
+                    )
+                    user = user_result.scalar_one()
+                    
+                    resource = Resource(
+                        name=user.full_name,
+                        email=user.email,
+                        resource_type="employee",
+                        status="active",
+                        hourly_rate=random.uniform(50.0, 120.0),
+                        capacity_hours_per_week=40.0,
+                        skills=json.dumps(user_skills),
+                        tenant_id=self.tenant_id
+                    )
+                    self.session.add(resource)
+                    await self.session.flush()
+                    self.resources[username] = resource.id
+                    print(f"✅ Created resource for {username}")
         
         await self.session.commit()
         print(f"✅ Created {len(self.resources)} resource profiles")
@@ -305,8 +358,7 @@ class PPMSeedData:
                 "phase": ProjectPhase.EXECUTION,
                 "start_date": datetime.now() - timedelta(days=30),
                 "planned_end_date": datetime.now() + timedelta(days=90),
-                "ai_autopublish": True,
-                "ai_guardrails": True
+                "ai_autopublish": True
             },
             {
                 "name": "BETA",
@@ -315,8 +367,7 @@ class PPMSeedData:
                 "phase": ProjectPhase.PLANNING,
                 "start_date": datetime.now() + timedelta(days=15),
                 "planned_end_date": datetime.now() + timedelta(days=120),
-                "ai_autopublish": False,
-                "ai_guardrails": True
+                "ai_autopublish": False
             }
         ]
         
@@ -366,7 +417,7 @@ class PPMSeedData:
                 **task_data,
                 project_id=self.projects["ALPHA"],
                 status=TaskStatus.IN_PROGRESS if i < 3 else TaskStatus.TODO,
-                assignee_id=random.choice(list(self.users.values()) if i < 3 else [None]),
+                assigned_to_id=random.choice(list(self.users.values()) if i < 3 else [None]),
                 created_at=datetime.now()
             )
             self.session.add(task)
@@ -388,9 +439,9 @@ class PPMSeedData:
         # Add dependencies (no cycles)
         if len(all_tasks) >= 4:
             # ALPHA: Setup -> Database -> API -> Frontend
-            all_tasks[1].dependencies = [all_tasks[0].id]  # Database depends on Setup
-            all_tasks[2].dependencies = [all_tasks[1].id]  # API depends on Database
-            all_tasks[3].dependencies = [all_tasks[2].id]  # Frontend depends on API
+            all_tasks[1].dependencies = json.dumps([all_tasks[0].id])  # Database depends on Setup
+            all_tasks[2].dependencies = json.dumps([all_tasks[1].id])  # API depends on Database
+            all_tasks[3].dependencies = json.dumps([all_tasks[2].id])  # Frontend depends on API
         
         await self.session.commit()
         print(f"✅ Created {len(all_tasks)} tasks")
@@ -404,21 +455,22 @@ class PPMSeedData:
                 "name": "Daily Updates",
                 "frequency": UpdateFrequency.DAILY,
                 "project_id": self.projects["ALPHA"],
-                "is_active": True
+                "is_active": True,
+                "reminder_time": time(9, 0, 0)
             },
             {
                 "name": "Weekly Updates",
                 "frequency": UpdateFrequency.WEEKLY,
                 "project_id": self.projects["BETA"],
-                "is_active": True
+                "is_active": True,
+                "reminder_time": time(9, 0, 0)
             }
         ]
         
         for policy_data in policies:
             policy = StatusUpdatePolicy(
                 **policy_data,
-                tenant_id=self.tenant_id,
-                created_by=self.users["manager"]
+                created_by_user_id=self.users["manager"]
             )
             self.session.add(policy)
         
@@ -430,23 +482,30 @@ class PPMSeedData:
         print("📊 Seeding status updates...")
         
         # Get tasks for updates
-        result = await self.session.execute(select(Task).where(Task.assignee_id.isnot(None)))
+        result = await self.session.execute(select(Task).where(Task.assigned_to_id.isnot(None)))
         assigned_tasks = result.scalars().all()
         
         for task in assigned_tasks:
             # Create recent status updates
             for days_ago in [0, 1, 3, 7]:
-                update_date = datetime.now() - timedelta(days=days_ago)
+                update_date = datetime.now(timezone.utc) - timedelta(days=days_ago)
                 if update_date >= task.created_at:
-                    status_update = StatusUpdate(
-                        task_id=task.id,
-                        user_id=task.assignee_id,
-                        status=task.status,
-                        progress=random.randint(0, 100),
-                        description=f"Status update for {task.name}",
-                        created_at=update_date
+                    # Get the policy for this project
+                    policy_result = await self.session.execute(
+                        select(StatusUpdatePolicy).where(StatusUpdatePolicy.project_id == task.project_id)
                     )
-                    self.session.add(status_update)
+                    policy = policy_result.scalar_one_or_none()
+                    
+                    if policy:
+                        status_update = StatusUpdate(
+                            policy_id=policy.id,
+                            user_id=task.assigned_to_id,
+                            project_id=task.project_id,
+                            progress_summary=f"Status update for {task.name}",
+                            status="submitted",
+                            submitted_at=update_date
+                                                )
+                        self.session.add(status_update)
         
         await self.session.commit()
         print("✅ Status updates created")
@@ -457,17 +516,19 @@ class PPMSeedData:
         
         documents = [
             {
-                "name": "Project Charter - ALPHA",
+                "title": "Project Charter - ALPHA",
                 "description": "Project charter document for ALPHA project",
-                "document_type": DocumentType.PDF,
+                "document_type": DocumentType.REQUIREMENTS,
                 "file_path": "documents/alpha_charter.pdf",
+                "file_name": "alpha_charter.pdf",
                 "project_id": self.projects["ALPHA"]
             },
             {
-                "name": "Technical Requirements - BETA",
+                "title": "Technical Requirements - BETA",
                 "description": "Technical requirements document for BETA project",
-                "document_type": DocumentType.MARKDOWN,
+                "document_type": DocumentType.REQUIREMENTS,
                 "file_path": "documents/beta_requirements.md",
+                "file_name": "beta_requirements.md",
                 "project_id": self.projects["BETA"]
             }
         ]
@@ -476,8 +537,7 @@ class PPMSeedData:
             document = Document(
                 **doc_data,
                 uploaded_by=self.users["manager"],
-                tenant_id=self.tenant_id,
-                created_at=datetime.now()
+                tenant_id=self.tenant_id
             )
             self.session.add(document)
         
@@ -495,20 +555,20 @@ class PPMSeedData:
         for task in tasks:
             draft = AIDraft(
                 draft_type=DraftType.TASK,
-                content=json.dumps({
+                payload=json.dumps({
                     "name": f"AI-Generated {task.name}",
                     "description": f"AI-generated description for {task.name}",
                     "estimated_hours": task.estimated_hours,
                     "priority": task.priority.value
                 }),
-                metadata=json.dumps({
+                rationale=json.dumps({
                     "project_id": task.project_id,
                     "source": "ai_autoplan",
                     "confidence": random.uniform(0.7, 0.95)
                 }),
-                status=DraftStatus.PENDING,
-                created_by=self.users["manager"],
-                tenant_id=self.tenant_id
+                status=DraftStatus.DRAFT,
+                created_by_user_id=self.users["manager"],
+                project_id=task.project_id
             )
             self.session.add(draft)
         
@@ -521,7 +581,7 @@ class PPMSeedData:
         
         # Create audit logs for various actions
         actions = [AuditAction.CREATE, AuditAction.UPDATE, AuditAction.DELETE]
-        entities = ["User", "Project", "Task", "Document"]
+        entities = ["user", "project", "task", "document"]
         
         for _ in range(20):
             audit_log = AuditLog(
@@ -529,9 +589,8 @@ class PPMSeedData:
                 entity_type=random.choice(entities),
                 entity_id=random.randint(1, 100),
                 user_id=random.choice(list(self.users.values())),
-                details=f"Audit log entry for {random.choice(actions).value} action",
-                tenant_id=self.tenant_id,
-                created_at=datetime.now() - timedelta(days=random.randint(0, 30))
+                audit_metadata={"description": f"Audit log entry for {random.choice(actions).value} action"},
+                tenant_id=self.tenant_id
             )
             self.session.add(audit_log)
         
@@ -547,6 +606,7 @@ class PPMSeedData:
             budget = Budget(
                 name=f"{project_name} Budget",
                 project_id=project_id,
+                budget_type="labor",
                 total_amount=random.uniform(50000.0, 200000.0),
                 currency="USD",
                 fiscal_year=2024,
