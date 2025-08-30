@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Text, Enum, Float, Date
+from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey, Text, Enum, Float, Date, JSON
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
@@ -53,6 +53,11 @@ class Project(Base):
     tags = Column(Text)  # JSON tags
     health_score = Column(Float, default=0.0)  # 0-100
     risk_level = Column(String(20), default="low")  # low, medium, high
+    
+    # AI-First Mode Flags
+    ai_autopublish = Column(Boolean, default=False)  # Auto-publish AI-generated tasks
+    allow_dev_task_create = Column(Boolean, default=False)  # Allow developers to create tasks
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
@@ -67,6 +72,7 @@ class Project(Base):
     changes = relationship("Change", back_populates="project")
     stakeholders = relationship("Stakeholder", back_populates="project")
     documents = relationship("Document", back_populates="project")
+    ai_drafts = relationship("AIDraft", back_populates="project")
 
 
 class Task(Base):
@@ -87,6 +93,12 @@ class Task(Base):
     completed_date = Column(Date)
     dependencies = Column(Text)  # JSON dependency IDs
     tags = Column(Text)  # JSON tags
+    
+    # AI-First Mode Fields
+    confidence_score = Column(Float, default=0.0)  # AI confidence in this task
+    reasoning = Column(JSON)  # AI reasoning for task creation/assignment
+    source = Column(String(20), default="ai")  # 'ai' or 'human'
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     

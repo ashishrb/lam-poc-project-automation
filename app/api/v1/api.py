@@ -10,7 +10,8 @@ from .endpoints import (
     alerts,
     stakeholders,
     reports,
-    ai_copilot
+    ai_copilot,
+    ai_first
 )
 
 api_router = APIRouter()
@@ -27,3 +28,4 @@ api_router.include_router(alerts.router, prefix="/alerts", tags=["Alerts"])
 api_router.include_router(stakeholders.router, prefix="/stakeholders", tags=["Stakeholders"])
 api_router.include_router(reports.router, prefix="/reports", tags=["Reports"])
 api_router.include_router(ai_copilot.router, prefix="/ai", tags=["AI Copilot"])
+api_router.include_router(ai_first.router, prefix="/ai-first", tags=["AI-First Operations"])

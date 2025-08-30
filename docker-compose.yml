@@ -5,16 +5,16 @@ services:
   db:
     image: postgres:15-alpine
     environment:
-      POSTGRES_DB: app
-      POSTGRES_USER: app
-      POSTGRES_PASSWORD: app
+      POSTGRES_DB: ppm
+      POSTGRES_USER: ppm_user
+      POSTGRES_PASSWORD: ppm_pass
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U app -d app"]
+      test: ["CMD-SHELL", "pg_isready -U ppm_user -d ppm"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -37,14 +37,14 @@ services:
     image: chromadb/chroma:latest
     environment:
       - CHROMA_SERVER_HOST=0.0.0.0
-      - CHROMA_SERVER_HTTP_PORT=8000
+      - CHROMA_SERVER_HTTP_PORT=8001
       - CHROMA_SERVER_CORS_ALLOW_ORIGINS=["*"]
     ports:
-      - "8000:8000"
+      - "8001:8001"
     volumes:
       - chroma_data:/chroma/chroma
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat"]
+      test: ["CMD", "curl", "-f", "http://localhost:8001/api/v1/heartbeat"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -55,15 +55,18 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
-      - DATABASE_URL=postgresql+psycopg://app:app@db:5432/app
+      - DATABASE_URL=postgresql+psycopg://ppm_user:ppm_pass@db:5432/ppm
       - REDIS_URL=redis://redis:6379/0
       - CHROMA_HOST=chroma
-      - CHROMA_PORT=8000
+      - CHROMA_PORT=8001
       - OLLAMA_BASE_URL=http://host.docker.internal:11434
       - JWT_SECRET=${JWT_SECRET:-change-me}
       - TENANT_DEFAULT=${TENANT_DEFAULT:-demo}
       - FILE_STORAGE_ROOT=/app/storage
       - TIMEZONE=${TIMEZONE:-Asia/Kolkata}
+      - AI_FIRST_MODE=${AI_FIRST_MODE:-true}
+      - AI_AUTOPUBLISH_DEFAULT=${AI_AUTOPUBLISH_DEFAULT:-false}
+      - ENABLE_OCR=${ENABLE_OCR:-true}
     volumes:
       - ./storage:/app/storage
       - ./data:/app/data
@@ -89,15 +92,18 @@ services:
       dockerfile: Dockerfile
     command: ["python", "-m", "rq", "worker", "--url", "redis://redis:6379/0"]
     environment:
-      - DATABASE_URL=postgresql+psycopg://app:app@db:5432/app
+      - DATABASE_URL=postgresql+psycopg://ppm_user:ppm_pass@db:5432/ppm
       - REDIS_URL=redis://redis:6379/0
       - CHROMA_HOST=chroma
-      - CHROMA_PORT=8000
+      - CHROMA_PORT=8001
       - OLLAMA_BASE_URL=http://host.docker.internal:11434
       - JWT_SECRET=${JWT_SECRET:-change-me}
       - TENANT_DEFAULT=${TENANT_DEFAULT:-demo}
       - FILE_STORAGE_ROOT=/app/storage
       - TIMEZONE=${TIMEZONE:-Asia/Kolkata}
+      - AI_FIRST_MODE=${AI_FIRST_MODE:-true}
+      - AI_AUTOPUBLISH_DEFAULT=${AI_AUTOPUBLISH_DEFAULT:-false}
+      - ENABLE_OCR=${ENABLE_OCR:-true}
     volumes:
       - ./storage:/app/storage
       - ./data:/app/data

@@ -9,6 +9,8 @@ from .document import Document, DocumentChunk
 from .alert import Alert, AlertRule
 from .stakeholder import Stakeholder
 from .audit import AuditLog
+from .ai_draft import AIDraft, DraftType, DraftStatus
+from .status_update_policy import StatusUpdatePolicy, StatusUpdate, UpdateFrequency, UpdateChannel
 
 __all__ = [
     "User", "Role", "Tenant",
@@ -20,5 +22,7 @@ __all__ = [
     "Document", "DocumentChunk",
     "Alert", "AlertRule",
     "Stakeholder",
-    "AuditLog"
+    "AuditLog",
+    "AIDraft", "DraftType", "DraftStatus",
+    "StatusUpdatePolicy", "StatusUpdate", "UpdateFrequency", "UpdateChannel"
 ]
