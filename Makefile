@@ -17,9 +17,21 @@ build: ## Build and start services
 	docker-compose up -d --build
 	@echo "🔨 Services built and started"
 
-seed: ## Seed database with sample data
-	@echo "🌱 Seeding database..."
+seed: ## Seed database with comprehensive PPM+AI data
+	@echo "🌱 Seeding database with comprehensive PPM+AI data..."
+	docker-compose exec api python scripts/seed.py
+
+seed-basic: ## Seed database with basic sample data
+	@echo "🌱 Seeding database with basic data..."
 	docker-compose exec api python scripts/seed_data.py
+
+seed-ai: ## Seed database with AI-First specific data
+	@echo "🤖 Seeding database with AI-First data..."
+	docker-compose exec api python scripts/seed_ai_first.py
+
+clear-db: ## Clear database (WARNING: removes all data)
+	@echo "🗑️  Clearing database..."
+	docker-compose exec api python scripts/clear_db.py
 
 test: ## Run tests
 	@echo "🧪 Running tests..."

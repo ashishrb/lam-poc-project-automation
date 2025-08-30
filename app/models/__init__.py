@@ -1,4 +1,5 @@
 # Database models
+from app.core.database import Base
 from .user import User, Role, Tenant
 from .project import Project, Task, WorkItem, Milestone
 from .resource import Resource, Skill, Evaluation, Timesheet
@@ -13,6 +14,7 @@ from .ai_draft import AIDraft, DraftType, DraftStatus
 from .status_update_policy import StatusUpdatePolicy, StatusUpdate, UpdateFrequency, UpdateChannel
 
 __all__ = [
+    "Base",
     "User", "Role", "Tenant",
     "Project", "Task", "WorkItem", "Milestone",
     "Resource", "Skill", "Evaluation", "Timesheet",

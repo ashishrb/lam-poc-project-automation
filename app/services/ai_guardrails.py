@@ -374,41 +374,66 @@ class AIGuardrails:
                 elif "date_logic" in violation.rule_name:
                     # Fix date logic issues
                     field_path = violation.field_path
-                    if "start_date" in field_path and "due_date" in field_path:
-                        # Set due date to start date + 1 day
-                        start_date = repaired_data.get("start_date")
-                        if start_date:
-                            try:
-                                start_dt = datetime.fromisoformat(start_date)
-                                due_dt = start_dt + timedelta(days=1)
-                                self._set_nested_value(repaired_data, field_path.replace("dates", "due_date"), due_dt.strftime("%Y-%m-%d"))
-                            except (ValueError, TypeError):
-                                pass
+                    if "dates" in field_path:
+                        # Extract task index from field path like "tasks[0].dates"
+                        parts = field_path.split(".")
+                        if len(parts) >= 2 and "[" in parts[0]:
+                            task_part = parts[0]
+                            task_idx = int(task_part[task_part.find("[")+1:task_part.find("]")])
+                            if "tasks" in task_part and task_idx < len(repaired_data.get("tasks", [])):
+                                task = repaired_data["tasks"][task_idx]
+                                if "start_date" in task:
+                                    try:
+                                        start_dt = datetime.fromisoformat(task["start_date"])
+                                        due_dt = start_dt + timedelta(days=1)
+                                        repaired_data["tasks"][task_idx]["due_date"] = due_dt.strftime("%Y-%m-%d")
+                                    except (ValueError, TypeError):
+                                        pass
         
         return repaired_data
     
     def _set_nested_value(self, data: Dict[str, Any], field_path: str, value: Any):
-        """Set a nested value in a dictionary using dot notation"""
+        """Set a nested value in a dictionary using dot notation with array support"""
         parts = field_path.split(".")
         current = data
         
         for part in parts[:-1]:
-            if part.isdigit():
-                idx = int(part)
-                if isinstance(current, list) and 0 <= idx < len(current):
-                    current = current[idx]
-                else:
-                    return
+            if "[" in part and "]" in part:
+                # Handle array notation like "tasks[0]"
+                field_name = part[:part.find("[")]
+                index = int(part[part.find("[")+1:part.find("]")])
+                
+                if field_name not in current:
+                    current[field_name] = []
+                if not isinstance(current[field_name], list):
+                    current[field_name] = []
+                
+                # Ensure list is long enough
+                while len(current[field_name]) <= index:
+                    current[field_name].append({})
+                
+                current = current[field_name][index]
             else:
                 if part not in current:
                     current[part] = {}
                 current = current[part]
         
         last_part = parts[-1]
-        if last_part.isdigit():
-            idx = int(last_part)
-            if isinstance(current, list) and 0 <= idx < len(current):
-                current[idx] = value
+        if "[" in last_part and "]" in last_part:
+            # Handle array notation in the last part
+            field_name = last_part[:last_part.find("[")]
+            index = int(last_part[last_part.find("[")+1:last_part.find("]")])
+            
+            if field_name not in current:
+                current[field_name] = []
+            if not isinstance(current[field_name], list):
+                current[field_name] = []
+            
+            # Ensure list is long enough
+            while len(current[field_name]) <= index:
+                current[field_name].append({})
+            
+            current[field_name][index] = value
         else:
             current[last_part] = value
     

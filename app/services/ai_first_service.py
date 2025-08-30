@@ -9,7 +9,7 @@ from sqlalchemy import select, update
 from sqlalchemy.orm import selectinload
 
 from app.core.config import settings
-from app.models.project import Project, Task
+from app.models.project import Project, Task, TaskStatus
 from app.models.ai_draft import AIDraft, DraftType, DraftStatus
 from app.models.status_update_policy import StatusUpdatePolicy, StatusUpdate
 from app.models.resource import Resource, Skill

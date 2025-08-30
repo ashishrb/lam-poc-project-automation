@@ -15,8 +15,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from app.core.database import AsyncSessionLocal, init_db
 from app.models.user import User, Role, Tenant
-from app.models.project import Project, ProjectStatus, ProjectPhase
-from app.models.task import Task, TaskStatus, TaskPriority
+from app.models.project import Project, ProjectStatus, ProjectPhase, Task, TaskStatus, TaskPriority
 from app.models.resource import Resource, Skill
 from app.models.status_update_policy import StatusUpdatePolicy, UpdateFrequency
 from app.models.ai_draft import AIDraft, DraftType, DraftStatus
