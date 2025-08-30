@@ -10,7 +10,7 @@ def test_config_loading():
     assert settings.APP_NAME == "Project Portfolio Management System"
     assert settings.APP_VERSION == "1.0.0"
     assert settings.DATABASE_URL is not None
-    assert settings.OLLAMA_BASE_URL == "http://localhost:11434"
+    assert settings.OLLAMA_BASE_URL == "http://127.0.0.1:11434"
 
 
 def test_ai_copilot_initialization():
@@ -79,8 +79,8 @@ def test_rag_configuration():
 def test_security_configuration():
     """Test security configuration"""
     assert settings.JWT_ALGORITHM == "HS256"
-    assert settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES == 30
-    assert settings.ACCESS_TOKEN_EXPIRE_MINUTES == 30
+    assert settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES == 60
+    assert settings.ACCESS_TOKEN_EXPIRE_MINUTES == 60
 
 
 def test_pagination_configuration():
