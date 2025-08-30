@@ -30,7 +30,7 @@
                 <div class="card text-white bg-primary">
                     <div class="card-body">
                         <h5 class="card-title">Projects</h5>
-                        <p class="card-text display-6">0</p>
+                        <p class="card-text display-6">{{ summary.total_projects or 0 }}</p>
                         <p class="card-text">Active Projects</p>
                     </div>
                 </div>
@@ -40,7 +40,7 @@
                 <div class="card text-white bg-success">
                     <div class="card-body">
                         <h5 class="card-title">Resources</h5>
-                        <p class="card-text display-6">0</p>
+                        <p class="card-text display-6">{{ summary.total_resources or 0 }}</p>
                         <p class="card-text">Team Members</p>
                     </div>
                 </div>
@@ -50,8 +50,8 @@
                 <div class="card text-white bg-warning">
                     <div class="card-body">
                         <h5 class="card-title">Budget</h5>
-                        <p class="card-text display-6">$0</p>
-                        <p class="card-text">Total Budget</p>
+                        <p class="card-text display-6">{{ summary.total_users or 0 }}</p>
+                        <p class="card-text">Total Users</p>
                     </div>
                 </div>
             </div>
@@ -74,7 +74,21 @@
                         <h5>Recent Activities</h5>
                     </div>
                     <div class="card-body">
-                        <p class="text-muted">No recent activities to display</p>
+                        {% if summary.recent_projects %}
+                            <div class="list-group list-group-flush">
+                                {% for project in summary.recent_projects %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ project.name }}</h6>
+                                        <small class="text-muted">{{ project.description[:50] }}...</small>
+                                    </div>
+                                    <span class="badge bg-primary rounded-pill">{{ project.status.value }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted">No recent activities to display</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>

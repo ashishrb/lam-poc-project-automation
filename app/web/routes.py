@@ -19,19 +19,84 @@ async def web_home(request: Request):
 @web_router.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(request: Request):
     """Main dashboard page"""
-    return templates.TemplateResponse("dashboards/dashboard.html", {"request": request})
+    from app.core.database import engine
+    from app.models.project import Project
+    from app.models.user import User
+    from app.models.resource import Resource
+    from sqlalchemy import select, func
+    
+    # Fetch summary data from database
+    summary = {}
+    try:
+        async with engine.begin() as conn:
+            # Count projects
+            result = await conn.execute(select(func.count()).select_from(Project))
+            summary["total_projects"] = result.scalar()
+            
+            # Count users
+            result = await conn.execute(select(func.count()).select_from(User))
+            summary["total_users"] = result.scalar()
+            
+            # Count resources
+            result = await conn.execute(select(func.count()).select_from(Resource))
+            summary["total_resources"] = result.scalar()
+            
+            # Get recent projects
+            result = await conn.execute(select(Project).order_by(Project.created_at.desc()).limit(5))
+            summary["recent_projects"] = result.scalars().all()
+            
+    except Exception as e:
+        print(f"Error fetching dashboard data: {e}")
+        summary = {"total_projects": 0, "total_users": 0, "total_resources": 0, "recent_projects": []}
+    
+    return templates.TemplateResponse("dashboards/dashboard.html", {
+        "request": request,
+        "summary": summary
+    })
 
 
 @web_router.get("/projects", response_class=HTMLResponse)
 async def projects_page(request: Request):
     """Projects page"""
-    return templates.TemplateResponse("projects.html", {"request": request})
+    from app.core.database import engine
+    from app.models.project import Project
+    from sqlalchemy import select
+    
+    # Fetch projects from database
+    projects = []
+    try:
+        async with engine.begin() as conn:
+            result = await conn.execute(select(Project).limit(20))
+            projects = result.scalars().all()
+    except Exception as e:
+        print(f"Error fetching projects: {e}")
+    
+    return templates.TemplateResponse("projects.html", {
+        "request": request,
+        "projects": projects
+    })
 
 
 @web_router.get("/resources", response_class=HTMLResponse)
 async def resources_page(request: Request):
     """Resources page"""
-    return templates.TemplateResponse("resources.html", {"request": request})
+    from app.core.database import engine
+    from app.models.resource import Resource
+    from sqlalchemy import select
+    
+    # Fetch resources from database
+    resources = []
+    try:
+        async with engine.begin() as conn:
+            result = await conn.execute(select(Resource).limit(20))
+            resources = result.scalars().all()
+    except Exception as e:
+        print(f"Error fetching resources: {e}")
+    
+    return templates.TemplateResponse("resources.html", {
+        "request": request,
+        "resources": resources
+    })
 
 
 @web_router.get("/finance", response_class=HTMLResponse)

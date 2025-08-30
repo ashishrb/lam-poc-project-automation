@@ -39,9 +39,52 @@
                         <h5>Project List</h5>
                     </div>
                     <div class="card-body">
-                        <div id="projectList">
-                            <p class="text-muted">No projects found. Create your first project to get started.</p>
-                        </div>
+                                <div id="projectList">
+            {% if projects %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Project</th>
+                                <th>Manager</th>
+                                <th>Status</th>
+                                <th>Priority</th>
+                                <th>Progress</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for project in projects %}
+                            <tr>
+                                <td>
+                                    <strong>{{ project.name }}</strong><br>
+                                    <small class="text-muted">{{ project.code or 'N/A' }}</small>
+                                </td>
+                                <td>{{ project.project_manager.full_name if project.project_manager else 'N/A' }}</td>
+                                <td><span class="badge bg-primary">{{ project.status.value }}</span></td>
+                                <td><span class="badge bg-warning">{{ project.priority.value }}</span></td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar" role="progressbar" style="width: 75%">75%</div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewProjectDetails({{ project.id }})">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success" onclick="addTask({{ project.id }})">
+                                        <i class="fas fa-plus"></i> Task
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <p class="text-muted">No projects found. Create your first project to get started.</p>
+            {% endif %}
+        </div>
                     </div>
                 </div>
             </div>
