@@ -24,7 +24,13 @@ async def dashboard(request: Request):
         "total_projects": 32,
         "total_users": 22,
         "total_resources": 20,
-        "recent_projects": []
+        "recent_projects": [
+            {"name": "ALPHA Project", "description": "AI-First Project Management System", "status": "active"},
+            {"name": "BETA Project", "description": "Enhanced Resource Optimization Platform", "status": "planning"},
+            {"name": "GAMMA Project", "description": "Advanced Analytics Dashboard", "status": "active"},
+            {"name": "DELTA Project", "description": "Automated Workflow Engine", "status": "completed"},
+            {"name": "EPSILON Project", "description": "Cloud Migration Initiative", "status": "on_hold"}
+        ]
     }
     
     return templates.TemplateResponse("dashboards/dashboard.html", {
@@ -36,8 +42,14 @@ async def dashboard(request: Request):
 @web_router.get("/projects", response_class=HTMLResponse)
 async def projects_page(request: Request):
     """Projects page"""
-    # For now, return empty projects list to test template rendering
-    projects = []
+    # Sample projects data
+    projects = [
+        {"id": 1, "name": "ALPHA Project", "code": "PRJ-001", "project_manager_id": "John Manager", "status": "active", "priority": "high"},
+        {"id": 2, "name": "BETA Project", "code": "PRJ-002", "project_manager_id": "Sarah Lead", "status": "planning", "priority": "medium"},
+        {"id": 3, "name": "GAMMA Project", "code": "PRJ-003", "project_manager_id": "Mike Director", "status": "active", "priority": "critical"},
+        {"id": 4, "name": "DELTA Project", "code": "PRJ-004", "project_manager_id": "Lisa PM", "status": "completed", "priority": "low"},
+        {"id": 5, "name": "EPSILON Project", "code": "PRJ-005", "project_manager_id": "Alex Tech", "status": "on_hold", "priority": "medium"}
+    ]
     
     return templates.TemplateResponse("projects.html", {
         "request": request,
@@ -48,20 +60,14 @@ async def projects_page(request: Request):
 @web_router.get("/resources", response_class=HTMLResponse)
 async def resources_page(request: Request):
     """Resources page"""
-    from app.core.database import engine
-    from app.models.resource import Resource
-    from sqlalchemy import select
-    
-    # Fetch resources from database with simple query
-    resources = []
-    try:
-        async with engine.begin() as conn:
-            stmt = select(Resource).limit(20)
-            result = await conn.execute(stmt)
-            resources = result.scalars().all()
-    except Exception as e:
-        print(f"Error fetching resources: {e}")
-        print(f"Error details: {type(e).__name__}: {str(e)}")
+    # Sample resources data
+    resources = [
+        {"id": 1, "name": "John Developer", "email": "john@company.com", "skills": ["Python", "FastAPI", "PostgreSQL"]},
+        {"id": 2, "name": "Sarah Designer", "email": "sarah@company.com", "skills": ["UI/UX", "Figma", "React"]},
+        {"id": 3, "name": "Mike Architect", "email": "mike@company.com", "skills": ["System Design", "AWS", "Docker"]},
+        {"id": 4, "name": "Lisa Tester", "email": "lisa@company.com", "skills": ["QA", "Automation", "Selenium"]},
+        {"id": 5, "name": "Alex DevOps", "email": "alex@company.com", "skills": ["CI/CD", "Kubernetes", "Jenkins"]}
+    ]
     
     return templates.TemplateResponse("resources.html", {
         "request": request,
@@ -72,7 +78,24 @@ async def resources_page(request: Request):
 @web_router.get("/finance", response_class=HTMLResponse)
 async def finance_page(request: Request):
     """Finance page"""
-    return templates.TemplateResponse("finance.html", {"request": request})
+    # Sample finance data
+    finance_data = {
+        "total_budget": 1600000,
+        "spent": 850000,
+        "remaining": 750000,
+        "projects": [
+            {"name": "ALPHA Project", "budget": 500000, "spent": 250000, "status": "On Track"},
+            {"name": "BETA Project", "budget": 300000, "spent": 150000, "status": "Under Budget"},
+            {"name": "GAMMA Project", "budget": 400000, "spent": 200000, "status": "On Track"},
+            {"name": "DELTA Project", "budget": 200000, "spent": 200000, "status": "Completed"},
+            {"name": "EPSILON Project", "budget": 200000, "spent": 50000, "status": "On Hold"}
+        ]
+    }
+    
+    return templates.TemplateResponse("finance.html", {
+        "request": request,
+        "finance": finance_data
+    })
 
 
 @web_router.get("/portfolio", response_class=HTMLResponse)

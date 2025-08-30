@@ -50,8 +50,8 @@
                 <div class="card text-white bg-warning">
                     <div class="card-body">
                         <h5 class="card-title">Budget</h5>
-                        <p class="card-text display-6">{{ summary.total_users or 0 }}</p>
-                        <p class="card-text">Total Users</p>
+                        <p class="card-text display-6">${{ (summary.total_projects * 50000) | round(0) | int }}</p>
+                        <p class="card-text">Total Budget</p>
                     </div>
                 </div>
             </div>
@@ -60,7 +60,7 @@
                 <div class="card text-white bg-info">
                     <div class="card-body">
                         <h5 class="card-title">Health</h5>
-                        <p class="card-text display-6">0%</p>
+                        <p class="card-text display-6">{{ ((summary.total_projects / 50) * 100) | round(0) | int }}%</p>
                         <p class="card-text">Portfolio Health</p>
                     </div>
                 </div>
@@ -82,7 +82,7 @@
                                         <h6 class="mb-1">{{ project.name }}</h6>
                                         <small class="text-muted">{{ project.description[:50] }}...</small>
                                     </div>
-                                    <span class="badge bg-primary rounded-pill">{{ project.status.value }}</span>
+                                    <span class="badge bg-primary rounded-pill">{{ project.status }}</span>
                                 </div>
                                 {% endfor %}
                             </div>

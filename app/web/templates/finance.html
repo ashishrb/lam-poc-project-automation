@@ -37,7 +37,7 @@
                 <div class="card text-white bg-primary">
                     <div class="card-body">
                         <h5 class="card-title">Total Budget</h5>
-                        <p class="card-text display-6" id="totalBudget">$0</p>
+                        <p class="card-text display-6" id="totalBudget">${{ finance.total_budget|default(0)|int|round(0) }}</p>
                         <p class="card-text">All Projects</p>
                     </div>
                 </div>
@@ -47,7 +47,7 @@
                 <div class="card text-white bg-success">
                     <div class="card-body">
                         <h5 class="card-title">Spent</h5>
-                        <p class="card-text display-6" id="totalSpent">$0</p>
+                        <p class="card-text display-6" id="totalSpent">${{ finance.spent|default(0)|int|round(0) }}</p>
                         <p class="card-text">Actual Costs</p>
                     </div>
                 </div>
@@ -57,7 +57,7 @@
                 <div class="card text-white bg-warning">
                     <div class="card-body">
                         <h5 class="card-title">Remaining</h5>
-                        <p class="card-text display-6" id="totalRemaining">$0</p>
+                        <p class="card-text display-6" id="totalRemaining">${{ finance.remaining|default(0)|int|round(0) }}</p>
                         <p class="card-text">Available</p>
                     </div>
                 </div>
@@ -83,7 +83,34 @@
                     </div>
                     <div class="card-body">
                         <div id="budgetList">
-                            <p class="text-muted">No budgets found. Create your first budget to get started.</p>
+                            {% if finance.projects %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Project</th>
+                                                <th>Budget</th>
+                                                <th>Spent</th>
+                                                <th>Remaining</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for project in finance.projects %}
+                                            <tr>
+                                                <td><strong>{{ project.name }}</strong></td>
+                                                <td>${{ project.budget|int|round(0) }}</td>
+                                                <td>${{ project.spent|int|round(0) }}</td>
+                                                <td>${{ (project.budget - project.spent)|int|round(0) }}</td>
+                                                <td><span class="badge bg-success">{{ project.status }}</span></td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <p class="text-muted">No budgets found. Create your first budget to get started.</p>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
