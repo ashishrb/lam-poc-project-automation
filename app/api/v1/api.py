@@ -11,7 +11,8 @@ from .endpoints import (
     stakeholders,
     reports,
     ai_copilot,
-    ai_first
+    ai_first,
+    plan_builder
 )
 
 api_router = APIRouter()
@@ -29,3 +30,4 @@ api_router.include_router(stakeholders.router, prefix="/stakeholders", tags=["St
 api_router.include_router(reports.router, prefix="/reports", tags=["Reports"])
 api_router.include_router(ai_copilot.router, prefix="/ai", tags=["AI Copilot"])
 api_router.include_router(ai_first.router, prefix="/ai-first", tags=["AI-First Operations"])
+api_router.include_router(plan_builder.router, prefix="/plan-builder", tags=["Document Plan Builder"])

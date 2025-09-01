@@ -560,3 +560,373 @@ class AIGuardrails:
                 ))
         
         return violations
+
+    async def validate_extracted_plan(
+        self,
+        extraction_result: Dict[str, Any],
+        dependency_result: Dict[str, Any],
+        risk_result: Dict[str, Any],
+        effort_result: Dict[str, Any]
+    ) -> ValidationResult:
+        """Validate extracted plan from document AI extraction"""
+        violations = []
+        repair_suggestions = []
+        
+        try:
+            # Validate extraction structure
+            if not isinstance(extraction_result, dict):
+                violations.append(GuardrailViolation(
+                    rule_name="extraction_structure",
+                    severity="error",
+                    message="Extraction result must be a dictionary",
+                    field_path="extraction",
+                    current_value=type(extraction_result).__name__,
+                    expected_value="dict"
+                ))
+                return ValidationResult(False, violations, repair_suggestions, 0.0)
+            
+            # Validate epics
+            epics = extraction_result.get("epics", [])
+            if isinstance(epics, list):
+                for i, epic in enumerate(epics):
+                    epic_violations = self._validate_epic(epic, f"epics[{i}]")
+                    violations.extend(epic_violations)
+            
+            # Validate features
+            features = extraction_result.get("features", [])
+            if isinstance(features, list):
+                for i, feature in enumerate(features):
+                    feature_violations = self._validate_feature(feature, f"features[{i}]")
+                    violations.extend(feature_violations)
+            
+            # Validate tasks
+            tasks = extraction_result.get("tasks", [])
+            if isinstance(tasks, list):
+                for i, task in enumerate(tasks):
+                    task_violations = self._validate_extracted_task(task, f"tasks[{i}]")
+                    violations.extend(task_violations)
+            
+            # Validate dependencies
+            dependencies = dependency_result.get("dependencies", [])
+            if isinstance(dependencies, list):
+                dep_violations = self._validate_dependencies(dependencies, tasks)
+                violations.extend(dep_violations)
+            
+            # Validate risks
+            risks = risk_result.get("risks", [])
+            if isinstance(risks, list):
+                for i, risk in enumerate(risks):
+                    risk_violations = self._validate_risk(risk, f"risks[{i}]")
+                    violations.extend(risk_violations)
+            
+            # Validate efforts
+            task_efforts = effort_result.get("task_efforts", [])
+            if isinstance(task_efforts, list):
+                for i, effort in enumerate(task_efforts):
+                    effort_violations = self._validate_effort(effort, f"task_efforts[{i}]")
+                    violations.extend(effort_violations)
+            
+            # Generate repair suggestions
+            repair_suggestions = self._generate_repair_suggestions(violations)
+            
+            # Calculate confidence score
+            confidence_score = self._calculate_confidence_score(violations, extraction_result)
+            
+            is_valid = not any(v.severity == "error" for v in violations)
+            
+            return ValidationResult(
+                is_valid=is_valid,
+                violations=violations,
+                repair_suggestions=repair_suggestions,
+                confidence_score=confidence_score
+            )
+            
+        except Exception as e:
+            logger.error(f"Error validating extracted plan: {e}")
+            violations.append(GuardrailViolation(
+                rule_name="validation_error",
+                severity="error",
+                message=f"Validation error: {str(e)}",
+                field_path="root",
+                current_value="error",
+                expected_value="valid"
+            ))
+            return ValidationResult(False, violations, repair_suggestions, 0.0)
+    
+    async def repair_extracted_plan(
+        self,
+        extraction_result: Dict[str, Any],
+        violations: List[GuardrailViolation]
+    ) -> Dict[str, Any]:
+        """Repair extracted plan based on violations"""
+        try:
+            repaired_extraction = extraction_result.copy()
+            repaired_dependencies = {"dependencies": []}
+            repaired_risks = {"risks": []}
+            repaired_efforts = {"task_efforts": []}
+            
+            for violation in violations:
+                if violation.severity == "error":
+                    if "epics" in violation.field_path:
+                        repaired_extraction = self._apply_epic_repair(repaired_extraction, violation)
+                    elif "features" in violation.field_path:
+                        repaired_extraction = self._apply_feature_repair(repaired_extraction, violation)
+                    elif "tasks" in violation.field_path:
+                        repaired_extraction = self._apply_task_repair(repaired_extraction, violation)
+                    elif "dependencies" in violation.field_path:
+                        repaired_dependencies = self._apply_dependency_repair(repaired_dependencies, violation)
+                    elif "risks" in violation.field_path:
+                        repaired_risks = self._apply_risk_repair(repaired_risks, violation)
+                    elif "task_efforts" in violation.field_path:
+                        repaired_efforts = self._apply_effort_repair(repaired_efforts, violation)
+            
+            return {
+                "extraction": repaired_extraction,
+                "dependencies": repaired_dependencies,
+                "risks": repaired_risks,
+                "efforts": repaired_efforts
+            }
+            
+        except Exception as e:
+            logger.error(f"Error repairing extracted plan: {e}")
+            return {
+                "extraction": extraction_result,
+                "dependencies": {"dependencies": []},
+                "risks": {"risks": []},
+                "efforts": {"task_efforts": []}
+            }
+    
+    def _validate_epic(self, epic: Dict[str, Any], field_path: str) -> List[GuardrailViolation]:
+        """Validate individual epic"""
+        violations = []
+        
+        # Required fields
+        required_fields = ["id", "name"]
+        for field in required_fields:
+            if field not in epic or not epic[field]:
+                violations.append(GuardrailViolation(
+                    rule_name="required_field",
+                    severity="error",
+                    message=f"Epic {field} is required",
+                    field_path=f"{field_path}.{field}",
+                    current_value=epic.get(field),
+                    expected_value="non_empty_value"
+                ))
+        
+        # Priority validation
+        if "priority" in epic:
+            priority = epic["priority"]
+            valid_priorities = ["high", "medium", "low"]
+            if priority not in valid_priorities:
+                violations.append(GuardrailViolation(
+                    rule_name="priority_validation",
+                    severity="warning",
+                    message=f"Epic priority must be one of {valid_priorities}",
+                    field_path=f"{field_path}.priority",
+                    current_value=priority,
+                    expected_value=valid_priorities
+                ))
+        
+        return violations
+    
+    def _validate_feature(self, feature: Dict[str, Any], field_path: str) -> List[GuardrailViolation]:
+        """Validate individual feature"""
+        violations = []
+        
+        # Required fields
+        required_fields = ["id", "name", "epic_id"]
+        for field in required_fields:
+            if field not in feature or not feature[field]:
+                violations.append(GuardrailViolation(
+                    rule_name="required_field",
+                    severity="error",
+                    message=f"Feature {field} is required",
+                    field_path=f"{field_path}.{field}",
+                    current_value=feature.get(field),
+                    expected_value="non_empty_value"
+                ))
+        
+        # Complexity validation
+        if "complexity" in feature:
+            complexity = feature["complexity"]
+            valid_complexities = ["high", "medium", "low"]
+            if complexity not in valid_complexities:
+                violations.append(GuardrailViolation(
+                    rule_name="complexity_validation",
+                    severity="warning",
+                    message=f"Feature complexity must be one of {valid_complexities}",
+                    field_path=f"{field_path}.complexity",
+                    current_value=complexity,
+                    expected_value=valid_complexities
+                ))
+        
+        return violations
+    
+    def _validate_extracted_task(self, task: Dict[str, Any], field_path: str) -> List[GuardrailViolation]:
+        """Validate individual extracted task"""
+        violations = []
+        
+        # Required fields
+        required_fields = ["id", "name"]
+        for field in required_fields:
+            if field not in task or not task[field]:
+                violations.append(GuardrailViolation(
+                    rule_name="required_field",
+                    severity="error",
+                    message=f"Task {field} is required",
+                    field_path=f"{field_path}.{field}",
+                    current_value=task.get(field),
+                    expected_value="non_empty_value"
+                ))
+        
+        # Estimated hours validation
+        if "estimated_hours" in task:
+            hours = task["estimated_hours"]
+            if not isinstance(hours, (int, float)) or hours <= 0:
+                violations.append(GuardrailViolation(
+                    rule_name="hours_validation",
+                    severity="error",
+                    message="Estimated hours must be a positive number",
+                    field_path=f"{field_path}.estimated_hours",
+                    current_value=hours,
+                    expected_value="positive_number"
+                ))
+        
+        # Type validation
+        if "type" in task:
+            task_type = task["type"]
+            valid_types = ["development", "testing", "deployment", "documentation", "analysis"]
+            if task_type not in valid_types:
+                violations.append(GuardrailViolation(
+                    rule_name="type_validation",
+                    severity="warning",
+                    message=f"Task type must be one of {valid_types}",
+                    field_path=f"{field_path}.type",
+                    current_value=task_type,
+                    expected_value=valid_types
+                ))
+        
+        return violations
+    
+    def _validate_risk(self, risk: Dict[str, Any], field_path: str) -> List[GuardrailViolation]:
+        """Validate individual risk"""
+        violations = []
+        
+        # Required fields
+        required_fields = ["id", "name", "description"]
+        for field in required_fields:
+            if field not in risk or not risk[field]:
+                violations.append(GuardrailViolation(
+                    rule_name="required_field",
+                    severity="error",
+                    message=f"Risk {field} is required",
+                    field_path=f"{field_path}.{field}",
+                    current_value=risk.get(field),
+                    expected_value="non_empty_value"
+                ))
+        
+        # Severity validation
+        if "severity" in risk:
+            severity = risk["severity"]
+            valid_severities = ["high", "medium", "low"]
+            if severity not in valid_severities:
+                violations.append(GuardrailViolation(
+                    rule_name="severity_validation",
+                    severity="warning",
+                    message=f"Risk severity must be one of {valid_severities}",
+                    field_path=f"{field_path}.severity",
+                    current_value=severity,
+                    expected_value=valid_severities
+                ))
+        
+        return violations
+    
+    def _validate_effort(self, effort: Dict[str, Any], field_path: str) -> List[GuardrailViolation]:
+        """Validate individual effort estimation"""
+        violations = []
+        
+        # Required fields
+        required_fields = ["task_id", "estimated_hours"]
+        for field in required_fields:
+            if field not in effort:
+                violations.append(GuardrailViolation(
+                    rule_name="required_field",
+                    severity="error",
+                    message=f"Effort {field} is required",
+                    field_path=f"{field_path}.{field}",
+                    current_value=effort.get(field),
+                    expected_value="value"
+                ))
+        
+        # Hours validation
+        if "estimated_hours" in effort:
+            hours = effort["estimated_hours"]
+            if not isinstance(hours, (int, float)) or hours <= 0:
+                violations.append(GuardrailViolation(
+                    rule_name="hours_validation",
+                    severity="error",
+                    message="Estimated hours must be a positive number",
+                    field_path=f"{field_path}.estimated_hours",
+                    current_value=hours,
+                    expected_value="positive_number"
+                ))
+        
+        return violations
+    
+    def _apply_epic_repair(self, extraction: Dict[str, Any], violation: GuardrailViolation) -> Dict[str, Any]:
+        """Apply repair to epic"""
+        if "required_field" in violation.rule_name:
+            field_path = violation.field_path
+            if "name" in field_path:
+                self._set_nested_value(extraction, field_path, "Unnamed Epic")
+            elif "id" in field_path:
+                self._set_nested_value(extraction, field_path, f"epic_{len(extraction.get('epics', []))}")
+        return extraction
+    
+    def _apply_feature_repair(self, extraction: Dict[str, Any], violation: GuardrailViolation) -> Dict[str, Any]:
+        """Apply repair to feature"""
+        if "required_field" in violation.rule_name:
+            field_path = violation.field_path
+            if "name" in field_path:
+                self._set_nested_value(extraction, field_path, "Unnamed Feature")
+            elif "id" in field_path:
+                self._set_nested_value(extraction, field_path, f"feature_{len(extraction.get('features', []))}")
+        return extraction
+    
+    def _apply_task_repair(self, extraction: Dict[str, Any], violation: GuardrailViolation) -> Dict[str, Any]:
+        """Apply repair to task"""
+        if "required_field" in violation.rule_name:
+            field_path = violation.field_path
+            if "name" in field_path:
+                self._set_nested_value(extraction, field_path, "Unnamed Task")
+            elif "id" in field_path:
+                self._set_nested_value(extraction, field_path, f"task_{len(extraction.get('tasks', []))}")
+        elif "hours_validation" in violation.rule_name:
+            field_path = violation.field_path
+            self._set_nested_value(extraction, field_path, 8)  # Default 8 hours
+        return extraction
+    
+    def _apply_dependency_repair(self, dependencies: Dict[str, Any], violation: GuardrailViolation) -> Dict[str, Any]:
+        """Apply repair to dependencies"""
+        # Remove invalid dependencies
+        if "dependency_validation" in violation.rule_name:
+            dependencies["dependencies"] = [d for d in dependencies.get("dependencies", []) 
+                                          if d.get("from_id") and d.get("to_id")]
+        return dependencies
+    
+    def _apply_risk_repair(self, risks: Dict[str, Any], violation: GuardrailViolation) -> Dict[str, Any]:
+        """Apply repair to risks"""
+        if "required_field" in violation.rule_name:
+            field_path = violation.field_path
+            if "name" in field_path:
+                self._set_nested_value(risks, field_path, "Unnamed Risk")
+            elif "id" in field_path:
+                self._set_nested_value(risks, field_path, f"risk_{len(risks.get('risks', []))}")
+        return risks
+    
+    def _apply_effort_repair(self, efforts: Dict[str, Any], violation: GuardrailViolation) -> Dict[str, Any]:
+        """Apply repair to efforts"""
+        if "hours_validation" in violation.rule_name:
+            field_path = violation.field_path
+            self._set_nested_value(efforts, field_path, 8)  # Default 8 hours
+        return efforts
