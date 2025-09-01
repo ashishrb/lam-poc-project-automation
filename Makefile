@@ -42,6 +42,43 @@ clean: ## Clean up all data and containers
 	docker system prune -f
 	@echo "🧹 Cleanup completed"
 
+# Additional test commands
+test-unit: ## Run unit tests only
+	@echo "🧪 Running unit tests..."
+	python -m pytest tests/ -v -m "unit" --tb=short
+
+test-integration: ## Run integration tests only
+	@echo "🧪 Running integration tests..."
+	python -m pytest tests/ -v -m "integration" --tb=short
+
+test-api: ## Run API tests only
+	@echo "🧪 Running API tests..."
+	python -m pytest tests/test_api.py -v --tb=short
+
+test-ai: ## Run AI functionality tests only
+	@echo "🧪 Running AI tests..."
+	python -m pytest tests/ -v -m "ai" --tb=short
+
+test-db: ## Run database tests only
+	@echo "🧪 Running database tests..."
+	python -m pytest tests/test_database.py -v --tb=short
+
+test-basic: ## Run basic configuration tests
+	@echo "🧪 Running basic tests..."
+	python -m pytest tests/test_basic.py -v --tb=short
+
+test-coverage: ## Run tests with detailed coverage report
+	@echo "🧪 Running tests with coverage..."
+	python -m pytest tests/ --cov=app --cov-report=term-missing --cov-report=html --cov-report=xml
+
+test-fast: ## Run fast tests only (excluding slow/external)
+	@echo "🧪 Running fast tests..."
+	python -m pytest tests/ -v -m "not slow and not external" --tb=short
+
+test-smoke: ## Run smoke tests for basic system health
+	@echo "🧪 Running smoke tests..."
+	python -m pytest tests/ -v -m "smoke" --tb=short
+
 logs: ## Show service logs
 	docker-compose logs -f
 
