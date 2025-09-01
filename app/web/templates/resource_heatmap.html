@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resource Heatmap</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9rem;
+        }
+
+        .control-group input, .control-group select {
+            padding: 10px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .control-group input:focus, .control-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .heatmap-container {
+            padding: 30px;
+            overflow-x: auto;
+        }
+
+        .heatmap {
+            border-collapse: collapse;
+            width: 100%;
+            min-width: 800px;
+        }
+
+        .heatmap th {
+            background: #f8f9fa;
+            padding: 15px 10px;
+            text-align: center;
+            font-weight: 600;
+            color: #495057;
+            border: 1px solid #e9ecef;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .heatmap td {
+            padding: 12px 8px;
+            text-align: center;
+            border: 1px solid #e9ecef;
+            font-size: 0.9rem;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .heatmap td:hover {
+            transform: scale(1.05);
+            z-index: 5;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .status-available {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-busy {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-overloaded {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-unavailable {
+            background: #e2e3e5;
+            color: #6c757d;
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            z-index: 1000;
+            pointer-events: none;
+            white-space: nowrap;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .heatmap td:hover .tooltip {
+            opacity: 1;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #6c757d;
+            font-size: 1.1rem;
+        }
+
+        .error {
+            text-align: center;
+            padding: 30px;
+            color: #dc3545;
+            background: #f8d7da;
+            border-radius: 8px;
+            margin: 20px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 2rem;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .heatmap-container {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Resource Heatmap</h1>
+            <p>Visualize resource utilization and availability across your team</p>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="startDate">Start Date</label>
+                <input type="date" id="startDate" value="">
+            </div>
+            <div class="control-group">
+                <label for="endDate">End Date</label>
+                <input type="date" id="endDate" value="">
+            </div>
+            <div class="control-group">
+                <label for="calendarType">Calendar Type</label>
+                <select id="calendarType">
+                    <option value="standard">Standard</option>
+                    <option value="us_federal">US Federal</option>
+                    <option value="european">European</option>
+                </select>
+            </div>
+            <button class="btn" onclick="loadHeatmap()">Generate Heatmap</button>
+        </div>
+
+        <div class="stats" id="stats" style="display: none;">
+            <div class="stat-card">
+                <h3 id="totalUsers">0</h3>
+                <p>Total Users</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="avgUtilization">0%</h3>
+                <p>Average Utilization</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="overloadedUsers">0</h3>
+                <p>Overloaded Users</p>
+            </div>
+            <div class="stat-card">
+                <h3 id="availableUsers">0</h3>
+                <p>Available Users</p>
+            </div>
+        </div>
+
+        <div class="legend" id="legend" style="display: none;">
+            <div class="legend-item">
+                <div class="legend-color status-available"></div>
+                <span>Available (0-50%)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color status-busy"></div>
+                <span>Busy (51-80%)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color status-overloaded"></div>
+                <span>Overloaded (81%+)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color status-unavailable"></div>
+                <span>Unavailable</span>
+            </div>
+        </div>
+
+        <div class="heatmap-container">
+            <div id="loading" class="loading" style="display: none;">
+                <p>Generating heatmap...</p>
+            </div>
+            <div id="error" class="error" style="display: none;"></div>
+            <div id="heatmapContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // Set default dates (next 4 weeks)
+        document.addEventListener('DOMContentLoaded', function() {
+            const today = new Date();
+            const startDate = new Date(today);
+            const endDate = new Date(today);
+            endDate.setDate(today.getDate() + 28);
+            
+            document.getElementById('startDate').value = startDate.toISOString().split('T')[0];
+            document.getElementById('endDate').value = endDate.toISOString().split('T')[0];
+            
+            // Load initial heatmap
+            loadHeatmap();
+        });
+
+        async function loadHeatmap() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const calendarType = document.getElementById('calendarType').value;
+
+            if (!startDate || !endDate) {
+                showError('Please select both start and end dates');
+                return;
+            }
+
+            showLoading(true);
+            hideError();
+
+            try {
+                const response = await fetch('/api/v1/resource-optimization/heatmap', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    params: {
+                        start_date: startDate,
+                        end_date: endDate
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderHeatmap(data);
+                    updateStats(data);
+                } else {
+                    showError(data.error || 'Failed to load heatmap data');
+                }
+            } catch (error) {
+                console.error('Error loading heatmap:', error);
+                showError('Failed to load heatmap data. Please try again.');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function renderHeatmap(data) {
+            const container = document.getElementById('heatmapContent');
+            const heatmapData = data.heatmap_data;
+            
+            if (!heatmapData || heatmapData.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 30px; color: #6c757d;">No data available for the selected date range</p>';
+                return;
+            }
+
+            // Group data by user
+            const users = {};
+            const dates = new Set();
+            
+            heatmapData.forEach(point => {
+                if (!users[point.user_id]) {
+                    users[point.user_id] = {
+                        name: point.user_name,
+                        data: {}
+                    };
+                }
+                users[point.user_id].data[point.date] = point;
+                dates.add(point.date);
+            });
+
+            // Sort dates
+            const sortedDates = Array.from(dates).sort();
+
+            // Create table
+            let html = '<table class="heatmap">';
+            
+            // Header row with dates
+            html += '<tr><th>User</th>';
+            sortedDates.forEach(date => {
+                const dateObj = new Date(date);
+                html += `<th>${dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</th>`;
+            });
+            html += '</tr>';
+
+            // Data rows
+            Object.values(users).forEach(user => {
+                html += `<tr><td style="font-weight: 600; text-align: left; padding: 15px;">${user.name}</td>`;
+                
+                sortedDates.forEach(date => {
+                    const point = user.data[date];
+                    if (point) {
+                        const tooltip = `
+                            <div class="tooltip">
+                                <strong>${user.name}</strong><br>
+                                Date: ${new Date(date).toLocaleDateString()}<br>
+                                Utilization: ${point.utilization_percentage.toFixed(1)}%<br>
+                                Assigned: ${point.assigned_hours}h<br>
+                                Available: ${point.available_hours}h<br>
+                                Projects: ${point.project_count}<br>
+                                Tasks: ${point.task_count}
+                            </div>
+                        `;
+                        
+                        html += `<td class="status-${point.status}" title="${point.utilization_percentage.toFixed(1)}%">${point.utilization_percentage.toFixed(0)}%${tooltip}</td>`;
+                    } else {
+                        html += '<td class="status-unavailable">-</td>';
+                    }
+                });
+                
+                html += '</tr>';
+            });
+
+            html += '</table>';
+            container.innerHTML = html;
+            
+            // Show legend
+            document.getElementById('legend').style.display = 'flex';
+        }
+
+        function updateStats(data) {
+            const heatmapData = data.heatmap_data;
+            
+            if (!heatmapData || heatmapData.length === 0) {
+                document.getElementById('stats').style.display = 'none';
+                return;
+            }
+
+            const totalUsers = data.total_users;
+            const totalUtilization = heatmapData.reduce((sum, point) => sum + point.utilization_percentage, 0);
+            const avgUtilization = totalUtilization / heatmapData.length;
+            
+            const overloadedUsers = new Set(heatmapData.filter(point => point.status === 'overloaded').map(point => point.user_id)).size;
+            const availableUsers = new Set(heatmapData.filter(point => point.status === 'available').map(point => point.user_id)).size;
+
+            document.getElementById('totalUsers').textContent = totalUsers;
+            document.getElementById('avgUtilization').textContent = `${avgUtilization.toFixed(1)}%`;
+            document.getElementById('overloadedUsers').textContent = overloadedUsers;
+            document.getElementById('availableUsers').textContent = availableUsers;
+            
+            document.getElementById('stats').style.display = 'grid';
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

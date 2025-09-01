@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assignment Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .task-info {
+            background: #f8f9fa;
+            padding: 20px 30px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .task-info h3 {
+            color: #495057;
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+        }
+
+        .task-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .task-detail {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+
+        .task-detail label {
+            font-weight: 600;
+            color: #6c757d;
+            font-size: 0.9rem;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .task-detail span {
+            color: #495057;
+            font-size: 1rem;
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            min-width: 200px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9rem;
+        }
+
+        .control-group input, .control-group select {
+            padding: 10px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .control-group input:focus, .control-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+        }
+
+        .recommendations {
+            padding: 30px;
+        }
+
+        .recommendation-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .recommendation-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .recommendation-card.selected {
+            border-color: #28a745;
+            background: #f8fff9;
+        }
+
+        .recommendation-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 1.2rem;
+        }
+
+        .user-details h4 {
+            color: #495057;
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+
+        .user-details p {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .score-badge {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .score-badge.high {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .score-badge.medium {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        }
+
+        .score-badge.low {
+            background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+        }
+
+        .recommendation-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .detail-item {
+            text-align: center;
+        }
+
+        .detail-item label {
+            display: block;
+            font-weight: 600;
+            color: #6c757d;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+
+        .detail-item span {
+            color: #495057;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .reasoning {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+
+        .reasoning h5 {
+            color: #495057;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .reasoning p {
+            color: #6c757d;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #6c757d;
+            font-size: 1.1rem;
+        }
+
+        .error {
+            text-align: center;
+            padding: 30px;
+            color: #dc3545;
+            background: #f8d7da;
+            border-radius: 8px;
+            margin: 20px;
+        }
+
+        .no-recommendations {
+            text-align: center;
+            padding: 50px;
+            color: #6c757d;
+        }
+
+        .filters-applied {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .filters-applied h4 {
+            color: #1976d2;
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .filters-applied ul {
+            list-style: none;
+            color: #424242;
+            font-size: 0.9rem;
+        }
+
+        .filters-applied li {
+            margin-bottom: 5px;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .control-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .recommendations {
+                padding: 20px;
+            }
+            
+            .recommendation-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Assignment Assistant</h1>
+            <p>AI-powered resource assignment recommendations</p>
+        </div>
+
+        <div class="task-info" id="taskInfo" style="display: none;">
+            <h3>Task Information</h3>
+            <div class="task-details">
+                <div class="task-detail">
+                    <label>Task Name</label>
+                    <span id="taskName">-</span>
+                </div>
+                <div class="task-detail">
+                    <label>Estimated Hours</label>
+                    <span id="taskHours">-</span>
+                </div>
+                <div class="task-detail">
+                    <label>Start Date</label>
+                    <span id="taskStartDate">-</span>
+                </div>
+                <div class="task-detail">
+                    <label>End Date</label>
+                    <span id="taskEndDate">-</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-row">
+                <div class="control-group">
+                    <label for="taskId">Task ID</label>
+                    <input type="number" id="taskId" placeholder="Enter task ID">
+                </div>
+                <div class="control-group">
+                    <label for="strategy">Assignment Strategy</label>
+                    <select id="strategy">
+                        <option value="best_fit">Best Fit</option>
+                        <option value="skill_optimization">Skill Optimization</option>
+                        <option value="load_balance">Load Balance</option>
+                        <option value="cost_optimization">Cost Optimization</option>
+                        <option value="availability_first">Availability First</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="preferredUsers">Preferred Users (comma-separated IDs)</label>
+                    <input type="text" id="preferredUsers" placeholder="e.g., 1,2,3">
+                </div>
+                <div class="control-group">
+                    <label for="excludeUsers">Exclude Users (comma-separated IDs)</label>
+                    <input type="text" id="excludeUsers" placeholder="e.g., 4,5,6">
+                </div>
+            </div>
+            <div class="control-row">
+                <button class="btn" onclick="getRecommendations()">Get Recommendations</button>
+                <button class="btn btn-secondary" onclick="clearForm()">Clear</button>
+            </div>
+        </div>
+
+        <div class="filters-applied" id="filtersApplied" style="display: none;">
+            <h4>Filters Applied</h4>
+            <ul id="filtersList"></ul>
+        </div>
+
+        <div class="recommendations">
+            <div id="loading" class="loading" style="display: none;">
+                <p>Getting recommendations...</p>
+            </div>
+            <div id="error" class="error" style="display: none;"></div>
+            <div id="noRecommendations" class="no-recommendations" style="display: none;">
+                <p>No recommendations available for this task.</p>
+            </div>
+            <div id="recommendationsList"></div>
+        </div>
+
+        <div class="action-buttons" id="actionButtons" style="display: none;">
+            <button class="btn" onclick="assignSelectedUser()">Assign Selected User</button>
+            <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <script>
+        let selectedRecommendation = null;
+        let currentTaskId = null;
+
+        // URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const taskIdFromUrl = urlParams.get('task_id');
+        
+        if (taskIdFromUrl) {
+            document.getElementById('taskId').value = taskIdFromUrl;
+            currentTaskId = parseInt(taskIdFromUrl);
+            getRecommendations();
+        }
+
+        async function getRecommendations() {
+            const taskId = document.getElementById('taskId').value;
+            const strategy = document.getElementById('strategy').value;
+            const preferredUsers = document.getElementById('preferredUsers').value;
+            const excludeUsers = document.getElementById('excludeUsers').value;
+
+            if (!taskId) {
+                showError('Please enter a task ID');
+                return;
+            }
+
+            currentTaskId = parseInt(taskId);
+            showLoading(true);
+            hideError();
+            hideRecommendations();
+
+            try {
+                const requestBody = {
+                    task_id: parseInt(taskId),
+                    strategy: strategy,
+                    preferred_users: preferredUsers ? preferredUsers.split(',').map(id => parseInt(id.trim())) : null,
+                    exclude_users: excludeUsers ? excludeUsers.split(',').map(id => parseInt(id.trim())) : null
+                };
+
+                const response = await fetch('/api/v1/resource-optimization/resources/assignment-assistant', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderRecommendations(data);
+                    showFilters(data.filters_applied);
+                } else {
+                    showError(data.error || 'Failed to get recommendations');
+                }
+            } catch (error) {
+                console.error('Error getting recommendations:', error);
+                showError('Failed to get recommendations. Please try again.');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function renderRecommendations(data) {
+            const container = document.getElementById('recommendationsList');
+            const recommendations = data.recommendations;
+            
+            if (!recommendations || recommendations.length === 0) {
+                showNoRecommendations();
+                return;
+            }
+
+            // Show task info
+            if (data.task_info) {
+                showTaskInfo(data.task_info);
+            }
+
+            let html = '';
+            
+            recommendations.forEach((rec, index) => {
+                const scoreClass = rec.overall_score >= 0.8 ? 'high' : rec.overall_score >= 0.6 ? 'medium' : 'low';
+                const initials = rec.user_name.split(' ').map(name => name[0]).join('').toUpperCase();
+                
+                html += `
+                    <div class="recommendation-card" onclick="selectRecommendation(${index}, ${JSON.stringify(rec).replace(/"/g, '&quot;')})">
+                        <div class="recommendation-header">
+                            <div class="user-info">
+                                <div class="user-avatar">${initials}</div>
+                                <div class="user-details">
+                                    <h4>${rec.user_name}</h4>
+                                    <p>User ID: ${rec.user_id}</p>
+                                </div>
+                            </div>
+                            <div class="score-badge ${scoreClass}">
+                                ${(rec.overall_score * 100).toFixed(0)}% Match
+                            </div>
+                        </div>
+                        
+                        <div class="recommendation-details">
+                            <div class="detail-item">
+                                <label>Skill Match</label>
+                                <span>${(rec.skill_match_score * 100).toFixed(0)}%</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Availability</label>
+                                <span>${(rec.availability_score * 100).toFixed(0)}%</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Cost Score</label>
+                                <span>${(rec.cost_score * 100).toFixed(0)}%</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Estimated Hours</label>
+                                <span>${rec.estimated_hours}h</span>
+                            </div>
+                        </div>
+                        
+                        <div class="reasoning">
+                            <h5>Why this user?</h5>
+                            <p>${rec.reasoning}</p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            showRecommendations();
+            showActionButtons();
+        }
+
+        function selectRecommendation(index, recommendation) {
+            // Remove previous selection
+            document.querySelectorAll('.recommendation-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Add selection to clicked card
+            const cards = document.querySelectorAll('.recommendation-card');
+            if (cards[index]) {
+                cards[index].classList.add('selected');
+            }
+            
+            selectedRecommendation = recommendation;
+        }
+
+        function showTaskInfo(taskInfo) {
+            document.getElementById('taskName').textContent = taskInfo.name || '-';
+            document.getElementById('taskHours').textContent = taskInfo.estimated_hours ? `${taskInfo.estimated_hours}h` : '-';
+            document.getElementById('taskStartDate').textContent = taskInfo.start_date || '-';
+            document.getElementById('taskEndDate').textContent = taskInfo.end_date || '-';
+            document.getElementById('taskInfo').style.display = 'block';
+        }
+
+        function showFilters(filters) {
+            const container = document.getElementById('filtersList');
+            let html = '';
+            
+            if (filters.preferred_users && filters.preferred_users.length > 0) {
+                html += `<li>Preferred Users: ${filters.preferred_users.join(', ')}</li>`;
+            }
+            
+            if (filters.exclude_users && filters.exclude_users.length > 0) {
+                html += `<li>Excluded Users: ${filters.exclude_users.join(', ')}</li>`;
+            }
+            
+            html += `<li>Strategy: ${filters.strategy}</li>`;
+            
+            container.innerHTML = html;
+            document.getElementById('filtersApplied').style.display = 'block';
+        }
+
+        function showRecommendations() {
+            document.getElementById('recommendationsList').style.display = 'block';
+            document.getElementById('noRecommendations').style.display = 'none';
+        }
+
+        function showNoRecommendations() {
+            document.getElementById('recommendationsList').style.display = 'none';
+            document.getElementById('noRecommendations').style.display = 'block';
+        }
+
+        function showActionButtons() {
+            document.getElementById('actionButtons').style.display = 'flex';
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function hideRecommendations() {
+            document.getElementById('recommendationsList').style.display = 'none';
+            document.getElementById('noRecommendations').style.display = 'none';
+            document.getElementById('actionButtons').style.display = 'none';
+        }
+
+        function clearForm() {
+            document.getElementById('taskId').value = '';
+            document.getElementById('preferredUsers').value = '';
+            document.getElementById('excludeUsers').value = '';
+            document.getElementById('strategy').value = 'best_fit';
+            hideRecommendations();
+            hideError();
+            document.getElementById('taskInfo').style.display = 'none';
+            document.getElementById('filtersApplied').style.display = 'none';
+            selectedRecommendation = null;
+            currentTaskId = null;
+        }
+
+        function assignSelectedUser() {
+            if (!selectedRecommendation) {
+                showError('Please select a user to assign');
+                return;
+            }
+
+            // In a real implementation, this would make an API call to assign the user
+            alert(`User ${selectedRecommendation.user_name} (ID: ${selectedRecommendation.user_id}) has been assigned to task ${currentTaskId}`);
+            
+            // Close the modal or redirect
+            closeModal();
+        }
+
+        function closeModal() {
+            // In a real implementation, this would close the modal
+            // For now, just clear the form
+            clearForm();
+        }
+    </script>
+</body>
+</html>

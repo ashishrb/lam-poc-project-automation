@@ -15,7 +15,8 @@ from enum import Enum
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_
 
-from app.models.project import Project, Task, User
+from app.models.project import Project, Task
+from app.models.user import User
 from app.models.project import TaskStatus, TaskPriority, ProjectStatus
 from app.services.ai_guardrails import AIGuardrails
 from app.services.metrics import EVMService

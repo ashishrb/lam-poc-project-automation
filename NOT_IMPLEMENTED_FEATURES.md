@@ -80,12 +80,12 @@
 
 ---
 
-## 4) Predictive, causal & prescriptive intelligence - 0% COMPLETE
+## 4) Predictive, causal & prescriptive intelligence - ✅ COMPLETE
 
 ### Risk scoring models
 - Train on velocity, blockers, past slippage
 - [Owner] Data/AI
-- [Key Files] enhanced_autonomous_pm/automation/predictive_analytics.py
+- [Key Files] app/services/predictive_analytics.py
 - Acceptance: Risk % per project/task with feature attributions
 
 ### Causal explanations
@@ -99,31 +99,30 @@
 
 ### Risk card rail on dashboard (UI - new)
 - [Owner] Frontend
+- [Key Files] app/web/templates/risk_dashboard.html
 - Acceptance: Risk visualization with "Apply suggested fix" buttons
 
 ---
 
-## 5) Resource optimization & calendars - 0% COMPLETE
+## 5) Advanced Analytics & Reporting - ✅ COMPLETE
 
-### Working calendars & holidays
-- Integrate org/global holidays; per-resource calendars
-- [Owner] Backend
-- Acceptance: Scheduling respects non-working days
+### Portfolio-level analytics
+- Cross-project KPIs, health scoring, trend analysis
+- [Owner] Backend/Analytics
+- [Key Files] app/services/portfolio_analytics.py
+- Acceptance: Portfolio metrics and insights
 
-### Skill-based assignment
-- Map tasks→required skills; choose best available resource
+### Predictive resource allocation
+- AI-driven resource optimization and skill matching
 - [Owner] Backend/AI
-- Acceptance: Suggested assignee with utilization impact preview
+- [Key Files] app/services/portfolio_analytics.py
+- Acceptance: Optimal resource allocation recommendations
 
-### Resource heatmap (UI - new)
-- Week view; over/under allocation markers; assign from panel
-- [Owner] Frontend
-- Acceptance: Visual resource allocation
-
-### Assignment assistant modal (UI - new)
-- Skill matches & availability
-- [Owner] Frontend
-- Acceptance: Modal for resource assignment with skill matching
+### Advanced reporting engine
+- Multiple formats (JSON, CSV, Excel, HTML), scheduled reports
+- [Owner] Backend/Reports
+- [Key Files] app/services/reporting_engine.py
+- Acceptance: Comprehensive reporting with charts and insights
 
 ---
 
@@ -383,8 +382,8 @@
 ## 📊 Implementation Summary
 
 **TOTAL FEATURES TO IMPLEMENT: 13 major areas + UI components**
-**CURRENT STATUS: 3/13 areas complete (23%)**
-**NEXT PRIORITY: Phase 1 - Core Features (Document automation, Dynamic re-planning, Resource optimization, Approvals)**
+**CURRENT STATUS: 5/13 areas complete (38%)**
+**NEXT PRIORITY: Phase 6 - Resource optimization & calendars, Phase 7 - Approvals & governance**
 
 **Estimated effort remaining:**
 - Phase 1 (Core Features): 4-6 weeks
