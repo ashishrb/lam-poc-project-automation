@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Portfolio Overview</h1>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+
+<div class="grid">
+  <section>
+    <h3>Projects Table</h3>
+    <div class="table-responsive">
+      <table class="table table-sm" id="tbl-projects">
+        <thead>
+          <tr>
+            <th>ID</th><th>Name</th><th>Status</th><th>Risk</th>
+            <th>Start</th><th>End</th>
+            <th>Allocated</th><th>Used</th><th>Util %</th><th>Complete %</th><th>Team</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+  <section>
+    <h3>Budget Utilization</h3>
+    <div id="budget-bar" style="height:360px;"></div>
+  </section>
+  <section>
+    <h3>Status Mix</h3>
+    <div id="status-pie" style="height:360px;"></div>
+  </section>
+  <section>
+    <h3>Completion Progress</h3>
+    <div id="completion-bar" style="height:360px;"></div>
+  </section>
+  <section>
+    <h3>Top Performers</h3>
+    <div class="table-responsive">
+      <table class="table table-sm" id="tbl-perf">
+        <thead>
+          <tr><th>Employee</th><th>Project</th><th>Quality</th><th>Collab</th><th>Innovation</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script>
+async function fetchJSON(url){ const r = await fetch(url); return await r.json(); }
+
+async function loadProjects(){
+  const d = await fetchJSON('/api/v1/projects/list');
+  const items = (d && d.success && d.projects) ? d.projects : [];
+  const tbody = document.querySelector('#tbl-projects tbody');
+  tbody.innerHTML = items.map(p=>
+    `<tr><td>${p.project_id}</td><td>${p.name}</td><td>${p.status}</td><td>${p.risk_level}</td>`+
+    `<td>${p.start_date}</td><td>${p.end_date}</td>`+
+    `<td>${p.budget_allocated}</td><td>${p.budget_used}</td>`+
+    `<td>${p.budget_utilization}%</td><td>${p.completion_percentage}%</td><td>${p.team_size}</td></tr>`
+  ).join('');
+
+  // Budget chart
+  const names = items.map(p=>p.name);
+  const alloc = items.map(p=>p.budget_allocated);
+  const used = items.map(p=>p.budget_used);
+  Plotly.newPlot('budget-bar', [
+    {type:'bar', x:names, y:alloc, name:'Allocated', marker:{color:'#93c5fd'}},
+    {type:'bar', x:names, y:used, name:'Used', marker:{color:'#22d3ee'}}
+  ], {barmode:'group', margin:{t:10}});
+
+  // Status mix
+  const counts = {};
+  items.forEach(p=>{ counts[p.status]=(counts[p.status]||0)+1; });
+  Plotly.newPlot('status-pie', [{type:'pie', labels:Object.keys(counts), values:Object.values(counts)}], {margin:{t:10}});
+
+  // Completion
+  Plotly.newPlot('completion-bar', [{type:'bar', x:names, y:items.map(p=>p.completion_percentage), marker:{color:'#34d399'}}], {yaxis:{range:[0,100]}, margin:{t:10}});
+}
+
+async function loadTopPerf(){
+  const d = await fetchJSON('/api/v1/employees/top-performance?limit=10');
+  const items = (d && d.success && d.employees) ? d.employees : [];
+  const tbody = document.querySelector('#tbl-perf tbody');
+  tbody.innerHTML = items.map(e=>
+    `<tr><td>${e.employee_name} (${e.employee_id})</td><td>${e.project_id||''}</td>`+
+    `<td>${e.quality_score}</td><td>${e.collaboration_score}</td><td>${e.innovation_score}</td></tr>`
+  ).join('');
+}
+
+(async ()=>{
+  await loadProjects();
+  await loadTopPerf();
+})();
+</script>
+{% endblock %}
+

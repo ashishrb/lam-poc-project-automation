@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Employee Self-Service Portal</h1>
+<form id="comprehensive-employee-form" method="post" action="{{ url_for('api_bp.employee_submit') }}">
+  <div class="grid">
+    <section>
+      <h3>Daily Task Tracking</h3>
+      <label>Employee ID<input name="employee_id" required></label>
+      <label>Name<input name="name" required></label>
+      <label>Department<input name="department"></label>
+      <label>Project ID<input name="project_id"></label>
+      <label>Tasks Completed Today<input type="number" name="tasks_completed" min="0"></label>
+      <label>Hours Worked<input type="number" name="hours_worked" step="0.25" min="0"></label>
+    </section>
+    <section>
+      <h3>Time Allocation</h3>
+      <label>Project A %<input type="number" name="alloc_a" min="0" max="100"></label>
+      <label>Project B %<input type="number" name="alloc_b" min="0" max="100"></label>
+      <label>Project C %<input type="number" name="alloc_c" min="0" max="100"></label>
+    </section>
+    <section>
+      <h3>Self-Assessment</h3>
+      <label>Quality (1-10)<input type="number" name="quality_score" min="1" max="10"></label>
+      <label>Collaboration (1-10)<input type="number" name="collaboration_score" min="1" max="10"></label>
+      <label>Innovation (1-10)<input type="number" name="innovation_score" min="1" max="10"></label>
+    </section>
+    <section>
+      <h3>Skills & Goals</h3>
+      <label>Skills (comma-separated)<input name="skills"></label>
+      <label>Development Goals<textarea name="development_goals" rows="3"></textarea></label>
+    </section>
+    <section>
+      <h3>Availability</h3>
+      <label>Availability %<input type="number" name="availability" min="0" max="100"></label>
+      <label>Notes<textarea name="notes" rows="3"></textarea></label>
+    </section>
+    <section>
+      <h3>Innovation Suggestions</h3>
+      <label>Idea<textarea name="innovation_suggestion" rows="4"></textarea></label>
+    </section>
+  </div>
+  <button type="submit">Submit</button>
+</form>
+{% endblock %}

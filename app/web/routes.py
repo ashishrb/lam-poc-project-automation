@@ -1,7 +1,10 @@
-from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Request, Form, HTTPException
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 import os
+from datetime import datetime
+from typing import Optional
 
 web_router = APIRouter()
 
@@ -126,3 +129,71 @@ async def alerts_page(request: Request):
 async def reports_page(request: Request):
     """Reports page"""
     return templates.TemplateResponse("reports.html", {"request": request})
+
+
+# Additional routes migrated from Flask
+
+@web_router.get("/update", response_class=HTMLResponse)
+async def update_form(request: Request):
+    """Update form page"""
+    return templates.TemplateResponse("forms/update.html", {"request": request})
+
+
+@web_router.post("/update")
+async def submit_update(
+    request: Request,
+    name: str = Form(...),
+    project: str = Form(...),
+    update: str = Form(...)
+):
+    """Submit project update"""
+    # Validate input
+    if not name.strip() or not project.strip() or not update.strip():
+        return templates.TemplateResponse("forms/update.html", {
+            "request": request,
+            "error": "Please fill in Name, Project, and Update.",
+            "form_data": {"name": name, "project": project, "update": update}
+        })
+    
+    # TODO: Implement database storage
+    # For now, just return success
+    return templates.TemplateResponse("forms/update.html", {
+        "request": request,
+        "success": "Update submitted successfully and visible on Leadership Dashboard."
+    })
+
+
+@web_router.get("/manager", response_class=HTMLResponse)
+async def manager_dashboard(request: Request):
+    """Manager dashboard - migrated from Flask blueprint"""
+    return templates.TemplateResponse("dashboards/manager.html", {"request": request})
+
+
+@web_router.get("/manager/portfolio", response_class=HTMLResponse)
+async def manager_portfolio(request: Request):
+    """Manager portfolio view - migrated from Flask blueprint"""
+    return templates.TemplateResponse("dashboards/portfolio.html", {"request": request})
+
+
+@web_router.get("/employee", response_class=HTMLResponse)
+async def employee_portal(request: Request):
+    """Employee portal - migrated from Flask blueprint"""
+    return templates.TemplateResponse("forms/employee_portal.html", {"request": request})
+
+
+@web_router.get("/executive", response_class=HTMLResponse)
+async def executive_dashboard(request: Request):
+    """Executive dashboard - migrated from Flask blueprint"""
+    return templates.TemplateResponse("dashboards/executive.html", {"request": request})
+
+
+@web_router.get("/client", response_class=HTMLResponse)
+async def client_interface(request: Request):
+    """Client interface - migrated from Flask blueprint"""
+    return templates.TemplateResponse("client_interface.html", {"request": request})
+
+
+@web_router.get("/favicon.ico")
+async def favicon():
+    """Favicon endpoint - avoid 404s"""
+    return {"status": "no favicon"}

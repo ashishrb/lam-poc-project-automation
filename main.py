@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
+from fastapi.exceptions import HTTPException
+from fastapi.templating import Jinja2Templates
 import uvicorn
 import os
 from contextlib import asynccontextmanager
@@ -12,6 +14,10 @@ from app.core.database import engine, Base
 from app.api.v1.api import api_router
 from app.web.routes import web_router
 from app.core.middleware import AuthMiddleware, AuditMiddleware
+
+# Set up templates for error handling
+templates_dir = os.path.join(os.path.dirname(__file__), "app", "web", "templates")
+templates = Jinja2Templates(directory=templates_dir)
 
 
 @asynccontextmanager
@@ -116,6 +122,27 @@ async def root():
     </body>
     </html>
     """
+
+
+# Exception handlers
+@app.exception_handler(404)
+async def not_found_handler(request: Request, exc: HTTPException):
+    """Handle 404 errors"""
+    return templates.TemplateResponse("error.html", {
+        "request": request,
+        "error": "Page not found",
+        "status_code": 404
+    })
+
+
+@app.exception_handler(500)
+async def internal_error_handler(request: Request, exc: HTTPException):
+    """Handle 500 errors"""
+    return templates.TemplateResponse("error.html", {
+        "request": request,
+        "error": "Internal server error",
+        "status_code": 500
+    })
 
 
 if __name__ == "__main__":

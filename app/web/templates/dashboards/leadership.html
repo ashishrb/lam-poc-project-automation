@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Leadership Dashboard</h1>
+{% if updates %}
+<section>
+  <table>
+      <tr><th>Date</th><th>Project</th><th>Team Member</th><th>Update</th></tr>
+      {% for date, project, name, update in updates %}
+      <tr>
+          <td>{{ date }}</td>
+          <td>{{ project }}</td>
+          <td>{{ name }}</td>
+          <td>{{ update }}</td>
+      </tr>
+      {% endfor %}
+  </table>
+</section>
+{% else %}
+<section>
+  <p class="text-muted">No updates yet. Use <a href="{{ url_for('update') }}">Submit Update</a> to add the first status.</p>
+</section>
+{% endif %}
+{% endblock %}
