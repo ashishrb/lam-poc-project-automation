@@ -1,12 +1,6 @@
 -- Initialize PPM+AI Database
--- This script only creates the database and basic extensions
+-- This script only creates basic extensions and user setup
 -- Tables will be created by SQLAlchemy models and Alembic migrations
-
--- Create the main application database
-CREATE DATABASE app;
-
--- Connect to the app database
-\c app;
 
 -- Create extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";

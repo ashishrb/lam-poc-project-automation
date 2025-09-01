@@ -1,44 +1,81 @@
 {% extends "base.html" %}
+
+{% block title %}Employee Portal - Project Portfolio Management System{% endblock %}
+
 {% block content %}
-<h1>Employee Self-Service Portal</h1>
-<form id="comprehensive-employee-form" method="post" action="{{ url_for('api_bp.employee_submit') }}">
-  <div class="grid">
-    <section>
-      <h3>Daily Task Tracking</h3>
-      <label>Employee ID<input name="employee_id" required></label>
-      <label>Name<input name="name" required></label>
-      <label>Department<input name="department"></label>
-      <label>Project ID<input name="project_id"></label>
-      <label>Tasks Completed Today<input type="number" name="tasks_completed" min="0"></label>
-      <label>Hours Worked<input type="number" name="hours_worked" step="0.25" min="0"></label>
-    </section>
-    <section>
-      <h3>Time Allocation</h3>
-      <label>Project A %<input type="number" name="alloc_a" min="0" max="100"></label>
-      <label>Project B %<input type="number" name="alloc_b" min="0" max="100"></label>
-      <label>Project C %<input type="number" name="alloc_c" min="0" max="100"></label>
-    </section>
-    <section>
-      <h3>Self-Assessment</h3>
-      <label>Quality (1-10)<input type="number" name="quality_score" min="1" max="10"></label>
-      <label>Collaboration (1-10)<input type="number" name="collaboration_score" min="1" max="10"></label>
-      <label>Innovation (1-10)<input type="number" name="innovation_score" min="1" max="10"></label>
-    </section>
-    <section>
-      <h3>Skills & Goals</h3>
-      <label>Skills (comma-separated)<input name="skills"></label>
-      <label>Development Goals<textarea name="development_goals" rows="3"></textarea></label>
-    </section>
-    <section>
-      <h3>Availability</h3>
-      <label>Availability %<input type="number" name="availability" min="0" max="100"></label>
-      <label>Notes<textarea name="notes" rows="3"></textarea></label>
-    </section>
-    <section>
-      <h3>Innovation Suggestions</h3>
-      <label>Idea<textarea name="innovation_suggestion" rows="4"></textarea></label>
-    </section>
-  </div>
-  <button type="submit">Submit</button>
-</form>
+<div class="row">
+    <div class="col-12">
+        <h1><i class="fas fa-user-tie"></i> Employee Self-Service Portal</h1>
+        <p class="lead">Submit your daily updates, track performance, and manage your profile.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-tasks"></i> Daily Task Tracking</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="/api/v1/employee/submit-data">
+                    <div class="mb-3">
+                        <label for="employee_id" class="form-label">Employee ID *</label>
+                        <input type="text" class="form-control" id="employee_id" name="employee_id" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name *</label>
+                        <input type="text" class="form-control" id="name" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="department" class="form-label">Department</label>
+                        <input type="text" class="form-control" id="department" name="department">
+                    </div>
+                    <div class="mb-3">
+                        <label for="project_id" class="form-label">Project ID</label>
+                        <input type="text" class="form-control" id="project_id" name="project_id">
+                    </div>
+                    <div class="mb-3">
+                        <label for="tasks_completed" class="form-label">Tasks Completed Today</label>
+                        <input type="number" class="form-control" id="tasks_completed" name="tasks_completed" min="0">
+                    </div>
+                    <div class="mb-3">
+                        <label for="hours_worked" class="form-label">Hours Worked</label>
+                        <input type="number" class="form-control" id="hours_worked" name="hours_worked" step="0.25" min="0">
+                    </div>
+                    <div class="mb-3">
+                        <label for="availability" class="form-label">Availability %</label>
+                        <input type="number" class="form-control" id="availability" name="availability" min="0" max="100" value="100">
+                    </div>
+                    <div class="mb-3">
+                        <label for="skills" class="form-label">Skills (comma-separated)</label>
+                        <input type="text" class="form-control" id="skills" name="skills" placeholder="Python, FastAPI, PostgreSQL">
+                    </div>
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> Submit Employee Data
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-info-circle"></i> Quick Info</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li><i class="fas fa-check text-success"></i> Submit daily updates</li>
+                    <li><i class="fas fa-check text-success"></i> Track your performance</li>
+                    <li><i class="fas fa-check text-success"></i> Update your skills</li>
+                    <li><i class="fas fa-check text-success"></i> Report availability</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

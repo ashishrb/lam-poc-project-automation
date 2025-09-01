@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "production"
     
     # Database
-    DATABASE_URL: str = "postgresql+psycopg://ppm_user:ppm_pass@localhost:5432/ppm"
+    DATABASE_URL: str = "postgresql://app:app_password@localhost:5432/app"
     
     # Redis
     REDIS_URL: str = "redis://localhost:6379/0"

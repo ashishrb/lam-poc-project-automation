@@ -8,9 +8,17 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Create async engine with proper URL format
+def get_async_database_url():
+    """Get async database URL for SQLAlchemy"""
+    url = settings.DATABASE_URL
+    if url.startswith("postgresql://"):
+        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    return url
+
 # Create async engine
 engine = create_async_engine(
-    settings.DATABASE_URL.replace("postgresql+psycopg://", "postgresql+asyncpg://"),
+    get_async_database_url(),
     echo=settings.DEBUG,
     pool_pre_ping=True,
     pool_recycle=300,
