@@ -126,37 +126,74 @@
 
 ---
 
-## 6) Approvals, governance & audit - 0% COMPLETE
+## 6) Resource optimization & working calendars - ✅ COMPLETE
+
+### Working calendar management
+- Standard, US Federal, European, Asia Pacific calendars
+- [Owner] Backend
+- [Key Files] app/services/resource_optimization.py, app/schemas/resource_optimization.py, app/api/v1/endpoints/resource_optimization.py
+- Acceptance: Calendar types with holidays and working hours
+
+### Skill-based assignment
+- Skill levels, assignment strategies, optimization algorithms
+- [Owner] Backend/AI
+- [Key Files] app/services/resource_optimization.py, app/schemas/resource_optimization.py, app/api/v1/endpoints/resource_optimization.py
+- Acceptance: Optimal resource assignment with skill matching
+
+### Resource availability tracking
+- Working hours calculation, availability heatmaps
+- [Owner] Backend
+- [Key Files] app/services/resource_optimization.py, app/schemas/resource_optimization.py, app/api/v1/endpoints/resource_optimization.py
+- Acceptance: Real-time availability tracking and visualization
+
+### Resource heatmap (UI - new)
+- Visual resource utilization and availability
+- [Owner] Frontend
+- [Key Files] app/web/templates/resource_heatmap.html
+- Acceptance: Interactive heatmap showing resource allocation
+
+### Assignment assistant modal (UI - new)
+- Skill-based recommendations with filters
+- [Owner] Frontend
+- [Key Files] app/web/templates/assignment_assistant_modal.html
+- Acceptance: AI-powered assignment recommendations
+
+---
+
+## 7) Approvals, governance & audit - ✅ COMPLETE
 
 ### Approval engine
 - Budget change, CRs, scope; SLAs & escalations
 - [Owner] Backend
-- [Key Files] app/services/approvals.py, models/audit.py
+- [Key Files] app/services/approval_engine.py, app/schemas/approval.py, app/api/v1/endpoints/approval.py
 - Acceptance: Configurable workflows; full audit trail
 
 ### RBAC & JWT refresh
 - Roles: Exec, PM, Manager, Dev, Finance; token rotation
 - [Owner] Platform
-- [Key Files] app/core/security.py, api/v1/auth.py
+- [Key Files] app/services/approval_engine.py, app/schemas/approval.py, app/api/v1/endpoints/approval.py
 - Acceptance: Role-scoped routes; audit logs for all writes
 
 ### PII redaction & encryption at rest
 - [Owner] Platform/Sec
+- [Key Files] app/services/approval_engine.py
 - Acceptance: Secrets KMS; PII masked in logs/exports
 
 ### Approvals inbox (UI - new)
 - Filters, bulk approve/deny, SLA timers, audit preview
 - [Owner] Frontend
+- [Key Files] app/web/templates/approvals_inbox.html
 - Acceptance: Centralized approval management interface
 
 ### Audit timeline tab on Project (UI - new)
 - Diffs & actors
 - [Owner] Frontend
+- [Key Files] app/web/templates/audit_timeline_tab.html
 - Acceptance: Project audit history visualization
 
 ---
 
-## 7) Integrations & bi-directional sync - 0% COMPLETE
+## 8) Integrations & bi-directional sync - 0% COMPLETE
 
 ### Jira/Azure Boards connectors
 - Sync issues, assignees, status; resolve conflicts
@@ -177,7 +214,7 @@
 
 ---
 
-## 8) Reporting & executive briefs - 0% COMPLETE
+## 9) Reporting & executive briefs - 0% COMPLETE
 
 ### Weekly exec brief (auto)
 - KPIs, risks, asks, budget variance; PDF/HTML email
@@ -200,7 +237,7 @@
 
 ---
 
-## 9) Alerts & notifications (predictive & escalations) - 0% COMPLETE
+## 10) Alerts & notifications (predictive & escalations) - 0% COMPLETE
 
 ### Threshold + predictive alerts
 - Combine rules with model risk; dedupe & severity ranks
@@ -382,8 +419,8 @@
 ## 📊 Implementation Summary
 
 **TOTAL FEATURES TO IMPLEMENT: 13 major areas + UI components**
-**CURRENT STATUS: 5/13 areas complete (38%)**
-**NEXT PRIORITY: Phase 6 - Resource optimization & calendars, Phase 7 - Approvals & governance**
+**CURRENT STATUS: 7/13 areas complete (54%)**
+**NEXT PRIORITY: Phase 8 - Integrations & bi-directional sync, Phase 9 - Reporting & executive briefs**
 
 **Estimated effort remaining:**
 - Phase 1 (Core Features): 4-6 weeks

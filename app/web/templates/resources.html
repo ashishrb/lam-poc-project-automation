@@ -26,9 +26,14 @@
     <div class="container mt-4">
         <div class="d-flex justify-content-between align-items-center">
             <h1>👥 Resources</h1>
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newResourceModal">
-                <i class="fas fa-plus"></i> Add Resource
-            </button>
+            <div>
+                <button class="btn btn-secondary me-2" onclick="testButtonClick()">
+                    <i class="fas fa-bug"></i> Test JS
+                </button>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newResourceModal">
+                    <i class="fas fa-plus"></i> Add Resource
+                </button>
+            </div>
         </div>
         
         <!-- Resource List -->
@@ -46,8 +51,10 @@
                                         <thead>
                                             <tr>
                                                 <th>Name</th>
-                                                <th>Email</th>
+                                                <th>Role</th>
+                                                <th>Department</th>
                                                 <th>Skills</th>
+                                                <th>Availability</th>
                                                 <th>Actions</th>
                                             </tr>
                                         </thead>
@@ -55,13 +62,22 @@
                                             {% for resource in resources %}
                                             <tr>
                                                 <td>
-                                                    <strong>{{ resource.name }}</strong>
+                                                    <strong>{{ resource.name }}</strong><br>
+                                                    <small class="text-muted">{{ resource.email }}</small>
                                                 </td>
-                                                <td>{{ resource.email }}</td>
+                                                <td>{{ resource.role }}</td>
+                                                <td>{{ resource.department }}</td>
                                                 <td>
                                                     {% for skill in resource.skills %}
                                                         <span class="badge bg-info me-1">{{ skill }}</span>
                                                     {% endfor %}
+                                                </td>
+                                                <td>
+                                                    <div class="progress" style="height: 20px;">
+                                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ resource.availability }}%">
+                                                            {{ resource.availability }}%
+                                                        </div>
+                                                    </div>
                                                 </td>
                                                 <td>
                                                     <button class="btn btn-sm btn-outline-primary" onclick="viewResourceDetails({{ resource.id }})">
@@ -80,6 +96,23 @@
                                 <p class="text-muted">No resources found. Add your first team member to get started.</p>
                             {% endif %}
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resource Details Modal -->
+    <div class="modal fade" id="resourceDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Resource Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="resourceDetailsContent">
+                        <!-- Content will be loaded dynamically -->
                     </div>
                 </div>
             </div>
@@ -187,274 +220,136 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        let resources = [];
-        let currentResourceId = 0;
-
-        function saveResource() {
-            const form = document.getElementById('newResourceForm');
-            const formData = new FormData(form);
-            
-            const resource = {
-                id: ++currentResourceId,
-                fullName: formData.get('fullName'),
-                email: formData.get('email'),
-                role: formData.get('role'),
-                department: formData.get('department'),
-                dailyRate: parseFloat(formData.get('dailyRate')) || 0,
-                startDate: formData.get('startDate'),
-                skills: formData.get('skills').split(',').map(s => s.trim()).filter(s => s),
-                notes: formData.get('notes'),
-                createdAt: new Date().toISOString(),
-                dailyUpdates: [],
-                attendance: [],
-                projectCompletions: [],
-                skillsUpdates: []
-            };
-            
-            resources.push(resource);
-            updateResourceList();
-            
-            // Close modal and reset form
-            bootstrap.Modal.getInstance(document.getElementById('newResourceModal')).hide();
-            form.reset();
-            
-            // Show success message
-            showAlert('Resource added successfully!', 'success');
+        // SIMPLE TEST - Minimal JavaScript to isolate the issue
+        console.log('=== RESOURCES PAGE JAVASCRIPT LOADING ===');
+        
+        // Store resources data for JavaScript access
+        window.templateResources = {{ resources | tojson }};
+        
+        // Simple test function
+        function testButtonClick() {
+            console.log('Button click test function called');
+            alert('Button click is working!');
         }
-
-        function updateResourceList() {
-            const container = document.getElementById('resourceList');
+        
+        // Simple view function
+        function viewResourceDetails(resourceId) {
+            console.log('viewResourceDetails called with resourceId:', resourceId);
             
-            if (resources.length === 0) {
-                container.innerHTML = '<p class="text-muted">No resources found. Add your first team member to get started.</p>';
+            // Find the resource from template data
+            const resource = window.templateResources.find(r => r.id === resourceId);
+            if (!resource) {
+                alert('Resource not found!');
                 return;
             }
             
-            let html = '<div class="table-responsive"><table class="table table-hover">';
-            html += '<thead><tr><th>Name</th><th>Role</th><th>Department</th><th>Skills</th><th>Actions</th></tr></thead><tbody>';
-            
-            resources.forEach(resource => {
-                html += `
-                    <tr>
-                        <td><strong>${resource.fullName}</strong><br><small class="text-muted">${resource.email}</small></td>
-                        <td><span class="badge bg-primary">${resource.role}</span></td>
-                        <td>${resource.department || '-'}</td>
-                        <td>${resource.skills.map(s => `<span class="badge bg-light text-dark me-1">${s}</span>`).join('')}</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary" onclick="viewResourceDetails(${resource.id})">
-                                <i class="fas fa-eye"></i> View
-                            </button>
-                            <button class="btn btn-sm btn-outline-success" onclick="addDailyUpdate(${resource.id})">
-                                <i class="fas fa-plus"></i> Update
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            });
-            
-            html += '</tbody></table></div>';
-            container.innerHTML = html;
-        }
-
-        function viewResourceDetails(resourceId) {
-            const resource = resources.find(r => r.id === resourceId);
-            if (!resource) return;
-            
-            const modal = document.getElementById('resourceDetailsModal');
+            // Get the modal content element
             const content = document.getElementById('resourceDetailsContent');
             
+            // Populate the modal with resource details
             content.innerHTML = `
                 <div class="row">
                     <div class="col-md-4">
                         <div class="card">
                             <div class="card-header">
-                                <h6>Basic Information</h6>
+                                <h6>Resource Information</h6>
                             </div>
                             <div class="card-body">
-                                <p><strong>Name:</strong> ${resource.fullName}</p>
+                                <p><strong>Name:</strong> ${resource.name}</p>
                                 <p><strong>Email:</strong> ${resource.email}</p>
                                 <p><strong>Role:</strong> ${resource.role}</p>
-                                <p><strong>Department:</strong> ${resource.department || 'Not specified'}</p>
-                                <p><strong>Daily Rate:</strong> $${resource.dailyRate}</p>
-                                <p><strong>Start Date:</strong> ${resource.startDate || 'Not specified'}</p>
+                                <p><strong>Department:</strong> ${resource.department}</p>
+                                <p><strong>Availability:</strong> ${resource.availability}%</p>
+                            </div>
+                        </div>
+                        
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h6>Skills</h6>
+                            </div>
+                            <div class="card-body">
+                                ${resource.skills.map(skill => `<span class="badge bg-info me-1 mb-1">${skill}</span>`).join('')}
                             </div>
                         </div>
                     </div>
                     
                     <div class="col-md-8">
-                        <div class="card mb-3">
-                            <div class="card-header d-flex justify-content-between align-items-center">
-                                <h6>Daily Work Updates</h6>
-                                <button class="btn btn-sm btn-primary" onclick="addDailyUpdate(${resource.id})">
-                                    <i class="fas fa-plus"></i> Add Update
-                                </button>
-                            </div>
-                            <div class="card-body">
-                                <div id="dailyUpdates-${resource.id}">
-                                    ${renderDailyUpdates(resource.dailyUpdates)}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="card mb-3">
-                            <div class="card-header">
-                                <h6>Skills & Competencies</h6>
-                            </div>
-                            <div class="card-body">
-                                <div id="skillsSection-${resource.id}">
-                                    ${renderSkillsSection(resource)}
-                                </div>
-                            </div>
-                        </div>
-                        
                         <div class="card">
                             <div class="card-header">
-                                <h6>Project Completions</h6>
+                                <h6>Current Project Allocations</h6>
                             </div>
                             <div class="card-body">
-                                <div id="projectCompletions-${resource.id}">
-                                    ${renderProjectCompletions(resource.projectCompletions)}
-                                </div>
+                                ${renderProjectAllocations(resource.current_projects)}
                             </div>
                         </div>
                     </div>
                 </div>
             `;
             
-            bootstrap.Modal.getInstance(modal).show();
+            // Show the modal using Bootstrap 5 API
+            const modal = new bootstrap.Modal(document.getElementById('resourceDetailsModal'));
+            modal.show();
         }
-
-        function renderDailyUpdates(updates) {
-            if (updates.length === 0) {
-                return '<p class="text-muted">No daily updates recorded yet.</p>';
+        
+        // Simple edit function
+        function editResource(resourceId) {
+            console.log('editResource called with resourceId:', resourceId);
+            
+            // Find the resource from template data
+            const resource = window.templateResources.find(r => r.id === resourceId);
+            if (!resource) {
+                alert('Resource not found!');
+                return;
+            }
+            
+            // Populate the edit form
+            document.querySelector('input[name="fullName"]').value = resource.name;
+            document.querySelector('input[name="email"]').value = resource.email;
+            document.querySelector('select[name="role"]').value = resource.role.toLowerCase().replace(' ', '_');
+            document.querySelector('input[name="department"]').value = resource.department;
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('newResourceModal'));
+            modal.show();
+            
+            // Change modal title to indicate editing
+            document.querySelector('#newResourceModal .modal-title').textContent = 'Edit Resource';
+        }
+        
+        // Helper function to render project allocations
+        function renderProjectAllocations(projects) {
+            if (!projects || projects.length === 0) {
+                return '<p class="text-muted">No current project allocations.</p>';
             }
             
             let html = '';
-            updates.slice(-5).reverse().forEach(update => {
+            projects.forEach(project => {
                 html += `
-                    <div class="border-bottom pb-2 mb-2">
-                        <div class="d-flex justify-content-between">
-                            <strong>${update.date}</strong>
-                            <small class="text-muted">${update.hours} hours</small>
+                    <div class="border-bottom pb-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">${project.project_name}</h6>
+                                <p class="text-muted mb-2">Role: ${project.role}</p>
+                            </div>
+                            <span class="badge bg-primary">${project.hours_allocated}h/week</span>
                         </div>
-                        <p class="mb-1">${update.description}</p>
-                        <small class="text-muted">Projects: ${update.projects.join(', ')}</small>
+                        <div class="mb-2">
+                            <strong>Tasks:</strong>
+                            <ul class="mb-0">
+                                ${project.tasks.map(task => `<li>${task}</li>`).join('')}
+                            </ul>
+                        </div>
                     </div>
                 `;
             });
             return html;
         }
-
-        function renderSkillsSection(resource) {
-            let html = '<div class="mb-3">';
-            resource.skills.forEach(skill => {
-                html += `<span class="badge bg-primary me-2 mb-2">${skill}</span>`;
-            });
-            html += '</div>';
-            
-            html += `
-                <button class="btn btn-sm btn-outline-primary" onclick="addSkillUpdate(${resource.id})">
-                    <i class="fas fa-plus"></i> Add Skill
-                </button>
-            `;
-            return html;
-        }
-
-        function renderProjectCompletions(completions) {
-            if (completions.length === 0) {
-                return '<p class="text-muted">No project completions recorded yet.</p>';
-            }
-            
-            let html = '';
-            completions.forEach(completion => {
-                html += `
-                    <div class="border-bottom pb-2 mb-2">
-                        <div class="d-flex justify-content-between">
-                            <strong>${completion.projectName}</strong>
-                            <span class="badge bg-success">Completed</span>
-                        </div>
-                        <p class="mb-1">${completion.description}</p>
-                        <small class="text-muted">Completed: ${completion.completionDate}</small>
-                    </div>
-                `;
-            });
-            return html;
-        }
-
-        function addDailyUpdate(resourceId) {
-            const resource = resources.find(r => r.id === resourceId);
-            if (!resource) return;
-            
-            const description = prompt('Enter daily work update:');
-            if (!description) return;
-            
-            const hours = prompt('Enter hours worked (1-12):');
-            if (!hours || isNaN(hours) || hours < 1 || hours > 12) return;
-            
-            const projects = prompt('Enter project names (comma separated):');
-            
-            const update = {
-                date: new Date().toLocaleDateString(),
-                description: description,
-                hours: parseInt(hours),
-                projects: projects ? projects.split(',').map(p => p.trim()) : []
-            };
-            
-            resource.dailyUpdates.push(update);
-            
-            // Update the display if modal is open
-            const dailyUpdatesDiv = document.getElementById(`dailyUpdates-${resourceId}`);
-            if (dailyUpdatesDiv) {
-                dailyUpdatesDiv.innerHTML = renderDailyUpdates(resource.dailyUpdates);
-            }
-            
-            showAlert('Daily update added successfully!', 'success');
-        }
-
-        function addSkillUpdate(resourceId) {
-            const resource = resources.find(r => r.id === resourceId);
-            if (!resource) return;
-            
-            const newSkill = prompt('Enter new skill:');
-            if (!newSkill) return;
-            
-            if (!resource.skills.includes(newSkill)) {
-                resource.skills.push(newSkill);
-                
-                // Update the display
-                const skillsSection = document.getElementById(`skillsSection-${resourceId}`);
-                if (skillsSection) {
-                    skillsSection.innerHTML = renderSkillsSection(resource);
-                }
-                
-                showAlert('Skill added successfully!', 'success');
-            } else {
-                showAlert('Skill already exists!', 'warning');
-            }
-        }
-
-        function showAlert(message, type) {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
-            alertDiv.style.top = '20px';
-            alertDiv.style.right = '20px';
-            alertDiv.style.zIndex = '9999';
-            alertDiv.innerHTML = `
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
-            
-            document.body.appendChild(alertDiv);
-            
-            setTimeout(() => {
-                if (alertDiv.parentNode) {
-                    alertDiv.parentNode.removeChild(alertDiv);
-                }
-            }, 3000);
-        }
-
+        
         // Initialize
-        updateResourceList();
+        console.log('Resources page loaded. Template data:', window.templateResources);
+        console.log('testButtonClick function:', typeof testButtonClick);
+        console.log('viewResourceDetails function:', typeof viewResourceDetails);
+        console.log('editResource function:', typeof editResource);
     </script>
 </body>
 </html>

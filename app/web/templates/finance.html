@@ -67,7 +67,7 @@
                 <div class="card text-white bg-info">
                     <div class="card-body">
                         <h5 class="card-title">Variance</h5>
-                        <p class="card-text display-6" id="totalVariance">0%</p>
+                        <p class="card-text display-6" id="totalVariance">{{ finance.variance_percentage|default(0)|round(1) }}%</p>
                         <p class="card-text">Budget vs Actual</p>
                     </div>
                 </div>
@@ -92,6 +92,7 @@
                                                 <th>Budget</th>
                                                 <th>Spent</th>
                                                 <th>Remaining</th>
+                                                <th>Variance</th>
                                                 <th>Status</th>
                                             </tr>
                                         </thead>
@@ -101,7 +102,16 @@
                                                 <td><strong>{{ project.name }}</strong></td>
                                                 <td>${{ project.budget|int|round(0) }}</td>
                                                 <td>${{ project.spent|int|round(0) }}</td>
-                                                <td>${{ (project.budget - project.spent)|int|round(0) }}</td>
+                                                <td>${{ project.remaining|int|round(0) }}</td>
+                                                <td>
+                                                    {% if project.variance > 0 %}
+                                                        <span class="text-success">+${{ project.variance|int|round(0) }}</span>
+                                                    {% elif project.variance < 0 %}
+                                                        <span class="text-danger">${{ project.variance|int|round(0) }}</span>
+                                                    {% else %}
+                                                        <span class="text-muted">$0</span>
+                                                    {% endif %}
+                                                </td>
                                                 <td><span class="badge bg-success">{{ project.status }}</span></td>
                                             </tr>
                                             {% endfor %}
@@ -593,7 +603,7 @@
 
         // Initialize
         updateBudgetList();
-        updateFinanceOverview();
+        // updateFinanceOverview(); // Commented out to prevent overriding template values
     </script>
 </body>
 </html>

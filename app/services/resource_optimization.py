@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, or_, func
 from sqlalchemy.orm import selectinload
 
-from app.models.project import Project, Task, User
+from app.models.project import Project, Task
 from app.models.user import User
 from app.core.config import settings
 
@@ -276,8 +276,8 @@ class ResourceOptimizationService:
             logger.error(f"Error getting resource availability: {e}")
             return {"success": False, "error": str(e)}
     
-    async def get_skill_based_recommendations(self, task_id: int, strategy: AssignmentStrategy = AssignmentStrategy.BEST_FIT,
-                                           db: AsyncSession) -> Dict[str, Any]:
+    async def get_skill_based_recommendations(self, task_id: int, db: AsyncSession,
+                                           strategy: AssignmentStrategy = AssignmentStrategy.BEST_FIT) -> Dict[str, Any]:
         """Get skill-based assignment recommendations for a task"""
         try:
             # Get task information
@@ -413,9 +413,8 @@ class ResourceOptimizationService:
             logger.error(f"Error generating resource heatmap: {e}")
             return {"success": False, "error": str(e)}
     
-    async def optimize_resource_allocation(self, project_id: int, 
-                                        strategy: AssignmentStrategy = AssignmentStrategy.BEST_FIT,
-                                        db: AsyncSession) -> Dict[str, Any]:
+    async def optimize_resource_allocation(self, project_id: int, db: AsyncSession,
+                                        strategy: AssignmentStrategy = AssignmentStrategy.BEST_FIT) -> Dict[str, Any]:
         """Optimize resource allocation for a project"""
         try:
             # Get project tasks

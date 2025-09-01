@@ -265,7 +265,7 @@ class ApprovalEngine:
             return {"success": False, "error": str(e)}
     
     async def process_approval(self, approval_id: int, approver_id: int, action: str,
-                             comments: str = "", db: AsyncSession) -> Dict[str, Any]:
+                             db: AsyncSession, comments: str = "") -> Dict[str, Any]:
         """Process an approval (approve/reject)"""
         try:
             # Get approval request (in real implementation, fetch from database)

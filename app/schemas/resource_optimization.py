@@ -42,7 +42,7 @@ class WorkingHoursSchema(BaseModel):
 # Holiday Schema
 class HolidaySchema(BaseModel):
     name: str = Field(..., description="Holiday name")
-    date: date = Field(..., description="Holiday date")
+    holiday_date: date = Field(..., description="Holiday date")
     is_recurring: bool = Field(default=True, description="Whether holiday recurs annually")
     description: Optional[str] = Field(None, description="Holiday description")
 
@@ -61,7 +61,7 @@ class CalendarResponse(BaseModel):
 
 # Working Day Check
 class WorkingDayCheckRequest(BaseModel):
-    date: date = Field(..., description="Date to check")
+    check_date: date = Field(..., description="Date to check")
     calendar_type: CalendarType = Field(default=CalendarType.STANDARD, description="Calendar type to use")
 
 class WorkingDayCheckResponse(BaseModel):
@@ -140,7 +140,7 @@ class ResourceHeatmapRequest(BaseModel):
 class ResourceHeatmapDataPoint(BaseModel):
     user_id: int = Field(..., description="User ID")
     user_name: str = Field(..., description="User name")
-    date: date = Field(..., description="Date")
+    heatmap_date: date = Field(..., description="Date")
     utilization_percentage: float = Field(..., description="Utilization percentage")
     assigned_hours: float = Field(..., description="Assigned hours")
     available_hours: float = Field(..., description="Available hours")

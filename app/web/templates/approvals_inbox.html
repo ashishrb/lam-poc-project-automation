@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Approvals Inbox</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid #e9ecef;
+            transition: transform 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .stat-card h3 {
+            font-size: 2rem;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .stat-card.critical h3 {
+            color: #dc3545;
+        }
+
+        .stat-card.warning h3 {
+            color: #ffc107;
+        }
+
+        .stat-card.success h3 {
+            color: #28a745;
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 0.9rem;
+        }
+
+        .control-group select, .control-group input {
+            padding: 10px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .control-group select:focus, .control-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+        }
+
+        .approvals-container {
+            padding: 30px;
+        }
+
+        .approval-card {
+            background: white;
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .approval-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .approval-card.selected {
+            border-color: #28a745;
+            background: #f8fff9;
+        }
+
+        .approval-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .approval-title {
+            flex: 1;
+        }
+
+        .approval-title h3 {
+            color: #495057;
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+
+        .approval-title p {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+
+        .approval-meta {
+            text-align: right;
+        }
+
+        .priority-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: inline-block;
+        }
+
+        .priority-high {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .priority-medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .priority-low {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .priority-critical {
+            background: #dc3545;
+            color: white;
+        }
+
+        .approval-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .detail-item {
+            text-align: center;
+        }
+
+        .detail-item label {
+            display: block;
+            font-weight: 600;
+            color: #6c757d;
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+
+        .detail-item span {
+            color: #495057;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .approval-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn-approve {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn-approve:hover {
+            background: #218838;
+        }
+
+        .btn-reject {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn-reject:hover {
+            background: #c82333;
+        }
+
+        .btn-view {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .btn-view:hover {
+            background: #5a6268;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #6c757d;
+            font-size: 1.1rem;
+        }
+
+        .error {
+            text-align: center;
+            padding: 30px;
+            color: #dc3545;
+            background: #f8d7da;
+            border-radius: 8px;
+            margin: 20px;
+        }
+
+        .no-approvals {
+            text-align: center;
+            padding: 50px;
+            color: #6c757d;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            color: #495057;
+            margin: 0;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: #000;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 5px;
+        }
+
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 1rem;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .approvals-container {
+                padding: 20px;
+            }
+            
+            .approval-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .approval-meta {
+                text-align: left;
+            }
+            
+            .approval-actions {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Approvals Inbox</h1>
+            <p>Manage and process approval requests</p>
+        </div>
+
+        <div class="stats-bar" id="statsBar">
+            <div class="stat-card">
+                <h3 id="totalPending">0</h3>
+                <p>Total Pending</p>
+            </div>
+            <div class="stat-card critical">
+                <h3 id="highPriority">0</h3>
+                <p>High Priority</p>
+            </div>
+            <div class="stat-card warning">
+                <h3 id="overdue">0</h3>
+                <p>Overdue</p>
+            </div>
+            <div class="stat-card success">
+                <h3 id="myApprovals">0</h3>
+                <p>My Approvals</p>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="statusFilter">Status</label>
+                <select id="statusFilter">
+                    <option value="">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="typeFilter">Type</label>
+                <select id="typeFilter">
+                    <option value="">All Types</option>
+                    <option value="project_creation">Project Creation</option>
+                    <option value="budget_change">Budget Change</option>
+                    <option value="timeline_change">Timeline Change</option>
+                    <option value="resource_assignment">Resource Assignment</option>
+                    <option value="risk_escalation">Risk Escalation</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label for="priorityFilter">Priority</label>
+                <select id="priorityFilter">
+                    <option value="">All Priorities</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                </select>
+            </div>
+            <button class="btn" onclick="loadApprovals()">Refresh</button>
+            <button class="btn btn-secondary" onclick="clearFilters()">Clear Filters</button>
+        </div>
+
+        <div class="approvals-container">
+            <div id="loading" class="loading" style="display: none;">
+                <p>Loading approvals...</p>
+            </div>
+            <div id="error" class="error" style="display: none;"></div>
+            <div id="noApprovals" class="no-approvals" style="display: none;">
+                <p>No approvals found matching your criteria.</p>
+            </div>
+            <div id="approvalsList"></div>
+        </div>
+    </div>
+
+    <!-- Approval Modal -->
+    <div id="approvalModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Process Approval</h2>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="modalBody">
+                    <p>Are you sure you want to <span id="actionText">approve</span> this request?</p>
+                    <div class="form-group">
+                        <label for="comments">Comments (optional)</label>
+                        <textarea id="comments" placeholder="Add any comments about your decision..."></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn" id="confirmBtn" onclick="confirmAction()">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentApproval = null;
+        let currentAction = null;
+
+        // Load approvals on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadApprovals();
+        });
+
+        async function loadApprovals() {
+            showLoading(true);
+            hideError();
+
+            try {
+                const response = await fetch('/api/v1/approval/approvals/pending', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderApprovals(data.pending_approvals);
+                    updateStats(data.pending_approvals);
+                } else {
+                    showError(data.error || 'Failed to load approvals');
+                }
+            } catch (error) {
+                console.error('Error loading approvals:', error);
+                showError('Failed to load approvals. Please try again.');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function renderApprovals(approvals) {
+            const container = document.getElementById('approvalsList');
+            
+            if (!approvals || approvals.length === 0) {
+                showNoApprovals();
+                return;
+            }
+
+            // Apply filters
+            const filteredApprovals = filterApprovals(approvals);
+            
+            if (filteredApprovals.length === 0) {
+                showNoApprovals();
+                return;
+            }
+
+            let html = '';
+            
+            filteredApprovals.forEach(approval => {
+                const priorityClass = getPriorityClass(approval.priority);
+                const timeAgo = getTimeAgo(approval.created_at);
+                const isOverdue = approval.due_date && new Date(approval.due_date) < new Date();
+                
+                html += `
+                    <div class="approval-card" onclick="selectApproval(${approval.id})">
+                        <div class="approval-header">
+                            <div class="approval-title">
+                                <h3>${approval.title}</h3>
+                                <p>${approval.description}</p>
+                            </div>
+                            <div class="approval-meta">
+                                <div class="priority-badge ${priorityClass}">${approval.priority.toUpperCase()}</div>
+                                <div style="font-size: 0.8rem; color: #6c757d;">
+                                    ${timeAgo}
+                                    ${isOverdue ? '<br><span style="color: #dc3545;">OVERDUE</span>' : ''}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="approval-details">
+                            <div class="detail-item">
+                                <label>Type</label>
+                                <span>${formatApprovalType(approval.approval_type)}</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Entity</label>
+                                <span>${approval.entity_type} #${approval.entity_id}</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Requester</label>
+                                <span>${approval.requester}</span>
+                            </div>
+                            <div class="detail-item">
+                                <label>Due Date</label>
+                                <span>${approval.due_date ? formatDate(approval.due_date) : 'No due date'}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="approval-actions">
+                            <button class="btn-view" onclick="event.stopPropagation(); viewApproval(${approval.id})">View Details</button>
+                            <button class="btn-approve" onclick="event.stopPropagation(); processApproval(${approval.id}, 'approve')">Approve</button>
+                            <button class="btn-reject" onclick="event.stopPropagation(); processApproval(${approval.id}, 'reject')">Reject</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            showApprovals();
+        }
+
+        function filterApprovals(approvals) {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const typeFilter = document.getElementById('typeFilter').value;
+            const priorityFilter = document.getElementById('priorityFilter').value;
+
+            return approvals.filter(approval => {
+                if (statusFilter && approval.status !== statusFilter) return false;
+                if (typeFilter && approval.approval_type !== typeFilter) return false;
+                if (priorityFilter && approval.priority !== priorityFilter) return false;
+                return true;
+            });
+        }
+
+        function updateStats(approvals) {
+            const totalPending = approvals.length;
+            const highPriority = approvals.filter(a => a.priority === 'high' || a.priority === 'critical').length;
+            const overdue = approvals.filter(a => a.due_date && new Date(a.due_date) < new Date()).length;
+            const myApprovals = approvals.filter(a => a.approver_id === 1).length; // Assuming current user ID is 1
+
+            document.getElementById('totalPending').textContent = totalPending;
+            document.getElementById('highPriority').textContent = highPriority;
+            document.getElementById('overdue').textContent = overdue;
+            document.getElementById('myApprovals').textContent = myApprovals;
+        }
+
+        function getPriorityClass(priority) {
+            switch (priority) {
+                case 'critical': return 'priority-critical';
+                case 'high': return 'priority-high';
+                case 'medium': return 'priority-medium';
+                case 'low': return 'priority-low';
+                default: return 'priority-medium';
+            }
+        }
+
+        function getTimeAgo(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffDays = Math.floor(diffHours / 24);
+
+            if (diffDays > 0) {
+                return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+            } else if (diffHours > 0) {
+                return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+            } else {
+                return 'Just now';
+            }
+        }
+
+        function formatApprovalType(type) {
+            return type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString();
+        }
+
+        function selectApproval(approvalId) {
+            // Remove previous selection
+            document.querySelectorAll('.approval-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Add selection to clicked card
+            const card = document.querySelector(`[onclick="selectApproval(${approvalId})"]`);
+            if (card) {
+                card.classList.add('selected');
+            }
+        }
+
+        function processApproval(approvalId, action) {
+            currentApproval = approvalId;
+            currentAction = action;
+            
+            document.getElementById('modalTitle').textContent = `${action.charAt(0).toUpperCase() + action.slice(1)} Approval`;
+            document.getElementById('actionText').textContent = action;
+            document.getElementById('comments').value = '';
+            
+            document.getElementById('approvalModal').style.display = 'block';
+        }
+
+        async function confirmAction() {
+            if (!currentApproval || !currentAction) return;
+
+            const comments = document.getElementById('comments').value;
+
+            try {
+                const response = await fetch(`/api/v1/approval/approvals/${currentApproval}/process`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: currentAction,
+                        comments: comments
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    closeModal();
+                    loadApprovals(); // Refresh the list
+                    alert(`Approval ${currentAction}d successfully!`);
+                } else {
+                    alert(data.error || 'Failed to process approval');
+                }
+            } catch (error) {
+                console.error('Error processing approval:', error);
+                alert('Failed to process approval. Please try again.');
+            }
+        }
+
+        function viewApproval(approvalId) {
+            // In a real implementation, this would open a detailed view
+            alert(`Viewing approval details for ID: ${approvalId}`);
+        }
+
+        function closeModal() {
+            document.getElementById('approvalModal').style.display = 'none';
+            currentApproval = null;
+            currentAction = null;
+        }
+
+        function clearFilters() {
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('typeFilter').value = '';
+            document.getElementById('priorityFilter').value = '';
+            loadApprovals();
+        }
+
+        function showApprovals() {
+            document.getElementById('approvalsList').style.display = 'block';
+            document.getElementById('noApprovals').style.display = 'none';
+        }
+
+        function showNoApprovals() {
+            document.getElementById('approvalsList').style.display = 'none';
+            document.getElementById('noApprovals').style.display = 'block';
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('approvalModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>

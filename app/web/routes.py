@@ -45,13 +45,73 @@ async def dashboard(request: Request):
 @web_router.get("/projects", response_class=HTMLResponse)
 async def projects_page(request: Request):
     """Projects page"""
-    # Sample projects data
+    # Sample projects data with more details
     projects = [
-        {"id": 1, "name": "ALPHA Project", "code": "PRJ-001", "project_manager_id": "John Manager", "status": "active", "priority": "high"},
-        {"id": 2, "name": "BETA Project", "code": "PRJ-002", "project_manager_id": "Sarah Lead", "status": "planning", "priority": "medium"},
-        {"id": 3, "name": "GAMMA Project", "code": "PRJ-003", "project_manager_id": "Mike Director", "status": "active", "priority": "critical"},
-        {"id": 4, "name": "DELTA Project", "code": "PRJ-004", "project_manager_id": "Lisa PM", "status": "completed", "priority": "low"},
-        {"id": 5, "name": "EPSILON Project", "code": "PRJ-005", "project_manager_id": "Alex Tech", "status": "on_hold", "priority": "medium"}
+        {
+            "id": 1, 
+            "name": "ALPHA Project", 
+            "code": "PRJ-001", 
+            "project_manager_id": "John Manager", 
+            "status": "active", 
+            "priority": "high",
+            "description": "AI-First Project Management System",
+            "start_date": "2024-01-15",
+            "end_date": "2024-06-30",
+            "budget": 500000,
+            "progress": 75
+        },
+        {
+            "id": 2, 
+            "name": "BETA Project", 
+            "code": "PRJ-002", 
+            "project_manager_id": "Sarah Lead", 
+            "status": "planning", 
+            "priority": "medium",
+            "description": "Enhanced Resource Optimization Platform",
+            "start_date": "2024-02-01",
+            "end_date": "2024-08-31",
+            "budget": 300000,
+            "progress": 25
+        },
+        {
+            "id": 3, 
+            "name": "GAMMA Project", 
+            "code": "PRJ-003", 
+            "project_manager_id": "Mike Director", 
+            "status": "active", 
+            "priority": "critical",
+            "description": "Advanced Analytics Dashboard",
+            "start_date": "2024-01-01",
+            "end_date": "2024-12-31",
+            "budget": 400000,
+            "progress": 60
+        },
+        {
+            "id": 4, 
+            "name": "DELTA Project", 
+            "code": "PRJ-004", 
+            "project_manager_id": "Lisa PM", 
+            "status": "completed", 
+            "priority": "low",
+            "description": "Automated Workflow Engine",
+            "start_date": "2023-09-01",
+            "end_date": "2024-01-31",
+            "budget": 200000,
+            "progress": 100
+        },
+        {
+            "id": 5, 
+            "name": "EPSILON Project", 
+            "code": "PRJ-005", 
+            "project_manager_id": "Alex Tech", 
+            "status": "on_hold", 
+            "priority": "medium",
+            "description": "Cloud Migration Initiative",
+            "start_date": "2024-03-01",
+            "end_date": "2024-09-30",
+            "budget": 200000,
+            "progress": 15
+        }
     ]
     
     return templates.TemplateResponse("projects.html", {
@@ -63,13 +123,73 @@ async def projects_page(request: Request):
 @web_router.get("/resources", response_class=HTMLResponse)
 async def resources_page(request: Request):
     """Resources page"""
-    # Sample resources data
+    # Sample resources data with project allocations
     resources = [
-        {"id": 1, "name": "John Developer", "email": "john@company.com", "skills": ["Python", "FastAPI", "PostgreSQL"]},
-        {"id": 2, "name": "Sarah Designer", "email": "sarah@company.com", "skills": ["UI/UX", "Figma", "React"]},
-        {"id": 3, "name": "Mike Architect", "email": "mike@company.com", "skills": ["System Design", "AWS", "Docker"]},
-        {"id": 4, "name": "Lisa Tester", "email": "lisa@company.com", "skills": ["QA", "Automation", "Selenium"]},
-        {"id": 5, "name": "Alex DevOps", "email": "alex@company.com", "skills": ["CI/CD", "Kubernetes", "Jenkins"]}
+        {
+            "id": 1, 
+            "name": "John Developer", 
+            "email": "john@company.com", 
+            "skills": ["Python", "FastAPI", "PostgreSQL"],
+            "role": "Senior Developer",
+            "department": "Engineering",
+            "availability": 85,
+            "current_projects": [
+                {"project_id": 1, "project_name": "ALPHA Project", "role": "Lead Developer", "hours_allocated": 40, "tasks": ["API Development", "Database Design"]},
+                {"project_id": 3, "project_name": "GAMMA Project", "role": "Developer", "hours_allocated": 20, "tasks": ["Analytics Module"]}
+            ]
+        },
+        {
+            "id": 2, 
+            "name": "Sarah Designer", 
+            "email": "sarah@company.com", 
+            "skills": ["UI/UX", "Figma", "React"],
+            "role": "UX Designer",
+            "department": "Design",
+            "availability": 70,
+            "current_projects": [
+                {"project_id": 1, "project_name": "ALPHA Project", "role": "UI Designer", "hours_allocated": 30, "tasks": ["Dashboard Design", "User Interface"]},
+                {"project_id": 2, "project_name": "BETA Project", "role": "UX Designer", "hours_allocated": 25, "tasks": ["User Research", "Wireframing"]}
+            ]
+        },
+        {
+            "id": 3, 
+            "name": "Mike Architect", 
+            "email": "mike@company.com", 
+            "skills": ["System Design", "AWS", "Docker"],
+            "role": "Solution Architect",
+            "department": "Architecture",
+            "availability": 60,
+            "current_projects": [
+                {"project_id": 2, "project_name": "BETA Project", "role": "Architect", "hours_allocated": 35, "tasks": ["System Architecture", "Cloud Setup"]},
+                {"project_id": 5, "project_name": "EPSILON Project", "role": "Architect", "hours_allocated": 15, "tasks": ["Migration Planning"]}
+            ]
+        },
+        {
+            "id": 4, 
+            "name": "Lisa Tester", 
+            "email": "lisa@company.com", 
+            "skills": ["QA", "Automation", "Selenium"],
+            "role": "QA Engineer",
+            "department": "Quality Assurance",
+            "availability": 90,
+            "current_projects": [
+                {"project_id": 1, "project_name": "ALPHA Project", "role": "QA Lead", "hours_allocated": 25, "tasks": ["Test Planning", "Automation"]},
+                {"project_id": 3, "project_name": "GAMMA Project", "role": "QA Engineer", "hours_allocated": 30, "tasks": ["Testing", "Bug Reports"]}
+            ]
+        },
+        {
+            "id": 5, 
+            "name": "Alex DevOps", 
+            "email": "alex@company.com", 
+            "skills": ["CI/CD", "Kubernetes", "Jenkins"],
+            "role": "DevOps Engineer",
+            "department": "Operations",
+            "availability": 80,
+            "current_projects": [
+                {"project_id": 4, "project_name": "DELTA Project", "role": "DevOps Engineer", "hours_allocated": 40, "tasks": ["Pipeline Setup", "Deployment"]},
+                {"project_id": 5, "project_name": "EPSILON Project", "role": "DevOps Engineer", "hours_allocated": 20, "tasks": ["Infrastructure Setup"]}
+            ]
+        }
     ]
     
     return templates.TemplateResponse("resources.html", {
@@ -81,17 +201,26 @@ async def resources_page(request: Request):
 @web_router.get("/finance", response_class=HTMLResponse)
 async def finance_page(request: Request):
     """Finance page"""
-    # Sample finance data
+    # Sample finance data with actual values
     finance_data = {
         "total_budget": 1600000,
         "spent": 850000,
         "remaining": 750000,
+        "variance": -50000,
+        "variance_percentage": -3.1,
         "projects": [
-            {"name": "ALPHA Project", "budget": 500000, "spent": 250000, "status": "On Track"},
-            {"name": "BETA Project", "budget": 300000, "spent": 150000, "status": "Under Budget"},
-            {"name": "GAMMA Project", "budget": 400000, "spent": 200000, "status": "On Track"},
-            {"name": "DELTA Project", "budget": 200000, "spent": 200000, "status": "Completed"},
-            {"name": "EPSILON Project", "budget": 200000, "spent": 50000, "status": "On Hold"}
+            {"name": "ALPHA Project", "budget": 500000, "spent": 375000, "remaining": 125000, "variance": 25000, "status": "On Track"},
+            {"name": "BETA Project", "budget": 300000, "spent": 75000, "remaining": 225000, "variance": -75000, "status": "Under Budget"},
+            {"name": "GAMMA Project", "budget": 400000, "spent": 240000, "remaining": 160000, "variance": 0, "status": "On Track"},
+            {"name": "DELTA Project", "budget": 200000, "spent": 200000, "remaining": 0, "variance": 0, "status": "Completed"},
+            {"name": "EPSILON Project", "budget": 200000, "spent": 30000, "remaining": 170000, "variance": -30000, "status": "On Hold"}
+        ],
+        "monthly_spending": [
+            {"month": "Jan", "spent": 120000},
+            {"month": "Feb", "spent": 150000},
+            {"month": "Mar", "spent": 180000},
+            {"month": "Apr", "spent": 200000},
+            {"month": "May", "spent": 0}
         ]
     }
     
