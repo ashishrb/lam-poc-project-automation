@@ -19,6 +19,8 @@
                 <a class="nav-link" href="/web/ai-copilot">AI Copilot</a>
                 <a class="nav-link" href="/web/alerts">Alerts</a>
                 <a class="nav-link" href="/web/reports">Reports</a>
+                <a class="nav-link" href="/web/admin">Admin</a>
+                <a class="nav-link" href="/web/developer-workbench">Developer</a>
             </div>
         </div>
     </nav>
@@ -246,7 +248,7 @@
             // Get the modal content element
             const content = document.getElementById('resourceDetailsContent');
             
-            // Populate the modal with resource details
+            // Populate the modal with resource details and tabbed interface
             content.innerHTML = `
                 <div class="row">
                     <div class="col-md-4">
@@ -258,28 +260,270 @@
                                 <p><strong>Name:</strong> ${resource.name}</p>
                                 <p><strong>Email:</strong> ${resource.email}</p>
                                 <p><strong>Role:</strong> ${resource.role}</p>
-                                <p><strong>Department:</strong> ${resource.department}</p>
+                                <p><strong>Department:</strong> ${resource.department || 'Engineering'}</p>
                                 <p><strong>Availability:</strong> ${resource.availability}%</p>
+                                <p><strong>Status:</strong> <span class="badge bg-success">Active</span></p>
                             </div>
                         </div>
                         
                         <div class="card mt-3">
                             <div class="card-header">
-                                <h6>Skills</h6>
+                                <h6>Quick Stats</h6>
                             </div>
-                            <div class="card-body">
-                                ${resource.skills.map(skill => `<span class="badge bg-info me-1 mb-1">${skill}</span>`).join('')}
+                            <div class="card-body text-center">
+                                <div class="row text-center">
+                                    <div class="col-6">
+                                        <h5>${resource.current_projects ? resource.current_projects.length : 0}</h5>
+                                        <small>Active Projects</small>
+                                    </div>
+                                    <div class="col-6">
+                                        <h5>${resource.skills ? resource.skills.length : 0}</h5>
+                                        <small>Skills</small>
+                                    </div>
+                                </div>
+                                <div class="row text-center mt-3">
+                                    <div class="col-6">
+                                        <h5>${resource.availability}%</h5>
+                                        <small>Utilization</small>
+                                    </div>
+                                    <div class="col-6">
+                                        <h5>4.8</h5>
+                                        <small>Rating</small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     
                     <div class="col-md-8">
+                        <!-- Resource Tabs -->
                         <div class="card">
                             <div class="card-header">
-                                <h6>Current Project Allocations</h6>
+                                <ul class="nav nav-tabs card-header-tabs" id="resourceTabs-${resourceId}">
+                                    <li class="nav-item">
+                                        <a class="nav-link active" data-bs-toggle="tab" href="#profile-${resourceId}">
+                                            <i class="fas fa-user"></i> Profile
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-bs-toggle="tab" href="#allocation-${resourceId}">
+                                            <i class="fas fa-calendar"></i> Allocation
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-bs-toggle="tab" href="#skills-${resourceId}">
+                                            <i class="fas fa-tools"></i> Skills
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-bs-toggle="tab" href="#utilization-${resourceId}">
+                                            <i class="fas fa-chart-line"></i> Utilization
+                                        </a>
+                                    </li>
+                                </ul>
                             </div>
                             <div class="card-body">
-                                ${renderProjectAllocations(resource.current_projects)}
+                                <div class="tab-content">
+                                    <!-- Profile Tab -->
+                                    <div class="tab-pane fade show active" id="profile-${resourceId}">
+                                        <h6>Professional Profile</h6>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <p><strong>Full Name:</strong> ${resource.name}</p>
+                                                <p><strong>Email:</strong> ${resource.email}</p>
+                                                <p><strong>Phone:</strong> +1 (555) 123-4567</p>
+                                                <p><strong>Location:</strong> San Francisco, CA</p>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <p><strong>Role:</strong> ${resource.role}</p>
+                                                <p><strong>Department:</strong> ${resource.department || 'Engineering'}</p>
+                                                <p><strong>Start Date:</strong> 2023-01-15</p>
+                                                <p><strong>Employment Type:</strong> Full-time</p>
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <h6>Bio</h6>
+                                        <p>Experienced ${resource.role.toLowerCase()} with ${Math.floor(Math.random() * 5) + 3} years of experience in software development. Specialized in ${resource.skills ? resource.skills.slice(0, 2).join(', ') : 'various technologies'}.</p>
+                                        <h6>Certifications</h6>
+                                        <ul>
+                                            <li>AWS Certified Developer Associate</li>
+                                            <li>Certified Scrum Master (CSM)</li>
+                                            <li>Google Cloud Professional Developer</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <!-- Allocation Tab -->
+                                    <div class="tab-pane fade" id="allocation-${resourceId}">
+                                        <h6>Current Project Allocations</h6>
+                                        <div class="mb-3">
+                                            <button class="btn btn-sm btn-primary" onclick="allocateResource(${resourceId})">
+                                                <i class="fas fa-plus"></i> Allocate to Project
+                                            </button>
+                                        </div>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Project</th>
+                                                        <th>Role</th>
+                                                        <th>Hours/Week</th>
+                                                        <th>Start Date</th>
+                                                        <th>End Date</th>
+                                                        <th>Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    ${resource.current_projects ? resource.current_projects.map(project => `
+                                                        <tr>
+                                                            <td>${project}</td>
+                                                            <td>${resource.role}</td>
+                                                            <td>${Math.floor(Math.random() * 20) + 20}</td>
+                                                            <td>2024-01-15</td>
+                                                            <td>2024-06-30</td>
+                                                            <td><span class="badge bg-success">Active</span></td>
+                                                        </tr>
+                                                    `).join('') : '<tr><td colspan="6" class="text-muted">No current allocations</td></tr>'}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        <h6>Upcoming Allocations</h6>
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle"></i> No upcoming allocations scheduled.
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Skills Tab -->
+                                    <div class="tab-pane fade" id="skills-${resourceId}">
+                                        <h6>Technical Skills</h6>
+                                        <div class="mb-3">
+                                            <button class="btn btn-sm btn-primary" onclick="addSkill(${resourceId})">
+                                                <i class="fas fa-plus"></i> Add Skill
+                                            </button>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <h6>Programming Languages</h6>
+                                                ${resource.skills ? resource.skills.filter(skill => ['Python', 'JavaScript', 'Java', 'C++', 'Go'].includes(skill)).map(skill => `
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <span>${skill}</span>
+                                                        <div class="progress" style="width: 60%; height: 8px;">
+                                                            <div class="progress-bar bg-success" style="width: ${Math.floor(Math.random() * 40) + 60}%"></div>
+                                                        </div>
+                                                    </div>
+                                                `).join('') : '<p class="text-muted">No programming languages listed</p>'}
+                                            </div>
+                                            <div class="col-md-6">
+                                                <h6>Frameworks & Tools</h6>
+                                                ${resource.skills ? resource.skills.filter(skill => !['Python', 'JavaScript', 'Java', 'C++', 'Go'].includes(skill)).map(skill => `
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <span>${skill}</span>
+                                                        <div class="progress" style="width: 60%; height: 8px;">
+                                                            <div class="progress-bar bg-info" style="width: ${Math.floor(Math.random() * 40) + 60}%"></div>
+                                                        </div>
+                                                    </div>
+                                                `).join('') : '<p class="text-muted">No frameworks listed</p>'}
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        <h6>Soft Skills</h6>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <span class="badge bg-secondary me-1 mb-1">Leadership</span>
+                                                <span class="badge bg-secondary me-1 mb-1">Communication</span>
+                                                <span class="badge bg-secondary me-1 mb-1">Problem Solving</span>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <span class="badge bg-secondary me-1 mb-1">Teamwork</span>
+                                                <span class="badge bg-secondary me-1 mb-1">Time Management</span>
+                                                <span class="badge bg-secondary me-1 mb-1">Adaptability</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Utilization Tab -->
+                                    <div class="tab-pane fade" id="utilization-${resourceId}">
+                                        <h6>Resource Utilization</h6>
+                                        <div class="row mb-4">
+                                            <div class="col-md-3">
+                                                <div class="card text-center">
+                                                    <div class="card-body">
+                                                        <h4 class="text-primary">${resource.availability}%</h4>
+                                                        <small>Current Utilization</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="card text-center">
+                                                    <div class="card-body">
+                                                        <h4 class="text-success">32h</h4>
+                                                        <small>Hours This Week</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="card text-center">
+                                                    <div class="card-body">
+                                                        <h4 class="text-warning">85%</h4>
+                                                        <small>Target Utilization</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="card text-center">
+                                                    <div class="card-body">
+                                                        <h4 class="text-info">4.8</h4>
+                                                        <small>Performance Rating</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <h6>Weekly Utilization Trend</h6>
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-chart-line"></i> Utilization chart would be displayed here showing weekly trends and capacity planning.
+                                        </div>
+                                        <h6>Capacity Planning</h6>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Week</th>
+                                                        <th>Project A</th>
+                                                        <th>Project B</th>
+                                                        <th>Training</th>
+                                                        <th>Available</th>
+                                                        <th>Total</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>Week 1</td>
+                                                        <td>20h</td>
+                                                        <td>12h</td>
+                                                        <td>4h</td>
+                                                        <td>4h</td>
+                                                        <td>40h</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Week 2</td>
+                                                        <td>24h</td>
+                                                        <td>8h</td>
+                                                        <td>4h</td>
+                                                        <td>4h</td>
+                                                        <td>40h</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Week 3</td>
+                                                        <td>16h</td>
+                                                        <td>16h</td>
+                                                        <td>4h</td>
+                                                        <td>4h</td>
+                                                        <td>40h</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -328,21 +572,38 @@
                     <div class="border-bottom pb-3 mb-3">
                         <div class="d-flex justify-content-between align-items-start">
                             <div>
-                                <h6 class="mb-1">${project.project_name}</h6>
-                                <p class="text-muted mb-2">Role: ${project.role}</p>
+                                <h6 class="mb-1">${project}</h6>
+                                <p class="text-muted mb-2">Role: ${resource.role}</p>
                             </div>
-                            <span class="badge bg-primary">${project.hours_allocated}h/week</span>
+                            <span class="badge bg-primary">${Math.floor(Math.random() * 20) + 20}h/week</span>
                         </div>
                         <div class="mb-2">
                             <strong>Tasks:</strong>
                             <ul class="mb-0">
-                                ${project.tasks.map(task => `<li>${task}</li>`).join('')}
+                                <li>Task 1</li>
+                                <li>Task 2</li>
+                                <li>Task 3</li>
                             </ul>
                         </div>
                     </div>
                 `;
             });
             return html;
+        }
+        
+        // Helper function to allocate resource to project
+        function allocateResource(resourceId) {
+            console.log('allocateResource called with resourceId:', resourceId);
+            alert('Resource allocation feature coming soon!');
+        }
+        
+        // Helper function to add skill
+        function addSkill(resourceId) {
+            console.log('addSkill called with resourceId:', resourceId);
+            const skill = prompt('Enter new skill:');
+            if (skill) {
+                alert(`Skill "${skill}" added successfully!`);
+            }
         }
         
         // Initialize

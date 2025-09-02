@@ -33,6 +33,11 @@ async def project_reports_page(request: Request):
     """Project reports page with Gantt charts and analytics"""
     return templates.TemplateResponse("project_reports.html", {"request": request})
 
+@web_router.get("/admin", response_class=HTMLResponse)
+async def admin_page(request: Request):
+    """Admin page"""
+    return templates.TemplateResponse("admin.html", {"request": request})
+
 
 @web_router.get("/dashboard", response_class=HTMLResponse)
 async def dashboard(request: Request):
@@ -199,51 +204,56 @@ async def finance_page(request: Request):
     # Sample financial data
     financial_data = {
         "total_budget": 2250000,
-        "total_spent": 1850000,
-        "total_remaining": 400000,
-        "budget_utilization": 82.2,
+        "spent": 1850000,
+        "remaining": 400000,
+        "variance_percentage": 82.2,
         "projects": [
             {
                 "name": "ALPHA Project",
                 "budget": 500000,
                 "spent": 375000,
                 "remaining": 125000,
-                "utilization": 75.0
+                "variance": 0,
+                "status": "On Track"
             },
             {
                 "name": "BETA Project",
                 "budget": 300000,
                 "spent": 75000,
                 "remaining": 225000,
-                "utilization": 25.0
+                "variance": 0,
+                "status": "Under Budget"
             },
             {
                 "name": "GAMMA Project",
                 "budget": 400000,
                 "spent": 240000,
                 "remaining": 160000,
-                "utilization": 60.0
+                "variance": 0,
+                "status": "On Track"
             },
             {
                 "name": "DELTA Project",
                 "budget": 250000,
                 "spent": 250000,
                 "remaining": 0,
-                "utilization": 100.0
+                "variance": 0,
+                "status": "Completed"
             },
             {
                 "name": "EPSILON Project",
                 "budget": 800000,
                 "spent": 120000,
                 "remaining": 680000,
-                "utilization": 15.0
+                "variance": 0,
+                "status": "Under Budget"
             }
         ]
     }
     
     return templates.TemplateResponse("finance.html", {
         "request": request,
-        "financial_data": financial_data
+        "finance": financial_data
     })
 
 

@@ -5,70 +5,639 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin - Project Portfolio Management System</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            border-radius: 8px;
+            margin: 2px 0;
+            transition: all 0.3s;
+        }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+        .main-content {
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-active { background-color: #28a745; }
+        .status-warning { background-color: #ffc107; }
+        .status-error { background-color: #dc3545; }
+        .status-inactive { background-color: #6c757d; }
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .connector-card {
+            border-left: 4px solid #007bff;
+        }
+        .connector-connected {
+            border-left-color: #28a745;
+        }
+        .connector-disconnected {
+            border-left-color: #dc3545;
+        }
+        .btn-admin {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            border: none;
+            color: white;
+            border-radius: 25px;
+            padding: 10px 25px;
+            transition: all 0.3s;
+        }
+        .btn-admin:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            color: white;
+        }
+        .demo-badge {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7em;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="/">🚀 PPM System</a>
-            <div class="navbar-nav">
-                <a class="nav-link" href="/web/dashboard">Dashboard</a>
-                <a class="nav-link" href="/web/projects">Projects</a>
-                <a class="nav-link" href="/web/resources">Resources</a>
-                <a class="nav-link" href="/web/finance">Finance</a>
-                <a class="nav-link" href="/web/ai-copilot">AI Copilot</a>
-                <a class="nav-link" href="/web/alerts">Alerts</a>
-                <a class="nav-link" href="/web/reports">Reports</a>
-            </div>
-        </div>
-    </nav>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="text-white"><i class="fas fa-cog"></i> Admin Panel</h4>
+                        <span class="demo-badge">DEMO MODE</span>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#tenant" onclick="showSection('tenant')">
+                                <i class="fas fa-building"></i> Tenant & Access
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#ai-rag" onclick="showSection('ai-rag')">
+                                <i class="fas fa-brain"></i> AI & RAG Control
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#connectors" onclick="showSection('connectors')">
+                                <i class="fas fa-plug"></i> Connector Hub
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#governance" onclick="showSection('governance')">
+                                <i class="fas fa-shield-alt"></i> Data & Governance
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#audit" onclick="showSection('audit')">
+                                <i class="fas fa-history"></i> Audit Center
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#ops" onclick="showSection('ops')">
+                                <i class="fas fa-chart-line"></i> Ops & Analytics
+                            </a>
+                        </li>
+                        <li class="nav-item mt-4">
+                            <a class="nav-link" href="/web/dashboard">
+                                <i class="fas fa-arrow-left"></i> Back to Dashboard
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
 
-    <div class="container mt-4">
-        <h1>⚙️ Admin & Security</h1>
-        
-        <div class="row mt-4">
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>User Management</h5>
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <!-- Tenant & Access Section -->
+                <div id="tenant" class="section">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-building"></i> Tenant & Access Management</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <span class="demo-badge">DEMO ONLY</span>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <button class="btn btn-primary mb-2">+ Add User</button>
-                        <button class="btn btn-outline-secondary mb-2">Manage Roles</button>
-                        <button class="btn btn-outline-secondary mb-2">Permissions</button>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-users"></i> Tenant Configuration</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form>
+                                        <div class="mb-3">
+                                            <label class="form-label">Tenant Name</label>
+                                            <input type="text" class="form-control" value="LAM Project Management" readonly>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Domain</label>
+                                            <input type="text" class="form-control" value="lam-pm.example.com" readonly>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Data Region</label>
+                                            <select class="form-select">
+                                                <option>US East (N. Virginia)</option>
+                                                <option>EU West (Ireland)</option>
+                                                <option>Asia Pacific (Singapore)</option>
+                                            </select>
+                                        </div>
+                                        <button type="button" class="btn btn-admin" onclick="showDemoAlert('Tenant settings updated (Demo)')">
+                                            <i class="fas fa-save"></i> Save Configuration
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-user-shield"></i> RBAC Configuration</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Role</label>
+                                        <select class="form-select">
+                                            <option>Admin</option>
+                                            <option>Manager</option>
+                                            <option>Developer</option>
+                                            <option>Viewer</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Permissions</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" checked>
+                                            <label class="form-check-label">Project Management</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" checked>
+                                            <label class="form-check-label">Resource Management</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" checked>
+                                            <label class="form-check-label">AI Operations</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox">
+                                            <label class="form-check-label">Financial Controls</label>
+                                        </div>
+                                    </div>
+                                    <button type="button" class="btn btn-admin" onclick="showDemoAlert('RBAC settings updated (Demo)')">
+                                        <i class="fas fa-save"></i> Update Permissions
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <div class="col-md-6">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>System Settings</h5>
+
+                <!-- AI & RAG Control Section -->
+                <div id="ai-rag" class="section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-brain"></i> AI & RAG Control</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <span class="demo-badge">DEMO ONLY</span>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <button class="btn btn-outline-secondary mb-2">Configuration</button>
-                        <button class="btn btn-outline-secondary mb-2">Audit Logs</button>
-                        <button class="btn btn-outline-secondary mb-2">Backup</button>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-server"></i> Model Registry</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Embedding Model</label>
+                                        <select class="form-select">
+                                            <option>nomic-embed-text:v1.5</option>
+                                            <option>text-embedding-ada-002</option>
+                                            <option>all-MiniLM-L6-v2</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">LLM Model</label>
+                                        <select class="form-select">
+                                            <option>gpt-oss:20B</option>
+                                            <option>qwen3:latest</option>
+                                            <option>llama3.2:1b-instruct</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Code Model</label>
+                                        <select class="form-select">
+                                            <option>qwen2.5-coder:1.5b</option>
+                                            <option>codellama:7b-instruct</option>
+                                            <option>starcoder:15.5b</option>
+                                        </select>
+                                    </div>
+                                    <button type="button" class="btn btn-admin" onclick="showDemoAlert('Model registry updated (Demo)')">
+                                        <i class="fas fa-save"></i> Update Models
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-sliders-h"></i> Model Parameters</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Temperature: <span id="tempValue">0.7</span></label>
+                                        <input type="range" class="form-range" min="0" max="2" step="0.1" value="0.7" oninput="document.getElementById('tempValue').textContent = this.value">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Top-P: <span id="topPValue">0.9</span></label>
+                                        <input type="range" class="form-range" min="0" max="1" step="0.1" value="0.9" oninput="document.getElementById('topPValue').textContent = this.value">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Max Tokens: <span id="maxTokensValue">2048</span></label>
+                                        <input type="range" class="form-range" min="512" max="4096" step="512" value="2048" oninput="document.getElementById('maxTokensValue').textContent = this.value">
+                                    </div>
+                                    <button type="button" class="btn btn-admin" onclick="showDemoAlert('Model parameters updated (Demo)')">
+                                        <i class="fas fa-save"></i> Apply Settings
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-        
-        <div class="row mt-4">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header">
-                        <h5>🤖 Autonomous System Management</h5>
+
+                <!-- Connector Hub Section -->
+                <div id="connectors" class="section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-plug"></i> Connector Hub</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <span class="demo-badge">DEMO ONLY</span>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <p class="card-text">Manage AI workflows, guardrails, and autonomous operations.</p>
-                        <a href="/web/autonomous-admin" class="btn btn-success">
-                            <i class="fas fa-robot"></i> Manage Autonomous System
-                        </a>
+
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="card connector-card connector-connected">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-code-branch fa-3x text-success mb-3"></i>
+                                    <h5>GitHub</h5>
+                                    <p class="text-success"><i class="fas fa-check-circle"></i> Connected</p>
+                                    <small class="text-muted">Last sync: 2 min ago</small>
+                                    <div class="mt-3">
+                                        <button class="btn btn-sm btn-outline-primary">Configure</button>
+                                        <button class="btn btn-sm btn-outline-secondary">Sync Now</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card connector-card connector-connected">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-exclamation-circle fa-3x text-success mb-3"></i>
+                                    <h5>Jira</h5>
+                                    <p class="text-success"><i class="fas fa-check-circle"></i> Connected</p>
+                                    <small class="text-muted">Last sync: 5 min ago</small>
+                                    <div class="mt-3">
+                                        <button class="btn btn-sm btn-outline-primary">Configure</button>
+                                        <button class="btn btn-sm btn-outline-secondary">Sync Now</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card connector-card connector-disconnected">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-tools fa-3x text-danger mb-3"></i>
+                                    <h5>ServiceNow</h5>
+                                    <p class="text-danger"><i class="fas fa-times-circle"></i> Disconnected</p>
+                                    <small class="text-muted">Last sync: Never</small>
+                                    <div class="mt-3">
+                                        <button class="btn btn-sm btn-outline-primary">Connect</button>
+                                        <button class="btn btn-sm btn-outline-secondary">Configure</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card connector-card connector-connected">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-comments fa-3x text-success mb-3"></i>
+                                    <h5>Slack</h5>
+                                    <p class="text-success"><i class="fas fa-check-circle"></i> Connected</p>
+                                    <small class="text-muted">Last sync: 1 min ago</small>
+                                    <div class="mt-3">
+                                        <button class="btn btn-sm btn-outline-primary">Configure</button>
+                                        <button class="btn btn-sm btn-outline-secondary">Sync Now</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
+
+                <!-- Data & Governance Section -->
+                <div id="governance" class="section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-shield-alt"></i> Data & Governance</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <span class="demo-badge">DEMO ONLY</span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-database"></i> Vector Index Dashboard</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row text-center">
+                                        <div class="col-4">
+                                            <h3 class="text-primary">7</h3>
+                                            <small>Collections</small>
+                                        </div>
+                                        <div class="col-4">
+                                            <h3 class="text-success">1,247</h3>
+                                            <small>Documents</small>
+                                        </div>
+                                        <div class="col-4">
+                                            <h3 class="text-info">98.5%</h3>
+                                            <small>Freshness</small>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <h6>Recent Collections</h6>
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span>Project Documentation</span>
+                                            <span class="badge bg-primary">342 docs</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span>Technical Specs</span>
+                                            <span class="badge bg-primary">156 docs</span>
+                                        </li>
+                                        <li class="list-group-item d-flex justify-content-between">
+                                            <span>User Guides</span>
+                                            <span class="badge bg-primary">89 docs</span>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-policy"></i> Retention Policies</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Document Retention</label>
+                                        <select class="form-select">
+                                            <option>1 Year</option>
+                                            <option>3 Years</option>
+                                            <option>5 Years</option>
+                                            <option>Indefinite</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Audit Log Retention</label>
+                                        <select class="form-select">
+                                            <option>6 Months</option>
+                                            <option>1 Year</option>
+                                            <option>2 Years</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" checked>
+                                        <label class="form-check-label">Enable Legal Hold</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" checked>
+                                        <label class="form-check-label">PII Masking</label>
+                                    </div>
+                                    <button type="button" class="btn btn-admin" onclick="showDemoAlert('Retention policies updated (Demo)')">
+                                        <i class="fas fa-save"></i> Apply Policies
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audit Center Section -->
+                <div id="audit" class="section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-history"></i> Audit Center</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <span class="demo-badge">DEMO ONLY</span>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-list"></i> Recent AI Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Timestamp</th>
+                                            <th>User</th>
+                                            <th>Action</th>
+                                            <th>Context</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>2024-01-15 14:32:15</td>
+                                            <td>john.doe@company.com</td>
+                                            <td>AI Plan Generation</td>
+                                            <td>Project: ALPHA - Created project plan</td>
+                                            <td><span class="badge bg-success">Approved</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>2024-01-15 14:28:42</td>
+                                            <td>sarah.lead@company.com</td>
+                                            <td>Resource Assignment</td>
+                                            <td>Project: BETA - Assigned 3 developers</td>
+                                            <td><span class="badge bg-success">Approved</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>2024-01-15 14:25:18</td>
+                                            <td>mike.director@company.com</td>
+                                            <td>Risk Assessment</td>
+                                            <td>Project: GAMMA - Identified 2 high risks</td>
+                                            <td><span class="badge bg-warning">Pending</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>2024-01-15 14:20:33</td>
+                                            <td>ai.system</td>
+                                            <td>Budget Adjustment</td>
+                                            <td>Project: DELTA - Increased by $50K</td>
+                                            <td><span class="badge bg-danger">Rejected</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>2024-01-15 14:15:07</td>
+                                            <td>dev.team@company.com</td>
+                                            <td>Code Review</td>
+                                            <td>PR #123 - Automated review completed</td>
+                                            <td><span class="badge bg-success">Approved</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ops & Analytics Section -->
+                <div id="ops" class="section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-chart-line"></i> Operations & Analytics</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <span class="demo-badge">DEMO ONLY</span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="card metric-card">
+                                <div class="card-body text-center">
+                                    <h3>94.2%</h3>
+                                    <p class="mb-0">On-Time Delivery</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card metric-card">
+                                <div class="card-body text-center">
+                                    <h3>87.5%</h3>
+                                    <p class="mb-0">AI Adoption Rate</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card metric-card">
+                                <div class="card-body text-center">
+                                    <h3>92.1%</h3>
+                                    <p class="mb-0">Budget Utilization</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div class="card metric-card">
+                                <div class="card-body text-center">
+                                    <h3>98.7%</h3>
+                                    <p class="mb-0">System Uptime</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-tasks"></i> Job Queue Monitor</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Active Jobs</span>
+                                        <span class="badge bg-success">12</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Queued Jobs</span>
+                                        <span class="badge bg-warning">3</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Failed Jobs</span>
+                                        <span class="badge bg-danger">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Completed Today</span>
+                                        <span class="badge bg-info">156</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-dollar-sign"></i> Cost Analytics</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>AI Model Costs</span>
+                                        <span>$2,847.32</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Infrastructure Costs</span>
+                                        <span>$1,234.56</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Storage Costs</span>
+                                        <span>$456.78</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Total This Month</span>
+                                        <span class="fw-bold">$4,538.66</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId).style.display = 'block';
+            
+            // Update navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        function showDemoAlert(message) {
+            alert(message);
+        }
+    </script>
 </body>
 </html>

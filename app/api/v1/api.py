@@ -15,7 +15,9 @@ from .endpoints import (
     plan_builder,
     resource_assignment,
     autonomous_system,
-    developer_workbench
+    developer_workbench,
+    vector_index,
+    financial_controls
 )
 
 api_router = APIRouter()
@@ -37,3 +39,5 @@ api_router.include_router(plan_builder.router, prefix="/plan-builder", tags=["Do
 api_router.include_router(resource_assignment.router, prefix="/resource-assignment", tags=["Resource Assignment"])
 api_router.include_router(autonomous_system.router, prefix="/autonomous-system", tags=["Autonomous System"])
 api_router.include_router(developer_workbench.router, prefix="/developer-workbench", tags=["Developer Workbench"])
+api_router.include_router(vector_index.router, prefix="/vector-index", tags=["Vector Index Management"])
+api_router.include_router(financial_controls.router, prefix="/financial-controls", tags=["Financial Controls"])
