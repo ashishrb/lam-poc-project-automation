@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Developer Workbench - LAM Project Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            border-radius: 8px;
+            margin: 2px 0;
+            transition: all 0.3s;
+        }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+        .main-content {
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .task-card {
+            border-left: 4px solid #007bff;
+        }
+        .task-high-priority {
+            border-left-color: #dc3545;
+        }
+        .task-medium-priority {
+            border-left-color: #ffc107;
+        }
+        .task-low-priority {
+            border-left-color: #28a745;
+        }
+        .btn-developer {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            border: none;
+            color: white;
+            border-radius: 25px;
+            padding: 10px 25px;
+            transition: all 0.3s;
+        }
+        .btn-developer:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            color: white;
+        }
+        .status-badge {
+            font-size: 0.8em;
+            padding: 4px 8px;
+        }
+        .ai-assistant {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+        }
+        .code-editor {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+        }
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        .progress-ring-circle {
+            transition: stroke-dashoffset 0.35s;
+            transform-origin: 50% 50%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="text-white"><i class="fas fa-code"></i> Dev Workbench</h4>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#dashboard" onclick="showSection('dashboard')">
+                                <i class="fas fa-tachometer-alt"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#tasks" onclick="showSection('tasks')">
+                                <i class="fas fa-tasks"></i> My Tasks
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#code" onclick="showSection('code')">
+                                <i class="fas fa-code"></i> Code Review
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#ai" onclick="showSection('ai')">
+                                <i class="fas fa-robot"></i> AI Assistant
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#docs" onclick="showSection('docs')">
+                                <i class="fas fa-book"></i> Documentation
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#time" onclick="showSection('time')">
+                                <i class="fas fa-clock"></i> Time Tracking
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#status" onclick="showSection('status')">
+                                <i class="fas fa-chart-line"></i> Status Updates
+                            </a>
+                        </li>
+                        <li class="nav-item mt-4">
+                            <a class="nav-link" href="/web/dashboard">
+                                <i class="fas fa-arrow-left"></i> Back to Dashboard
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <!-- Dashboard Section -->
+                <div id="dashboard" class="section">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-tachometer-alt"></i> Developer Dashboard</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <button class="btn btn-developer" onclick="refreshDashboard()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Developer Stats -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h3 id="activeTasks">0</h3>
+                                    <p class="mb-0">Active Tasks</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h3 id="hoursLogged">0</h3>
+                                    <p class="mb-0">Hours This Week</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h3 id="codeReviews">0</h3>
+                                    <p class="mb-0">Code Reviews</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <h3 id="productivity">85%</h3>
+                                    <p class="mb-0">Productivity</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Assistant -->
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-robot"></i> AI Development Assistant</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="ai-assistant">
+                                        <h6>🤖 How can I help you today?</h6>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <button class="btn btn-light btn-sm mb-2" onclick="askAI('code_review')">
+                                                    <i class="fas fa-code"></i> Review Code
+                                                </button>
+                                                <button class="btn btn-light btn-sm mb-2" onclick="askAI('debug')">
+                                                    <i class="fas fa-bug"></i> Debug Issue
+                                                </button>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <button class="btn btn-light btn-sm mb-2" onclick="askAI('optimize')">
+                                                    <i class="fas fa-rocket"></i> Optimize Code
+                                                </button>
+                                                <button class="btn btn-light btn-sm mb-2" onclick="askAI('test')">
+                                                    <i class="fas fa-vial"></i> Generate Tests
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3">
+                                            <input type="text" class="form-control" id="aiQuery" placeholder="Ask me anything about your code...">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-chart-pie"></i> Task Progress</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <svg class="progress-ring" width="120" height="120">
+                                        <circle class="progress-ring-circle" stroke="#e6e6e6" stroke-width="8" fill="transparent" r="52" cx="60" cy="60"/>
+                                        <circle class="progress-ring-circle" stroke="#007bff" stroke-width="8" fill="transparent" r="52" cx="60" cy="60" stroke-dasharray="326.73" stroke-dashoffset="81.68"/>
+                                    </svg>
+                                    <h4 class="mt-2">75%</h4>
+                                    <p class="text-muted">Weekly Goal</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-clock"></i> Recent Activity</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="recentActivity">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="flex-shrink-0">
+                                                <i class="fas fa-code text-primary"></i>
+                                            </div>
+                                            <div class="flex-grow-1 ms-3">
+                                                <h6 class="mb-0">Code review completed</h6>
+                                                <small class="text-muted">2 hours ago</small>
+                                            </div>
+                                        </div>
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="flex-shrink-0">
+                                                <i class="fas fa-check text-success"></i>
+                                            </div>
+                                            <div class="flex-grow-1 ms-3">
+                                                <h6 class="mb-0">Task completed</h6>
+                                                <small class="text-muted">4 hours ago</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-exclamation-triangle"></i> Alerts & Notifications</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="alerts">
+                                        <div class="alert alert-warning alert-sm">
+                                            <i class="fas fa-clock"></i> Task deadline approaching
+                                        </div>
+                                        <div class="alert alert-info alert-sm">
+                                            <i class="fas fa-code-branch"></i> New PR ready for review
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tasks Section -->
+                <div id="tasks" class="section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-tasks"></i> My Tasks</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <button class="btn btn-developer" onclick="createTask()">
+                                <i class="fas fa-plus"></i> New Task
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row" id="tasksGrid">
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card task-card task-high-priority">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="card-title">Fix Authentication Bug</h6>
+                                        <span class="badge bg-danger status-badge">High</span>
+                                    </div>
+                                    <p class="card-text">Critical authentication issue in login module</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">Due: Today</small>
+                                        <button class="btn btn-sm btn-outline-primary">Start</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Code Review Section -->
+                <div id="code" class="section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-code"></i> Code Review</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <button class="btn btn-developer" onclick="requestCodeReview()">
+                                <i class="fas fa-plus"></i> Request Review
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Code Editor</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="code-editor p-3" style="min-height: 400px;">
+                                        <pre><code id="codeEditor">// Your code here...
+function example() {
+    console.log("Hello, World!");
+}</code></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>AI Code Analysis</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="codeAnalysis">
+                                        <div class="alert alert-success">
+                                            <i class="fas fa-check"></i> No issues found
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Assistant Section -->
+                <div id="ai" class="section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-robot"></i> AI Development Assistant</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <button class="btn btn-developer" onclick="clearAIChat()">
+                                <i class="fas fa-trash"></i> Clear Chat
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>AI Chat</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="aiChat" style="height: 400px; overflow-y: auto;">
+                                        <div class="ai-message">
+                                            <div class="d-flex">
+                                                <div class="flex-shrink-0">
+                                                    <i class="fas fa-robot text-primary"></i>
+                                                </div>
+                                                <div class="flex-grow-1 ms-3">
+                                                    <div class="bg-light p-3 rounded">
+                                                        Hello! I'm your AI development assistant. How can I help you today?
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="aiInput" placeholder="Ask me anything...">
+                                            <button class="btn btn-primary" onclick="sendAIMessage()">
+                                                <i class="fas fa-paper-plane"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Quick Actions</h5>
+                                </div>
+                                <div class="card-body">
+                                    <button class="btn btn-outline-primary btn-sm mb-2 w-100" onclick="askAI('explain_code')">
+                                        <i class="fas fa-question"></i> Explain Code
+                                    </button>
+                                    <button class="btn btn-outline-success btn-sm mb-2 w-100" onclick="askAI('optimize')">
+                                        <i class="fas fa-rocket"></i> Optimize
+                                    </button>
+                                    <button class="btn btn-outline-warning btn-sm mb-2 w-100" onclick="askAI('debug')">
+                                        <i class="fas fa-bug"></i> Debug
+                                    </button>
+                                    <button class="btn btn-outline-info btn-sm mb-2 w-100" onclick="askAI('test')">
+                                        <i class="fas fa-vial"></i> Generate Tests
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Documentation Section -->
+                <div id="docs" class="section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-book"></i> Documentation</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <button class="btn btn-developer" onclick="searchDocs()">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Documentation Categories</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="list-group">
+                                        <a href="#" class="list-group-item list-group-item-action" onclick="loadDocs('api')">
+                                            <i class="fas fa-code"></i> API Documentation
+                                        </a>
+                                        <a href="#" class="list-group-item list-group-item-action" onclick="loadDocs('architecture')">
+                                            <i class="fas fa-sitemap"></i> Architecture
+                                        </a>
+                                        <a href="#" class="list-group-item list-group-item-action" onclick="loadDocs('deployment')">
+                                            <i class="fas fa-server"></i> Deployment
+                                        </a>
+                                        <a href="#" class="list-group-item list-group-item-action" onclick="loadDocs('troubleshooting')">
+                                            <i class="fas fa-tools"></i> Troubleshooting
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 id="docTitle">API Documentation</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="docContent">
+                                        <h6>REST API Endpoints</h6>
+                                        <p>This section contains all available API endpoints...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Time Tracking Section -->
+                <div id="time" class="section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-clock"></i> Time Tracking</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <button class="btn btn-developer" onclick="startTimer()">
+                                <i class="fas fa-play"></i> Start Timer
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Current Session</h5>
+                                </div>
+                                <div class="card-body text-center">
+                                    <h2 id="timer">00:00:00</h2>
+                                    <p class="text-muted">No active timer</p>
+                                    <button class="btn btn-success" onclick="startTimer()">
+                                        <i class="fas fa-play"></i> Start
+                                    </button>
+                                    <button class="btn btn-danger" onclick="stopTimer()">
+                                        <i class="fas fa-stop"></i> Stop
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Today's Summary</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Total Hours:</span>
+                                        <span id="totalHours">0h 0m</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Active Tasks:</span>
+                                        <span id="activeTaskCount">0</span>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Productivity:</span>
+                                        <span id="productivityScore">85%</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status Updates Section -->
+                <div id="status" class="section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-chart-line"></i> Status Updates</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <button class="btn btn-developer" onclick="generateStatusUpdate()">
+                                <i class="fas fa-magic"></i> AI Generate
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Status Update</h5>
+                                </div>
+                                <div class="card-body">
+                                    <textarea class="form-control" id="statusUpdate" rows="8" placeholder="What did you work on today? What are your blockers? What's next?"></textarea>
+                                    <div class="mt-3">
+                                        <button class="btn btn-primary" onclick="saveStatusUpdate()">
+                                            <i class="fas fa-save"></i> Save Update
+                                        </button>
+                                        <button class="btn btn-outline-secondary" onclick="generateStatusUpdate()">
+                                            <i class="fas fa-magic"></i> AI Generate
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Recent Updates</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="recentUpdates">
+                                        <div class="mb-3">
+                                            <small class="text-muted">Today</small>
+                                            <p class="mb-1">Completed authentication module...</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variables
+        let currentSection = 'dashboard';
+        let timerRunning = false;
+        let timerInterval = null;
+        let startTime = null;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboard();
+        });
+
+        // Navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId).style.display = 'block';
+            
+            // Update navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            currentSection = sectionId;
+            
+            // Load section-specific data
+            switch(sectionId) {
+                case 'dashboard':
+                    loadDashboard();
+                    break;
+                case 'tasks':
+                    loadTasks();
+                    break;
+                case 'code':
+                    loadCodeReview();
+                    break;
+                case 'ai':
+                    loadAIAssistant();
+                    break;
+                case 'docs':
+                    loadDocs('api');
+                    break;
+                case 'time':
+                    loadTimeTracking();
+                    break;
+                case 'status':
+                    loadStatusUpdates();
+                    break;
+            }
+        }
+
+        // Dashboard functions
+        function loadDashboard() {
+            // Load developer stats
+            document.getElementById('activeTasks').textContent = '5';
+            document.getElementById('hoursLogged').textContent = '32';
+            document.getElementById('codeReviews').textContent = '3';
+            document.getElementById('productivity').textContent = '85%';
+        }
+
+        function refreshDashboard() {
+            loadDashboard();
+            showAlert('Dashboard refreshed', 'success');
+        }
+
+        // Task functions
+        function loadTasks() {
+            // Load tasks from API
+            console.log('Loading tasks...');
+        }
+
+        function createTask() {
+            showAlert('Task creation feature coming soon', 'info');
+        }
+
+        // Code review functions
+        function loadCodeReview() {
+            // Load code review interface
+            console.log('Loading code review...');
+        }
+
+        function requestCodeReview() {
+            showAlert('Code review request feature coming soon', 'info');
+        }
+
+        // AI Assistant functions
+        function loadAIAssistant() {
+            // Load AI assistant
+            console.log('Loading AI assistant...');
+        }
+
+        function askAI(type) {
+            const queries = {
+                'code_review': 'Please review my code for best practices and potential issues.',
+                'debug': 'Help me debug this issue.',
+                'optimize': 'How can I optimize this code for better performance?',
+                'test': 'Generate unit tests for this code.',
+                'explain_code': 'Explain what this code does.'
+            };
+            
+            const query = queries[type] || 'How can I help you with your code?';
+            addAIMessage('user', query);
+            
+            // Simulate AI response
+            setTimeout(() => {
+                addAIMessage('ai', `I'll help you with ${type}. Here's my analysis...`);
+            }, 1000);
+        }
+
+        function sendAIMessage() {
+            const input = document.getElementById('aiInput');
+            const message = input.value.trim();
+            
+            if (message) {
+                addAIMessage('user', message);
+                input.value = '';
+                
+                // Simulate AI response
+                setTimeout(() => {
+                    addAIMessage('ai', 'I understand your question. Let me help you with that...');
+                }, 1000);
+            }
+        }
+
+        function addAIMessage(sender, message) {
+            const chat = document.getElementById('aiChat');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'ai-message mb-3';
+            
+            const icon = sender === 'user' ? 'fas fa-user text-secondary' : 'fas fa-robot text-primary';
+            const bgClass = sender === 'user' ? 'bg-primary text-white' : 'bg-light';
+            
+            messageDiv.innerHTML = `
+                <div class="d-flex">
+                    <div class="flex-shrink-0">
+                        <i class="${icon}"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <div class="${bgClass} p-3 rounded">
+                            ${message}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            chat.appendChild(messageDiv);
+            chat.scrollTop = chat.scrollHeight;
+        }
+
+        function clearAIChat() {
+            document.getElementById('aiChat').innerHTML = `
+                <div class="ai-message">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-robot text-primary"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="bg-light p-3 rounded">
+                                Hello! I'm your AI development assistant. How can I help you today?
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Documentation functions
+        function loadDocs(category) {
+            const docs = {
+                'api': { title: 'API Documentation', content: 'REST API endpoints and usage...' },
+                'architecture': { title: 'Architecture', content: 'System architecture overview...' },
+                'deployment': { title: 'Deployment', content: 'Deployment procedures...' },
+                'troubleshooting': { title: 'Troubleshooting', content: 'Common issues and solutions...' }
+            };
+            
+            const doc = docs[category];
+            document.getElementById('docTitle').textContent = doc.title;
+            document.getElementById('docContent').innerHTML = `<h6>${doc.title}</h6><p>${doc.content}</p>`;
+        }
+
+        function searchDocs() {
+            showAlert('Documentation search feature coming soon', 'info');
+        }
+
+        // Time tracking functions
+        function loadTimeTracking() {
+            // Load time tracking data
+            console.log('Loading time tracking...');
+        }
+
+        function startTimer() {
+            if (!timerRunning) {
+                timerRunning = true;
+                startTime = new Date();
+                timerInterval = setInterval(updateTimer, 1000);
+                
+                document.querySelector('#time .btn-success').innerHTML = '<i class="fas fa-pause"></i> Pause';
+                document.querySelector('#time .btn-success').onclick = pauseTimer;
+            }
+        }
+
+        function pauseTimer() {
+            if (timerRunning) {
+                timerRunning = false;
+                clearInterval(timerInterval);
+                
+                document.querySelector('#time .btn-success').innerHTML = '<i class="fas fa-play"></i> Resume';
+                document.querySelector('#time .btn-success').onclick = startTimer;
+            }
+        }
+
+        function stopTimer() {
+            timerRunning = false;
+            clearInterval(timerInterval);
+            startTime = null;
+            
+            document.getElementById('timer').textContent = '00:00:00';
+            document.querySelector('#time .btn-success').innerHTML = '<i class="fas fa-play"></i> Start';
+            document.querySelector('#time .btn-success').onclick = startTimer;
+            
+            showAlert('Timer stopped', 'info');
+        }
+
+        function updateTimer() {
+            if (startTime) {
+                const now = new Date();
+                const diff = now - startTime;
+                const hours = Math.floor(diff / 3600000);
+                const minutes = Math.floor((diff % 3600000) / 60000);
+                const seconds = Math.floor((diff % 60000) / 1000);
+                
+                document.getElementById('timer').textContent = 
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }
+
+        // Status update functions
+        function loadStatusUpdates() {
+            // Load status updates
+            console.log('Loading status updates...');
+        }
+
+        function saveStatusUpdate() {
+            const update = document.getElementById('statusUpdate').value;
+            if (update.trim()) {
+                showAlert('Status update saved', 'success');
+                document.getElementById('statusUpdate').value = '';
+            } else {
+                showAlert('Please enter a status update', 'warning');
+            }
+        }
+
+        function generateStatusUpdate() {
+            // Simulate AI-generated status update
+            const update = `Today I worked on:
+• Completed the authentication module implementation
+• Fixed 3 bugs in the user management system
+• Reviewed 2 pull requests
+• Attended team standup
+
+Blockers: None currently
+
+Next: Continue with the payment integration module`;
+            
+            document.getElementById('statusUpdate').value = update;
+            showAlert('AI-generated status update created', 'success');
+        }
+
+        // Utility functions
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            const container = document.querySelector('.main-content');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

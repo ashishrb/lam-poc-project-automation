@@ -572,3 +572,148 @@ class AICopilotService:
                 "error": str(e),
                 "last_updated": datetime.now().isoformat()
             }
+
+    def _generate_interactive_buttons(self, message: str, context: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Generate interactive buttons based on message content and context"""
+        buttons = []
+        message_lower = message.lower()
+        
+        # Project-related actions
+        if any(word in message_lower for word in ['project', 'plan', 'wbs', 'gantt']):
+            buttons.extend([
+                {
+                    "text": "📊 Generate Project Plan",
+                    "action": "generate_project_plan",
+                    "icon": "fas fa-project-diagram",
+                    "color": "primary"
+                },
+                {
+                    "text": "📈 Create Gantt Chart",
+                    "action": "create_gantt_chart",
+                    "icon": "fas fa-chart-bar",
+                    "color": "success"
+                },
+                {
+                    "text": "📋 View WBS",
+                    "action": "view_wbs",
+                    "icon": "fas fa-list",
+                    "color": "info"
+                }
+            ])
+        
+        # Report-related actions
+        if any(word in message_lower for word in ['report', 'summary', 'status', 'progress']):
+            buttons.extend([
+                {
+                    "text": "📄 Generate Report",
+                    "action": "generate_report",
+                    "icon": "fas fa-file-alt",
+                    "color": "primary"
+                },
+                {
+                    "text": "📧 Email Report",
+                    "action": "email_report",
+                    "icon": "fas fa-envelope",
+                    "color": "success"
+                },
+                {
+                    "text": "📊 Executive Summary",
+                    "action": "executive_summary",
+                    "icon": "fas fa-chart-line",
+                    "color": "warning"
+                }
+            ])
+        
+        # Resource-related actions
+        if any(word in message_lower for word in ['resource', 'staff', 'team', 'allocation']):
+            buttons.extend([
+                {
+                    "text": "👥 Resource Allocation",
+                    "action": "resource_allocation",
+                    "icon": "fas fa-users",
+                    "color": "primary"
+                },
+                {
+                    "text": "📊 Capacity Planning",
+                    "action": "capacity_planning",
+                    "icon": "fas fa-chart-pie",
+                    "color": "info"
+                },
+                {
+                    "text": "⚡ Optimize Resources",
+                    "action": "optimize_resources",
+                    "icon": "fas fa-magic",
+                    "color": "success"
+                }
+            ])
+        
+        # Financial actions
+        if any(word in message_lower for word in ['budget', 'cost', 'financial', 'expense']):
+            buttons.extend([
+                {
+                    "text": "💰 Budget Analysis",
+                    "action": "budget_analysis",
+                    "icon": "fas fa-dollar-sign",
+                    "color": "success"
+                },
+                {
+                    "text": "📈 Forecast Budget",
+                    "action": "forecast_budget",
+                    "icon": "fas fa-chart-line",
+                    "color": "primary"
+                },
+                {
+                    "text": "⚠️ Variance Alert",
+                    "action": "variance_alert",
+                    "icon": "fas fa-exclamation-triangle",
+                    "color": "warning"
+                }
+            ])
+        
+        # Risk-related actions
+        if any(word in message_lower for word in ['risk', 'issue', 'problem', 'delay']):
+            buttons.extend([
+                {
+                    "text": "⚠️ Risk Assessment",
+                    "action": "risk_assessment",
+                    "icon": "fas fa-exclamation-triangle",
+                    "color": "warning"
+                },
+                {
+                    "text": "🛡️ Mitigation Plan",
+                    "action": "mitigation_plan",
+                    "icon": "fas fa-shield-alt",
+                    "color": "info"
+                },
+                {
+                    "text": "📊 Risk Dashboard",
+                    "action": "risk_dashboard",
+                    "icon": "fas fa-chart-bar",
+                    "color": "danger"
+                }
+            ])
+        
+        # Default actions
+        if not buttons:
+            buttons.extend([
+                {
+                    "text": "🤖 Ask AI Assistant",
+                    "action": "ai_assistant",
+                    "icon": "fas fa-robot",
+                    "color": "primary"
+                },
+                {
+                    "text": "📚 View Documentation",
+                    "action": "view_docs",
+                    "icon": "fas fa-book",
+                    "color": "info"
+                },
+                {
+                    "text": "❓ Get Help",
+                    "action": "get_help",
+                    "icon": "fas fa-question-circle",
+                    "color": "secondary"
+                }
+            ])
+        
+        return buttons

@@ -12,7 +12,10 @@ from .endpoints import (
     reports,
     ai_copilot,
     ai_first,
-    plan_builder
+    plan_builder,
+    resource_assignment,
+    autonomous_system,
+    developer_workbench
 )
 
 api_router = APIRouter()
@@ -31,3 +34,6 @@ api_router.include_router(reports.router, prefix="/reports", tags=["Reports"])
 api_router.include_router(ai_copilot.router, prefix="/ai", tags=["AI Copilot"])
 api_router.include_router(ai_first.router, prefix="/ai-first", tags=["AI-First Operations"])
 api_router.include_router(plan_builder.router, prefix="/plan-builder", tags=["Document Plan Builder"])
+api_router.include_router(resource_assignment.router, prefix="/resource-assignment", tags=["Resource Assignment"])
+api_router.include_router(autonomous_system.router, prefix="/autonomous-system", tags=["Autonomous System"])
+api_router.include_router(developer_workbench.router, prefix="/developer-workbench", tags=["Developer Workbench"])

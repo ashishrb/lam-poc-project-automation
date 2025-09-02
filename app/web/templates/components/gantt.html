@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gantt Chart Component</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .gantt-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .gantt-header {
+            background: #f8f9fa;
+            padding: 15px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .gantt-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .gantt-timeline {
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            padding: 10px 0;
+            overflow-x: auto;
+        }
+        .timeline-header {
+            display: flex;
+            min-width: 800px;
+        }
+        .timeline-month {
+            flex: 1;
+            text-align: center;
+            font-weight: 600;
+            color: #495057;
+            border-right: 1px solid #dee2e6;
+            padding: 5px;
+        }
+        .timeline-week {
+            flex: 1;
+            text-align: center;
+            font-size: 0.8em;
+            color: #6c757d;
+            border-right: 1px solid #dee2e6;
+            padding: 3px;
+        }
+        .gantt-body {
+            overflow-x: auto;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .gantt-row {
+            display: flex;
+            border-bottom: 1px solid #f1f3f4;
+            min-height: 50px;
+            align-items: center;
+        }
+        .gantt-row:hover {
+            background: #f8f9fa;
+        }
+        .task-info {
+            width: 300px;
+            padding: 10px;
+            border-right: 1px solid #dee2e6;
+            background: white;
+            position: sticky;
+            left: 0;
+            z-index: 10;
+        }
+        .task-name {
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 5px;
+        }
+        .task-meta {
+            font-size: 0.8em;
+            color: #6c757d;
+        }
+        .task-timeline {
+            flex: 1;
+            position: relative;
+            min-width: 800px;
+            height: 50px;
+        }
+        .task-bar {
+            position: absolute;
+            height: 30px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            font-size: 0.8em;
+            font-weight: 500;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .task-bar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .task-bar.completed {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+        .task-bar.in-progress {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        }
+        .task-bar.planned {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        }
+        .task-bar.delayed {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+        .task-bar.critical {
+            background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%);
+            border: 2px solid #ffc107;
+        }
+        .dependency-line {
+            position: absolute;
+            height: 2px;
+            background: #6c757d;
+            z-index: 5;
+        }
+        .dependency-arrow {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 6px solid #6c757d;
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+        }
+        .milestone {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #ffc107;
+            border: 3px solid #fd7e14;
+            border-radius: 50%;
+            transform: translateX(-50%);
+            z-index: 15;
+        }
+        .milestone::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 8px;
+            height: 8px;
+            background: #fd7e14;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .progress-indicator {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: rgba(255,255,255,0.3);
+            border-radius: 15px;
+        }
+        .zoom-controls {
+            display: flex;
+            gap: 5px;
+        }
+        .zoom-btn {
+            padding: 5px 10px;
+            border: 1px solid #dee2e6;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.8em;
+        }
+        .zoom-btn:hover {
+            background: #f8f9fa;
+        }
+        .zoom-btn.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .filter-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .filter-chip {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            cursor: pointer;
+            border: 1px solid #dee2e6;
+            background: white;
+        }
+        .filter-chip.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .gantt-legend {
+            padding: 15px;
+            border-top: 1px solid #dee2e6;
+            background: #f8f9fa;
+        }
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 20px;
+            font-size: 0.9em;
+        }
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 10px;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="gantt-container">
+        <div class="gantt-header">
+            <h5><i class="fas fa-chart-bar"></i> Project Timeline</h5>
+            <div class="gantt-controls">
+                <div class="filter-controls">
+                    <span class="filter-chip active" onclick="toggleFilter('all')">All</span>
+                    <span class="filter-chip" onclick="toggleFilter('critical')">Critical</span>
+                    <span class="filter-chip" onclick="toggleFilter('delayed')">Delayed</span>
+                    <span class="filter-chip" onclick="toggleFilter('completed')">Completed</span>
+                </div>
+                <div class="zoom-controls">
+                    <span class="zoom-btn" onclick="setZoom('week')">Week</span>
+                    <span class="zoom-btn active" onclick="setZoom('month')">Month</span>
+                    <span class="zoom-btn" onclick="setZoom('quarter')">Quarter</span>
+                </div>
+                <button class="btn btn-sm btn-outline-primary" onclick="exportGantt()">
+                    <i class="fas fa-download"></i> Export
+                </button>
+            </div>
+        </div>
+        
+        <div class="gantt-timeline">
+            <div class="timeline-header" id="timelineHeader">
+                <!-- Timeline headers will be generated here -->
+            </div>
+        </div>
+        
+        <div class="gantt-body" id="ganttBody">
+            <!-- Gantt rows will be generated here -->
+        </div>
+        
+        <div class="gantt-legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);"></div>
+                <span>Completed</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);"></div>
+                <span>In Progress</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%);"></div>
+                <span>Planned</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);"></div>
+                <span>Delayed</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%); border: 2px solid #ffc107;"></div>
+                <span>Critical Path</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ffc107; border: 3px solid #fd7e14; border-radius: 50%;"></div>
+                <span>Milestone</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample project data
+        const projectData = {
+            projectId: 1,
+            projectName: "ALPHA Project",
+            startDate: "2024-01-15",
+            endDate: "2024-06-30",
+            tasks: [
+                {
+                    id: 1,
+                    name: "Project Planning",
+                    startDate: "2024-01-15",
+                    endDate: "2024-01-31",
+                    progress: 100,
+                    status: "completed",
+                    critical: false,
+                    dependencies: []
+                },
+                {
+                    id: 2,
+                    name: "Requirements Analysis",
+                    startDate: "2024-02-01",
+                    endDate: "2024-02-15",
+                    progress: 100,
+                    status: "completed",
+                    critical: false,
+                    dependencies: [1]
+                },
+                {
+                    id: 3,
+                    name: "System Design",
+                    startDate: "2024-02-16",
+                    endDate: "2024-03-15",
+                    progress: 80,
+                    status: "in-progress",
+                    critical: true,
+                    dependencies: [2]
+                },
+                {
+                    id: 4,
+                    name: "Database Design",
+                    startDate: "2024-02-20",
+                    endDate: "2024-03-10",
+                    progress: 90,
+                    status: "in-progress",
+                    critical: false,
+                    dependencies: [2]
+                },
+                {
+                    id: 5,
+                    name: "Frontend Development",
+                    startDate: "2024-03-16",
+                    endDate: "2024-05-15",
+                    progress: 60,
+                    status: "in-progress",
+                    critical: true,
+                    dependencies: [3, 4]
+                },
+                {
+                    id: 6,
+                    name: "Backend Development",
+                    startDate: "2024-03-16",
+                    endDate: "2024-05-20",
+                    progress: 70,
+                    status: "in-progress",
+                    critical: true,
+                    dependencies: [3, 4]
+                },
+                {
+                    id: 7,
+                    name: "Testing Phase",
+                    startDate: "2024-05-21",
+                    endDate: "2024-06-15",
+                    progress: 20,
+                    status: "planned",
+                    critical: true,
+                    dependencies: [5, 6]
+                },
+                {
+                    id: 8,
+                    name: "Deployment",
+                    startDate: "2024-06-16",
+                    endDate: "2024-06-30",
+                    progress: 0,
+                    status: "planned",
+                    critical: false,
+                    dependencies: [7]
+                }
+            ],
+            milestones: [
+                {
+                    id: 1,
+                    name: "Design Complete",
+                    date: "2024-03-15",
+                    taskId: 3
+                },
+                {
+                    id: 2,
+                    name: "Development Complete",
+                    date: "2024-05-20",
+                    taskId: 6
+                },
+                {
+                    id: 3,
+                    name: "Project Complete",
+                    date: "2024-06-30",
+                    taskId: 8
+                }
+            ]
+        };
+
+        let currentZoom = 'month';
+        let currentFilter = 'all';
+
+        // Initialize Gantt chart
+        function initGantt() {
+            generateTimeline();
+            generateTasks();
+            drawDependencies();
+            drawMilestones();
+        }
+
+        // Generate timeline headers
+        function generateTimeline() {
+            const header = document.getElementById('timelineHeader');
+            const startDate = new Date(projectData.startDate);
+            const endDate = new Date(projectData.endDate);
+            
+            header.innerHTML = '';
+            
+            if (currentZoom === 'week') {
+                // Generate weekly headers
+                let currentDate = new Date(startDate);
+                while (currentDate <= endDate) {
+                    const weekDiv = document.createElement('div');
+                    weekDiv.className = 'timeline-week';
+                    weekDiv.textContent = `W${getWeekNumber(currentDate)}`;
+                    header.appendChild(weekDiv);
+                    currentDate.setDate(currentDate.getDate() + 7);
+                }
+            } else if (currentZoom === 'month') {
+                // Generate monthly headers
+                let currentDate = new Date(startDate);
+                while (currentDate <= endDate) {
+                    const monthDiv = document.createElement('div');
+                    monthDiv.className = 'timeline-month';
+                    monthDiv.textContent = currentDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                    header.appendChild(monthDiv);
+                    currentDate.setMonth(currentDate.getMonth() + 1);
+                }
+            } else {
+                // Generate quarterly headers
+                let currentDate = new Date(startDate);
+                while (currentDate <= endDate) {
+                    const quarterDiv = document.createElement('div');
+                    quarterDiv.className = 'timeline-month';
+                    quarterDiv.textContent = `Q${Math.floor(currentDate.getMonth() / 3) + 1} ${currentDate.getFullYear()}`;
+                    header.appendChild(quarterDiv);
+                    currentDate.setMonth(currentDate.getMonth() + 3);
+                }
+            }
+        }
+
+        // Generate task rows
+        function generateTasks() {
+            const body = document.getElementById('ganttBody');
+            body.innerHTML = '';
+            
+            projectData.tasks.forEach(task => {
+                if (shouldShowTask(task)) {
+                    const row = createTaskRow(task);
+                    body.appendChild(row);
+                }
+            });
+        }
+
+        // Create individual task row
+        function createTaskRow(task) {
+            const row = document.createElement('div');
+            row.className = 'gantt-row';
+            
+            const taskInfo = document.createElement('div');
+            taskInfo.className = 'task-info';
+            taskInfo.innerHTML = `
+                <div class="task-name">${task.name}</div>
+                <div class="task-meta">
+                    ${task.progress}% complete | ${task.status}
+                    ${task.critical ? ' | <i class="fas fa-exclamation-triangle text-warning"></i> Critical' : ''}
+                </div>
+            `;
+            
+            const taskTimeline = document.createElement('div');
+            taskTimeline.className = 'task-timeline';
+            
+            const taskBar = createTaskBar(task);
+            taskTimeline.appendChild(taskBar);
+            
+            row.appendChild(taskInfo);
+            row.appendChild(taskTimeline);
+            
+            return row;
+        }
+
+        // Create task bar
+        function createTaskBar(task) {
+            const bar = document.createElement('div');
+            bar.className = `task-bar ${task.status} ${task.critical ? 'critical' : ''}`;
+            
+            const startDate = new Date(task.startDate);
+            const endDate = new Date(task.endDate);
+            const projectStart = new Date(projectData.startDate);
+            
+            const startOffset = getDateOffset(startDate, projectStart);
+            const duration = getDateDifference(startDate, endDate);
+            
+            bar.style.left = `${startOffset}%`;
+            bar.style.width = `${duration}%`;
+            bar.textContent = task.name;
+            
+            // Add progress indicator
+            if (task.progress > 0) {
+                const progress = document.createElement('div');
+                progress.className = 'progress-indicator';
+                progress.style.width = `${task.progress}%`;
+                bar.appendChild(progress);
+            }
+            
+            // Add click handler
+            bar.addEventListener('click', () => {
+                showTaskDetails(task);
+            });
+            
+            return bar;
+        }
+
+        // Draw dependency lines
+        function drawDependencies() {
+            projectData.tasks.forEach(task => {
+                task.dependencies.forEach(depId => {
+                    const dependentTask = projectData.tasks.find(t => t.id === depId);
+                    if (dependentTask) {
+                        drawDependencyLine(dependentTask, task);
+                    }
+                });
+            });
+        }
+
+        // Draw individual dependency line
+        function drawDependencyLine(fromTask, toTask) {
+            const fromBar = document.querySelector(`[data-task-id="${fromTask.id}"]`);
+            const toBar = document.querySelector(`[data-task-id="${toTask.id}"]`);
+            
+            if (fromBar && toBar) {
+                const line = document.createElement('div');
+                line.className = 'dependency-line';
+                
+                const fromRect = fromBar.getBoundingClientRect();
+                const toRect = toBar.getBoundingClientRect();
+                
+                const startX = fromRect.right;
+                const endX = toRect.left;
+                const y = fromRect.top + fromRect.height / 2;
+                
+                line.style.left = `${startX}px`;
+                line.style.top = `${y}px`;
+                line.style.width = `${endX - startX}px`;
+                
+                // Add arrow
+                const arrow = document.createElement('div');
+                arrow.className = 'dependency-arrow';
+                arrow.style.left = `${endX - startX - 6}px`;
+                arrow.style.top = '-3px';
+                line.appendChild(arrow);
+                
+                document.body.appendChild(line);
+            }
+        }
+
+        // Draw milestones
+        function drawMilestones() {
+            projectData.milestones.forEach(milestone => {
+                const task = projectData.tasks.find(t => t.id === milestone.taskId);
+                if (task) {
+                    const milestoneElement = document.createElement('div');
+                    milestoneElement.className = 'milestone';
+                    milestoneElement.title = milestone.name;
+                    
+                    const taskDate = new Date(task.endDate);
+                    const projectStart = new Date(projectData.startDate);
+                    const offset = getDateOffset(taskDate, projectStart);
+                    
+                    milestoneElement.style.left = `${offset}%`;
+                    
+                    const taskBar = document.querySelector(`[data-task-id="${task.id}"]`);
+                    if (taskBar) {
+                        taskBar.appendChild(milestoneElement);
+                    }
+                }
+            });
+        }
+
+        // Filter tasks
+        function toggleFilter(filter) {
+            currentFilter = filter;
+            
+            // Update filter chips
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            generateTasks();
+        }
+
+        // Set zoom level
+        function setZoom(zoom) {
+            currentZoom = zoom;
+            
+            // Update zoom buttons
+            document.querySelectorAll('.zoom-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            generateTimeline();
+            generateTasks();
+        }
+
+        // Show task details
+        function showTaskDetails(task) {
+            const details = `
+                Task: ${task.name}
+                Status: ${task.status}
+                Progress: ${task.progress}%
+                Start: ${task.startDate}
+                End: ${task.endDate}
+                Critical: ${task.critical ? 'Yes' : 'No'}
+                Dependencies: ${task.dependencies.length}
+            `;
+            alert(details);
+        }
+
+        // Export Gantt chart
+        function exportGantt() {
+            // Implementation for exporting to PDF/PNG
+            alert('Export functionality would generate a PDF/PNG of the Gantt chart');
+        }
+
+        // Utility functions
+        function shouldShowTask(task) {
+            if (currentFilter === 'all') return true;
+            if (currentFilter === 'critical' && task.critical) return true;
+            if (currentFilter === 'delayed' && task.status === 'delayed') return true;
+            if (currentFilter === 'completed' && task.status === 'completed') return true;
+            return false;
+        }
+
+        function getDateOffset(date, startDate) {
+            const totalDays = getDateDifference(startDate, new Date(projectData.endDate));
+            const daysFromStart = getDateDifference(startDate, date);
+            return (daysFromStart / totalDays) * 100;
+        }
+
+        function getDateDifference(start, end) {
+            const diffTime = Math.abs(end - start);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays;
+        }
+
+        function getWeekNumber(date) {
+            const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
+            const pastDaysOfYear = (date - firstDayOfYear) / 86400000;
+            return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', initGantt);
+    </script>
+</body>
+</html>

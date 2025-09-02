@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from datetime import datetime
 
 
@@ -69,3 +69,51 @@ class ResourceListResponse(BaseModel):
     total: int
     page: int
     size: int
+
+
+class SkillMatch(BaseModel):
+    skill_name: str
+    proficiency_level: float
+    years_experience: int
+    match_score: float
+
+
+class ResourceAssignment(BaseModel):
+    task_id: int
+    task_name: str
+    resource_id: int
+    resource_name: str
+    skill_match: float
+    confidence_score: float
+    reasoning: str
+    assignment_date: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class AssignmentRequest(BaseModel):
+    tasks: List[Dict[str, Any]]
+    project_id: Optional[int] = None
+    constraints: Optional[Dict[str, Any]] = None
+
+
+class AssignmentResponse(BaseModel):
+    assignments: List[ResourceAssignment]
+    summary: Dict[str, Any]
+    success: bool
+    message: str
+
+
+class ResourceSkillInfo(BaseModel):
+    skill_name: str
+    skill_category: Optional[str] = None
+    proficiency_level: float
+    years_experience: int
+    last_used: Optional[datetime] = None
+
+
+class ResourceSkillsResponse(BaseModel):
+    resource: Dict[str, Any]
+    skills: List[ResourceSkillInfo]
+    total_skills: int

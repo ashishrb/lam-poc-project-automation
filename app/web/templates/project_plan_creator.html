@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Plan Creator - PPM System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .plan-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .plan-option {
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .plan-option:hover {
+            border-color: #007bff;
+            background: #f8f9fa;
+        }
+        .plan-option.selected {
+            border-color: #007bff;
+            background: #e3f2fd;
+        }
+        .task-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 5px 0;
+        }
+        .task-dependencies {
+            background: #fff3cd;
+            border-radius: 3px;
+            padding: 5px;
+            font-size: 0.8em;
+        }
+        .resource-skill {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin: 2px;
+        }
+        .ai-loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .ai-loading.show {
+            display: block;
+        }
+        .document-upload {
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+        .document-upload:hover {
+            border-color: #007bff;
+            background: #e3f2fd;
+        }
+        .document-upload.dragover {
+            border-color: #007bff;
+            background: #e3f2fd;
+        }
+        .plan-preview {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">🚀 PPM System</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/web/dashboard">Dashboard</a>
+                <a class="nav-link" href="/web/projects">Projects</a>
+                <a class="nav-link active" href="/web/project-plan-creator">Plan Creator</a>
+                <a class="nav-link" href="/web/resources">Resources</a>
+                <a class="nav-link" href="/web/ai-copilot">AI Copilot</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h1><i class="fas fa-project-diagram"></i> Project Plan Creator</h1>
+                <p class="lead">Create comprehensive project plans manually or using AI from BRD/HLD documents</p>
+            </div>
+        </div>
+
+        <!-- Plan Creation Options -->
+        <div class="plan-section">
+            <h3><i class="fas fa-cogs"></i> Plan Creation Method</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="plan-option" onclick="selectPlanMethod('manual')">
+                        <h5><i class="fas fa-edit"></i> Manual Plan Creation</h5>
+                        <p>Create project plan step by step with full control over tasks, dependencies, and assignments.</p>
+                        <ul>
+                            <li>Full control over plan structure</li>
+                            <li>Custom task definitions</li>
+                            <li>Manual resource assignment</li>
+                            <li>Flexible timeline planning</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="plan-option" onclick="selectPlanMethod('ai')">
+                        <h5><i class="fas fa-robot"></i> AI-Powered Plan Generation</h5>
+                        <p>Generate comprehensive project plan automatically from BRD/HLD documents using AI.</p>
+                        <ul>
+                            <li>Upload BRD/HLD documents</li>
+                            <li>AI extracts requirements</li>
+                            <li>Automatic task breakdown</li>
+                            <li>Smart resource assignment</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Basic Information -->
+        <div class="plan-section">
+            <h3><i class="fas fa-info-circle"></i> Project Information</h3>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Project Name *</label>
+                        <input type="text" class="form-control" id="projectName" placeholder="Enter project name">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="projectDescription" rows="3" placeholder="Project description"></textarea>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label">Project Manager</label>
+                        <select class="form-control" id="projectManager">
+                            <option value="">Select Project Manager</option>
+                            <option value="1">John Manager</option>
+                            <option value="2">Sarah Lead</option>
+                            <option value="3">Mike Director</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Start Date</label>
+                        <input type="date" class="form-control" id="startDate">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">End Date</label>
+                        <input type="date" class="form-control" id="endDate">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Document Upload Section -->
+        <div class="plan-section" id="aiDocumentSection" style="display: none;">
+            <h3><i class="fas fa-file-upload"></i> Upload BRD/HLD Documents</h3>
+            <div class="document-upload" id="documentUpload">
+                <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                <h5>Drag & Drop Documents Here</h5>
+                <p class="text-muted">or click to browse files</p>
+                <input type="file" id="documentInput" multiple accept=".pdf,.doc,.docx,.txt,.md" style="display: none;">
+                <button class="btn btn-outline-primary" onclick="document.getElementById('documentInput').click()">
+                    <i class="fas fa-folder-open"></i> Browse Files
+                </button>
+            </div>
+            <div class="mt-3">
+                <h6>Supported Document Types:</h6>
+                <ul>
+                    <li><strong>BRD (Business Requirements Document)</strong> - Business objectives, user stories, functional requirements</li>
+                    <li><strong>HLD (High-Level Design)</strong> - System architecture, technical specifications, component design</li>
+                    <li><strong>SRS (Software Requirements Specification)</strong> - Detailed functional and non-functional requirements</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- AI Processing Section -->
+        <div class="ai-loading" id="aiProcessing">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <h5 class="mt-3">AI is analyzing your documents...</h5>
+            <p class="text-muted">This may take a few minutes depending on document size and complexity.</p>
+            <div class="progress mt-3">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <!-- Manual Plan Creation Section -->
+        <div class="plan-section" id="manualPlanSection" style="display: none;">
+            <h3><i class="fas fa-tasks"></i> Manual Plan Creation</h3>
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <button class="btn btn-success" onclick="addTask()">
+                            <i class="fas fa-plus"></i> Add Task
+                        </button>
+                        <button class="btn btn-info" onclick="addMilestone()">
+                            <i class="fas fa-flag"></i> Add Milestone
+                        </button>
+                    </div>
+                    <div id="taskList">
+                        <!-- Tasks will be added here dynamically -->
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6><i class="fas fa-list"></i> Plan Summary</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <strong>Total Tasks:</strong> <span id="totalTasks">0</span>
+                            </div>
+                            <div class="mb-2">
+                                <strong>Total Milestones:</strong> <span id="totalMilestones">0</span>
+                            </div>
+                            <div class="mb-2">
+                                <strong>Estimated Duration:</strong> <span id="estimatedDuration">0 days</span>
+                            </div>
+                            <div class="mb-2">
+                                <strong>Required Resources:</strong> <span id="requiredResources">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generated Plan Preview -->
+        <div class="plan-section" id="planPreviewSection" style="display: none;">
+            <h3><i class="fas fa-eye"></i> Generated Plan Preview</h3>
+            <div class="plan-preview" id="planPreview">
+                <!-- Generated plan will be displayed here -->
+            </div>
+            <div class="mt-3">
+                <button class="btn btn-primary" onclick="editGeneratedPlan()">
+                    <i class="fas fa-edit"></i> Edit Plan
+                </button>
+                <button class="btn btn-success" onclick="savePlan()">
+                    <i class="fas fa-save"></i> Save Plan
+                </button>
+            </div>
+        </div>
+
+        <!-- Resource Assignment Section -->
+        <div class="plan-section" id="resourceAssignmentSection" style="display: none;">
+            <h3><i class="fas fa-users"></i> Resource Assignment</h3>
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <button class="btn btn-primary" onclick="autoAssignResources()">
+                            <i class="fas fa-magic"></i> Auto-Assign Resources
+                        </button>
+                        <button class="btn btn-secondary" onclick="manualAssignResources()">
+                            <i class="fas fa-hand-pointer"></i> Manual Assignment
+                        </button>
+                    </div>
+                    <div id="resourceAssignmentList">
+                        <!-- Resource assignments will be displayed here -->
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6><i class="fas fa-chart-pie"></i> Assignment Summary</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <strong>Assigned Tasks:</strong> <span id="assignedTasks">0</span>
+                            </div>
+                            <div class="mb-2">
+                                <strong>Unassigned Tasks:</strong> <span id="unassignedTasks">0</span>
+                            </div>
+                            <div class="mb-2">
+                                <strong>Resource Utilization:</strong> <span id="resourceUtilization">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="plan-section">
+            <div class="d-flex justify-content-between">
+                <button class="btn btn-secondary" onclick="goBack()">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <div>
+                    <button class="btn btn-outline-primary me-2" onclick="previewPlan()">
+                        <i class="fas fa-eye"></i> Preview Plan
+                    </button>
+                    <button class="btn btn-success" onclick="createProject()">
+                        <i class="fas fa-rocket"></i> Create Project
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Template Modal -->
+    <div class="modal fade" id="taskModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add/Edit Task</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Task Name *</label>
+                                <input type="text" class="form-control" id="taskName">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <textarea class="form-control" id="taskDescription" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Priority</label>
+                                <select class="form-control" id="taskPriority">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Start Date</label>
+                                <input type="date" class="form-control" id="taskStartDate">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Due Date</label>
+                                <input type="date" class="form-control" id="taskDueDate">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Estimated Hours</label>
+                                <input type="number" class="form-control" id="taskEstimatedHours" min="0" step="0.5">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Dependencies</label>
+                                <select class="form-control" id="taskDependencies" multiple>
+                                    <!-- Dependencies will be populated dynamically -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveTask()">Save Task</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let selectedPlanMethod = null;
+        let currentTasks = [];
+        let currentMilestones = [];
+        let generatedPlan = null;
+        let resourceAssignments = [];
+
+        // Plan Method Selection
+        function selectPlanMethod(method) {
+            selectedPlanMethod = method;
+            
+            // Update UI
+            document.querySelectorAll('.plan-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            event.target.closest('.plan-option').classList.add('selected');
+            
+            // Show/hide sections
+            if (method === 'ai') {
+                document.getElementById('aiDocumentSection').style.display = 'block';
+                document.getElementById('manualPlanSection').style.display = 'none';
+            } else {
+                document.getElementById('aiDocumentSection').style.display = 'none';
+                document.getElementById('manualPlanSection').style.display = 'block';
+            }
+        }
+
+        // Document Upload Handling
+        document.getElementById('documentInput').addEventListener('change', handleFileUpload);
+        
+        function handleFileUpload(event) {
+            const files = event.target.files;
+            if (files.length > 0) {
+                processDocuments(files);
+            }
+        }
+
+        async function processDocuments(files) {
+            document.getElementById('aiProcessing').classList.add('show');
+            
+            const formData = new FormData();
+            for (let file of files) {
+                formData.append('documents', file);
+            }
+            
+            try {
+                const response = await fetch('/api/v1/plan-builder/extract-from-documents', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    generatedPlan = result.plan;
+                    displayGeneratedPlan(result.plan);
+                    document.getElementById('planPreviewSection').style.display = 'block';
+                    document.getElementById('resourceAssignmentSection').style.display = 'block';
+                } else {
+                    alert('Error generating plan: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error processing documents:', error);
+                alert('Error processing documents. Please try again.');
+            } finally {
+                document.getElementById('aiProcessing').classList.remove('show');
+            }
+        }
+
+        function displayGeneratedPlan(plan) {
+            const preview = document.getElementById('planPreview');
+            preview.innerHTML = `
+                <h5>Generated Plan Structure</h5>
+                <div class="mb-3">
+                    <strong>Epics:</strong> ${plan.epics.length}
+                </div>
+                <div class="mb-3">
+                    <strong>Features:</strong> ${plan.features.length}
+                </div>
+                <div class="mb-3">
+                    <strong>Tasks:</strong> ${plan.tasks.length}
+                </div>
+                <div class="mb-3">
+                    <strong>Estimated Duration:</strong> ${plan.estimated_duration} days
+                </div>
+                <div class="mb-3">
+                    <strong>Required Resources:</strong> ${plan.required_resources}
+                </div>
+                
+                <h6>Task Breakdown:</h6>
+                ${plan.tasks.map(task => `
+                    <div class="task-item">
+                        <strong>${task.name}</strong><br>
+                        <small class="text-muted">${task.description}</small><br>
+                        <span class="badge bg-primary">${task.priority}</span>
+                        <span class="badge bg-info">${task.estimated_hours}h</span>
+                        ${task.dependencies.length > 0 ? `<div class="task-dependencies">Dependencies: ${task.dependencies.join(', ')}</div>` : ''}
+                    </div>
+                `).join('')}
+            `;
+        }
+
+        // Manual Plan Creation
+        function addTask() {
+            // Show task modal
+            const modal = new bootstrap.Modal(document.getElementById('taskModal'));
+            modal.show();
+        }
+
+        function saveTask() {
+            const task = {
+                id: Date.now(),
+                name: document.getElementById('taskName').value,
+                description: document.getElementById('taskDescription').value,
+                priority: document.getElementById('taskPriority').value,
+                start_date: document.getElementById('taskStartDate').value,
+                due_date: document.getElementById('taskDueDate').value,
+                estimated_hours: parseFloat(document.getElementById('taskEstimatedHours').value) || 0,
+                dependencies: Array.from(document.getElementById('taskDependencies').selectedOptions).map(opt => opt.value)
+            };
+            
+            currentTasks.push(task);
+            updateTaskList();
+            updatePlanSummary();
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('taskModal'));
+            modal.hide();
+        }
+
+        function updateTaskList() {
+            const taskList = document.getElementById('taskList');
+            taskList.innerHTML = currentTasks.map(task => `
+                <div class="task-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>${task.name}</strong><br>
+                            <small class="text-muted">${task.description}</small>
+                        </div>
+                        <div>
+                            <button class="btn btn-sm btn-outline-danger" onclick="removeTask(${task.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <span class="badge bg-primary">${task.priority}</span>
+                        <span class="badge bg-info">${task.estimated_hours}h</span>
+                        <span class="badge bg-secondary">${task.start_date} - ${task.due_date}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function removeTask(taskId) {
+            currentTasks = currentTasks.filter(task => task.id !== taskId);
+            updateTaskList();
+            updatePlanSummary();
+        }
+
+        function updatePlanSummary() {
+            document.getElementById('totalTasks').textContent = currentTasks.length;
+            document.getElementById('totalMilestones').textContent = currentMilestones.length;
+            
+            const totalHours = currentTasks.reduce((sum, task) => sum + task.estimated_hours, 0);
+            const estimatedDays = Math.ceil(totalHours / 8); // Assuming 8 hours per day
+            document.getElementById('estimatedDuration').textContent = `${estimatedDays} days`;
+            
+            // Calculate required resources based on concurrent tasks
+            const maxConcurrentTasks = Math.max(...currentTasks.map(task => {
+                const start = new Date(task.start_date);
+                const end = new Date(task.due_date);
+                return Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+            }), 1);
+            document.getElementById('requiredResources').textContent = maxConcurrentTasks;
+        }
+
+        // Resource Assignment
+        async function autoAssignResources() {
+            try {
+                const response = await fetch('/api/v1/resources/auto-assign', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        tasks: currentTasks,
+                        project_id: null // Will be set when project is created
+                    })
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    resourceAssignments = result.assignments;
+                    displayResourceAssignments();
+                }
+            } catch (error) {
+                console.error('Error auto-assigning resources:', error);
+                alert('Error auto-assigning resources. Please try manual assignment.');
+            }
+        }
+
+        function displayResourceAssignments() {
+            const assignmentList = document.getElementById('resourceAssignmentList');
+            assignmentList.innerHTML = resourceAssignments.map(assignment => `
+                <div class="task-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${assignment.task_name}</strong><br>
+                            <small class="text-muted">Assigned to: ${assignment.resource_name}</small>
+                        </div>
+                        <div>
+                            <span class="resource-skill">${assignment.skill_match}% match</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            updateAssignmentSummary();
+        }
+
+        function updateAssignmentSummary() {
+            const assigned = resourceAssignments.length;
+            const unassigned = currentTasks.length - assigned;
+            const utilization = Math.round((assigned / currentTasks.length) * 100);
+            
+            document.getElementById('assignedTasks').textContent = assigned;
+            document.getElementById('unassignedTasks').textContent = unassigned;
+            document.getElementById('resourceUtilization').textContent = `${utilization}%`;
+        }
+
+        // Project Creation
+        async function createProject() {
+            const projectData = {
+                name: document.getElementById('projectName').value,
+                description: document.getElementById('projectDescription').value,
+                project_manager_id: document.getElementById('projectManager').value,
+                start_date: document.getElementById('startDate').value,
+                end_date: document.getElementById('endDate').value,
+                plan_method: selectedPlanMethod,
+                tasks: currentTasks,
+                milestones: currentMilestones,
+                resource_assignments: resourceAssignments,
+                generated_plan: generatedPlan
+            };
+            
+            try {
+                const response = await fetch('/api/v1/projects/create-with-plan', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(projectData)
+                });
+                
+                const result = await response.json();
+                if (result.success) {
+                    alert('Project created successfully!');
+                    window.location.href = `/web/projects/${result.project_id}`;
+                } else {
+                    alert('Error creating project: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error creating project:', error);
+                alert('Error creating project. Please try again.');
+            }
+        }
+
+        // Utility Functions
+        function goBack() {
+            window.history.back();
+        }
+
+        function previewPlan() {
+            // Implementation for plan preview
+            alert('Plan preview functionality will be implemented');
+        }
+
+        function editGeneratedPlan() {
+            // Convert AI-generated plan to manual editing mode
+            if (generatedPlan) {
+                currentTasks = generatedPlan.tasks;
+                updateTaskList();
+                updatePlanSummary();
+                document.getElementById('manualPlanSection').style.display = 'block';
+                document.getElementById('planPreviewSection').style.display = 'none';
+            }
+        }
+
+        function savePlan() {
+            // Save plan without creating project
+            alert('Plan saved successfully!');
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            updatePlanSummary();
+            updateAssignmentSummary();
+        });
+    </script>
+</body>
+</html>

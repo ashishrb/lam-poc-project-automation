@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Reports - Project Portfolio Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .report-card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            margin-bottom: 20px;
+        }
+        .report-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
+        .report-header {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px 10px 0 0;
+        }
+        .report-body {
+            padding: 20px;
+        }
+        .metric-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .metric-label {
+            color: #6c757d;
+            font-size: 0.9em;
+        }
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+        .status-active { background: #d4edda; color: #155724; }
+        .status-completed { background: #cce5ff; color: #004085; }
+        .status-delayed { background: #f8d7da; color: #721c24; }
+        .status-planning { background: #fff3cd; color: #856404; }
+        .gantt-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .gantt-header {
+            background: #f8f9fa;
+            padding: 15px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .gantt-timeline {
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            padding: 10px 0;
+            overflow-x: auto;
+        }
+        .timeline-header {
+            display: flex;
+            min-width: 800px;
+        }
+        .timeline-month {
+            flex: 1;
+            text-align: center;
+            font-weight: 600;
+            color: #495057;
+            border-right: 1px solid #dee2e6;
+            padding: 5px;
+        }
+        .gantt-body {
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .gantt-row {
+            display: flex;
+            border-bottom: 1px solid #f1f3f4;
+            min-height: 40px;
+            align-items: center;
+        }
+        .task-info {
+            width: 250px;
+            padding: 10px;
+            border-right: 1px solid #dee2e6;
+            background: white;
+            position: sticky;
+            left: 0;
+            z-index: 10;
+        }
+        .task-timeline {
+            flex: 1;
+            position: relative;
+            min-width: 800px;
+            height: 40px;
+        }
+        .task-bar {
+            position: absolute;
+            height: 25px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            font-size: 0.7em;
+            font-weight: 500;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .task-bar.completed { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); }
+        .task-bar.in-progress { background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); }
+        .task-bar.planned { background: linear-gradient(135deg, #6c757d 0%, #495057 100%); }
+        .task-bar.critical { background: linear-gradient(135deg, #fd7e14 0%, #e55a00 100%); border: 2px solid #ffc107; }
+        .progress-indicator {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: rgba(255,255,255,0.3);
+            border-radius: 12px;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+        .report-tabs {
+            border-bottom: 1px solid #dee2e6;
+            margin-bottom: 20px;
+        }
+        .report-tab {
+            padding: 10px 20px;
+            border: none;
+            background: none;
+            color: #6c757d;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        .report-tab.active {
+            color: #007bff;
+            border-bottom-color: #007bff;
+        }
+        .report-content {
+            display: none;
+        }
+        .report-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">🚀 PPM System</a>
+            <div class="navbar-nav">
+                <a class="nav-link" href="/web/dashboard">Dashboard</a>
+                <a class="nav-link" href="/web/projects">Projects</a>
+                <a class="nav-link" href="/web/resources">Resources</a>
+                <a class="nav-link" href="/web/finance">Finance</a>
+                <a class="nav-link" href="/web/ai-copilot">AI Copilot</a>
+                <a class="nav-link" href="/web/alerts">Alerts</a>
+                <a class="nav-link active" href="/web/project-reports">Reports</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="report-header">
+                    <h1><i class="fas fa-chart-line"></i> Project Reports & Analytics</h1>
+                    <p class="mb-0">Comprehensive project insights and performance metrics</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Project Selection -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="report-card">
+                    <div class="report-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label">Select Project:</label>
+                                <select class="form-select" id="projectSelect" onchange="loadProjectReports()">
+                                    <option value="">Choose a project...</option>
+                                    <option value="1">ALPHA Project - AI-First Project Management</option>
+                                    <option value="2">BETA Project - Resource Optimization Platform</option>
+                                    <option value="3">GAMMA Project - Analytics Dashboard</option>
+                                    <option value="4">DELTA Project - Workflow Engine</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Report Type:</label>
+                                <select class="form-select" id="reportTypeSelect" onchange="switchReportType()">
+                                    <option value="overview">Project Overview</option>
+                                    <option value="gantt">Gantt Chart</option>
+                                    <option value="progress">Progress Report</option>
+                                    <option value="financial">Financial Report</option>
+                                    <option value="resource">Resource Report</option>
+                                    <option value="risk">Risk Assessment</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Report Tabs -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="report-card">
+                    <div class="report-tabs">
+                        <button class="report-tab active" onclick="showTab('overview')">Overview</button>
+                        <button class="report-tab" onclick="showTab('gantt')">Gantt Chart</button>
+                        <button class="report-tab" onclick="showTab('progress')">Progress</button>
+                        <button class="report-tab" onclick="showTab('financial')">Financial</button>
+                        <button class="report-tab" onclick="showTab('resource')">Resources</button>
+                        <button class="report-tab" onclick="showTab('risk')">Risks</button>
+                    </div>
+                    
+                    <div class="report-body">
+                        <!-- Overview Tab -->
+                        <div id="overviewTab" class="report-content active">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="metric-card">
+                                        <div class="metric-value" id="progressValue">75%</div>
+                                        <div class="metric-label">Overall Progress</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="metric-card">
+                                        <div class="metric-value" id="budgetValue">$375K</div>
+                                        <div class="metric-label">Budget Spent</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="metric-card">
+                                        <div class="metric-value" id="teamValue">12</div>
+                                        <div class="metric-label">Team Members</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="metric-card">
+                                        <div class="metric-value" id="riskValue">3</div>
+                                        <div class="metric-label">Active Risks</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <h5>Project Status</h5>
+                                    <div class="chart-container">
+                                        <canvas id="statusChart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5>Timeline Overview</h5>
+                                    <div class="chart-container">
+                                        <canvas id="timelineChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gantt Chart Tab -->
+                        <div id="ganttTab" class="report-content">
+                            <div class="gantt-container">
+                                <div class="gantt-header">
+                                    <h5><i class="fas fa-chart-bar"></i> Project Timeline</h5>
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="setGanttZoom('week')">Week</button>
+                                        <button class="btn btn-sm btn-outline-primary active" onclick="setGanttZoom('month')">Month</button>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="setGanttZoom('quarter')">Quarter</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="gantt-timeline">
+                                    <div class="timeline-header" id="ganttTimeline">
+                                        <!-- Timeline headers -->
+                                    </div>
+                                </div>
+                                
+                                <div class="gantt-body" id="ganttBody">
+                                    <!-- Gantt rows -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Progress Tab -->
+                        <div id="progressTab" class="report-content">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h5>Task Progress</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Task</th>
+                                                    <th>Status</th>
+                                                    <th>Progress</th>
+                                                    <th>Due Date</th>
+                                                    <th>Assignee</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="taskTableBody">
+                                                <!-- Task rows will be populated -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <h5>Progress Summary</h5>
+                                    <div class="chart-container">
+                                        <canvas id="progressChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Financial Tab -->
+                        <div id="financialTab" class="report-content">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5>Budget Overview</h5>
+                                    <div class="chart-container">
+                                        <canvas id="budgetChart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5>Cost Trends</h5>
+                                    <div class="chart-container">
+                                        <canvas id="costChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row mt-4">
+                                <div class="col-12">
+                                    <h5>Financial Summary</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered">
+                                            <thead>
+                                                <tr>
+                                                    <th>Category</th>
+                                                    <th>Planned</th>
+                                                    <th>Actual</th>
+                                                    <th>Variance</th>
+                                                    <th>% Complete</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="financialTableBody">
+                                                <!-- Financial data -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Resource Tab -->
+                        <div id="resourceTab" class="report-content">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5>Resource Allocation</h5>
+                                    <div class="chart-container">
+                                        <canvas id="resourceChart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5>Team Utilization</h5>
+                                    <div class="chart-container">
+                                        <canvas id="utilizationChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Risk Tab -->
+                        <div id="riskTab" class="report-content">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h5>Risk Register</h5>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Risk</th>
+                                                    <th>Probability</th>
+                                                    <th>Impact</th>
+                                                    <th>Status</th>
+                                                    <th>Owner</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="riskTableBody">
+                                                <!-- Risk data -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <h5>Risk Matrix</h5>
+                                    <div class="chart-container">
+                                        <canvas id="riskMatrixChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Options -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="report-card">
+                    <div class="report-body">
+                        <h5>Export Options</h5>
+                        <div class="btn-group">
+                            <button class="btn btn-outline-primary" onclick="exportReport('pdf')">
+                                <i class="fas fa-file-pdf"></i> Export PDF
+                            </button>
+                            <button class="btn btn-outline-success" onclick="exportReport('excel')">
+                                <i class="fas fa-file-excel"></i> Export Excel
+                            </button>
+                            <button class="btn btn-outline-info" onclick="exportReport('email')">
+                                <i class="fas fa-envelope"></i> Email Report
+                            </button>
+                            <button class="btn btn-outline-warning" onclick="scheduleReport()">
+                                <i class="fas fa-clock"></i> Schedule Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample project data
+        const projectData = {
+            1: {
+                name: "ALPHA Project",
+                description: "AI-First Project Management System",
+                status: "active",
+                progress: 75,
+                budget: 500000,
+                spent: 375000,
+                teamSize: 12,
+                risks: 3,
+                startDate: "2024-01-15",
+                endDate: "2024-06-30",
+                tasks: [
+                    { name: "Project Planning", status: "completed", progress: 100, dueDate: "2024-01-31", assignee: "John Manager" },
+                    { name: "Requirements Analysis", status: "completed", progress: 100, dueDate: "2024-02-15", assignee: "Sarah Analyst" },
+                    { name: "System Design", status: "in-progress", progress: 80, dueDate: "2024-03-15", assignee: "Mike Architect" },
+                    { name: "Database Design", status: "in-progress", progress: 90, dueDate: "2024-03-10", assignee: "Lisa DBA" },
+                    { name: "Frontend Development", status: "in-progress", progress: 60, dueDate: "2024-05-15", assignee: "Tom Developer" },
+                    { name: "Backend Development", status: "in-progress", progress: 70, dueDate: "2024-05-20", assignee: "Alex Developer" },
+                    { name: "Testing Phase", status: "planned", progress: 20, dueDate: "2024-06-15", assignee: "QA Team" },
+                    { name: "Deployment", status: "planned", progress: 0, dueDate: "2024-06-30", assignee: "DevOps Team" }
+                ],
+                financial: [
+                    { category: "Development", planned: 300000, actual: 225000, variance: -75000, complete: 75 },
+                    { category: "Design", planned: 80000, actual: 60000, variance: -20000, complete: 75 },
+                    { category: "Testing", planned: 60000, actual: 45000, variance: -15000, complete: 75 },
+                    { category: "Infrastructure", planned: 60000, actual: 45000, variance: -15000, complete: 75 }
+                ],
+                risks: [
+                    { name: "Resource shortage", probability: "Medium", impact: "High", status: "Active", owner: "John Manager" },
+                    { name: "Scope creep", probability: "Low", impact: "Medium", status: "Mitigated", owner: "Sarah Analyst" },
+                    { name: "Technical debt", probability: "High", impact: "Medium", status: "Active", owner: "Mike Architect" }
+                ]
+            }
+        };
+
+        let currentProject = null;
+        let currentZoom = 'month';
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProjectReports();
+        });
+
+        function loadProjectReports() {
+            const projectId = document.getElementById('projectSelect').value;
+            if (!projectId) return;
+
+            currentProject = projectData[projectId];
+            if (!currentProject) return;
+
+            updateOverview();
+            updateGanttChart();
+            updateProgressReport();
+            updateFinancialReport();
+            updateResourceReport();
+            updateRiskReport();
+        }
+
+        function updateOverview() {
+            // Update metrics
+            document.getElementById('progressValue').textContent = currentProject.progress + '%';
+            document.getElementById('budgetValue').textContent = '$' + (currentProject.spent / 1000) + 'K';
+            document.getElementById('teamValue').textContent = currentProject.teamSize;
+            document.getElementById('riskValue').textContent = currentProject.risks;
+
+            // Create status chart
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Completed', 'In Progress', 'Planned'],
+                    datasets: [{
+                        data: [2, 4, 2],
+                        backgroundColor: ['#28a745', '#007bff', '#6c757d']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+
+            // Create timeline chart
+            const timelineCtx = document.getElementById('timelineChart').getContext('2d');
+            new Chart(timelineCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Progress',
+                        data: [15, 30, 45, 60, 75, 85],
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, max: 100 }
+                    }
+                }
+            });
+        }
+
+        function updateGanttChart() {
+            const timeline = document.getElementById('ganttTimeline');
+            const body = document.getElementById('ganttBody');
+            
+            // Generate timeline headers
+            timeline.innerHTML = '';
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+            months.forEach(month => {
+                const monthDiv = document.createElement('div');
+                monthDiv.className = 'timeline-month';
+                monthDiv.textContent = month;
+                timeline.appendChild(monthDiv);
+            });
+
+            // Generate task rows
+            body.innerHTML = '';
+            currentProject.tasks.forEach(task => {
+                const row = document.createElement('div');
+                row.className = 'gantt-row';
+                
+                const taskInfo = document.createElement('div');
+                taskInfo.className = 'task-info';
+                taskInfo.innerHTML = `
+                    <div class="task-name">${task.name}</div>
+                    <div class="task-meta">${task.progress}% complete</div>
+                `;
+                
+                const taskTimeline = document.createElement('div');
+                taskTimeline.className = 'task-timeline';
+                
+                const taskBar = document.createElement('div');
+                taskBar.className = `task-bar ${task.status}`;
+                taskBar.style.left = '10%';
+                taskBar.style.width = '15%';
+                taskBar.textContent = task.name;
+                
+                if (task.progress > 0) {
+                    const progress = document.createElement('div');
+                    progress.className = 'progress-indicator';
+                    progress.style.width = task.progress + '%';
+                    taskBar.appendChild(progress);
+                }
+                
+                taskTimeline.appendChild(taskBar);
+                row.appendChild(taskInfo);
+                row.appendChild(taskTimeline);
+                body.appendChild(row);
+            });
+        }
+
+        function updateProgressReport() {
+            const tbody = document.getElementById('taskTableBody');
+            tbody.innerHTML = '';
+            
+            currentProject.tasks.forEach(task => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${task.name}</td>
+                    <td><span class="status-badge status-${task.status}">${task.status}</span></td>
+                    <td>
+                        <div class="progress">
+                            <div class="progress-bar" style="width: ${task.progress}%">${task.progress}%</div>
+                        </div>
+                    </td>
+                    <td>${task.dueDate}</td>
+                    <td>${task.assignee}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Progress chart
+            const progressCtx = document.getElementById('progressChart').getContext('2d');
+            new Chart(progressCtx, {
+                type: 'bar',
+                data: {
+                    labels: currentProject.tasks.map(t => t.name.substring(0, 15)),
+                    datasets: [{
+                        label: 'Progress %',
+                        data: currentProject.tasks.map(t => t.progress),
+                        backgroundColor: '#007bff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, max: 100 }
+                    }
+                }
+            });
+        }
+
+        function updateFinancialReport() {
+            const tbody = document.getElementById('financialTableBody');
+            tbody.innerHTML = '';
+            
+            currentProject.financial.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.category}</td>
+                    <td>$${item.planned.toLocaleString()}</td>
+                    <td>$${item.actual.toLocaleString()}</td>
+                    <td class="${item.variance < 0 ? 'text-success' : 'text-danger'}">$${Math.abs(item.variance).toLocaleString()}</td>
+                    <td>${item.complete}%</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Budget chart
+            const budgetCtx = document.getElementById('budgetChart').getContext('2d');
+            new Chart(budgetCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: currentProject.financial.map(f => f.category),
+                    datasets: [{
+                        data: currentProject.financial.map(f => f.actual),
+                        backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Cost trend chart
+            const costCtx = document.getElementById('costChart').getContext('2d');
+            new Chart(costCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Planned',
+                        data: [50000, 100000, 150000, 200000, 250000, 300000],
+                        borderColor: '#6c757d',
+                        fill: false
+                    }, {
+                        label: 'Actual',
+                        data: [45000, 95000, 140000, 190000, 240000, 375000],
+                        borderColor: '#007bff',
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        function updateResourceReport() {
+            // Resource allocation chart
+            const resourceCtx = document.getElementById('resourceChart').getContext('2d');
+            new Chart(resourceCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Development', 'Design', 'Testing', 'Management'],
+                    datasets: [{
+                        data: [6, 2, 2, 2],
+                        backgroundColor: ['#007bff', '#28a745', '#ffc107', '#dc3545']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // Utilization chart
+            const utilizationCtx = document.getElementById('utilizationChart').getContext('2d');
+            new Chart(utilizationCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Dev Team', 'Design Team', 'QA Team', 'Management'],
+                    datasets: [{
+                        label: 'Utilization %',
+                        data: [85, 70, 60, 90],
+                        backgroundColor: '#007bff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true, max: 100 }
+                    }
+                }
+            });
+        }
+
+        function updateRiskReport() {
+            const tbody = document.getElementById('riskTableBody');
+            tbody.innerHTML = '';
+            
+            currentProject.risks.forEach(risk => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${risk.name}</td>
+                    <td>${risk.probability}</td>
+                    <td>${risk.impact}</td>
+                    <td><span class="status-badge status-${risk.status.toLowerCase()}">${risk.status}</span></td>
+                    <td>${risk.owner}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Risk matrix chart
+            const riskCtx = document.getElementById('riskMatrixChart').getContext('2d');
+            new Chart(riskCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Risks',
+                        data: [
+                            { x: 2, y: 3 }, // Medium probability, High impact
+                            { x: 1, y: 2 }, // Low probability, Medium impact
+                            { x: 3, y: 2 }  // High probability, Medium impact
+                        ],
+                        backgroundColor: ['#dc3545', '#ffc107', '#fd7e14']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { 
+                            title: { display: true, text: 'Probability' },
+                            min: 0, max: 4
+                        },
+                        y: { 
+                            title: { display: true, text: 'Impact' },
+                            min: 0, max: 4
+                        }
+                    }
+                }
+            });
+        }
+
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.report-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.report-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function setGanttZoom(zoom) {
+            currentZoom = zoom;
+            // Update active button
+            document.querySelectorAll('.btn-group .btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            updateGanttChart();
+        }
+
+        function exportReport(format) {
+            const projectName = currentProject ? currentProject.name : 'Project';
+            alert(`${format.toUpperCase()} export for ${projectName} would be generated here.`);
+        }
+
+        function scheduleReport() {
+            alert('Report scheduling functionality would be implemented here.');
+        }
+
+        function switchReportType() {
+            const reportType = document.getElementById('reportTypeSelect').value;
+            showTab(reportType);
+        }
+    </script>
+</body>
+</html>

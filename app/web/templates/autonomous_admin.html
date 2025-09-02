@@ -1,0 +1,933 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autonomous System Admin - LAM Project Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .sidebar {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            border-radius: 8px;
+            margin: 2px 0;
+            transition: all 0.3s;
+        }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+        .main-content {
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-active { background-color: #28a745; }
+        .status-warning { background-color: #ffc107; }
+        .status-error { background-color: #dc3545; }
+        .status-inactive { background-color: #6c757d; }
+        .metric-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .workflow-card {
+            border-left: 4px solid #007bff;
+        }
+        .model-card {
+            border-left: 4px solid #28a745;
+        }
+        .guardrail-card {
+            border-left: 4px solid #ffc107;
+        }
+        .btn-autonomous {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            border-radius: 25px;
+            padding: 10px 25px;
+            transition: all 0.3s;
+        }
+        .btn-autonomous:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            color: white;
+        }
+        .table-responsive {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            border-radius: 10px;
+        }
+        .alert-autonomous {
+            border-radius: 10px;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Sidebar -->
+            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
+                <div class="position-sticky pt-3">
+                    <div class="text-center mb-4">
+                        <h4 class="text-white"><i class="fas fa-robot"></i> Autonomous Admin</h4>
+                    </div>
+                    <ul class="nav flex-column">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#dashboard" onclick="showSection('dashboard')">
+                                <i class="fas fa-tachometer-alt"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#workflows" onclick="showSection('workflows')">
+                                <i class="fas fa-project-diagram"></i> Workflows
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#models" onclick="showSection('models')">
+                                <i class="fas fa-brain"></i> AI Models
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#guardrails" onclick="showSection('guardrails')">
+                                <i class="fas fa-shield-alt"></i> Guardrails
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#approvals" onclick="showSection('approvals')">
+                                <i class="fas fa-check-circle"></i> Approvals
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#audit" onclick="showSection('audit')">
+                                <i class="fas fa-history"></i> Audit Trail
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#config" onclick="showSection('config')">
+                                <i class="fas fa-cog"></i> Configuration
+                            </a>
+                        </li>
+                        <li class="nav-item mt-4">
+                            <a class="nav-link" href="/web/admin">
+                                <i class="fas fa-arrow-left"></i> Back to Admin
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
+                <!-- Dashboard Section -->
+                <div id="dashboard" class="section">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-tachometer-alt"></i> Autonomous System Dashboard</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <button class="btn btn-autonomous" onclick="refreshDashboard()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- System Status -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card metric-card">
+                                <div class="card-body text-center">
+                                    <h3 id="activeWorkflows">0</h3>
+                                    <p class="mb-0">Active Workflows</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card metric-card">
+                                <div class="card-body text-center">
+                                    <h3 id="availableModels">0</h3>
+                                    <p class="mb-0">Available Models</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card metric-card">
+                                <div class="card-body text-center">
+                                    <h3 id="pendingApprovals">0</h3>
+                                    <p class="mb-0">Pending Approvals</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card metric-card">
+                                <div class="card-body text-center">
+                                    <h3 id="systemHealth">100%</h3>
+                                    <p class="mb-0">System Health</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-clock"></i> Recent Workflows</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="recentWorkflows">
+                                        <div class="text-center text-muted">
+                                            <i class="fas fa-spinner fa-spin"></i> Loading...
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5><i class="fas fa-exclamation-triangle"></i> System Alerts</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="systemAlerts">
+                                        <div class="alert alert-success alert-autonomous">
+                                            <i class="fas fa-check-circle"></i> All systems operational
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Workflows Section -->
+                <div id="workflows" class="section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-project-diagram"></i> Workflow Management</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <button class="btn btn-autonomous" onclick="startNewWorkflow()">
+                                <i class="fas fa-plus"></i> New Workflow
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Active Workflows</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Workflow ID</th>
+                                            <th>Type</th>
+                                            <th>Status</th>
+                                            <th>Project</th>
+                                            <th>Started</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="workflowsTable">
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted">
+                                                <i class="fas fa-spinner fa-spin"></i> Loading workflows...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Models Section -->
+                <div id="models" class="section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-brain"></i> AI Model Management</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <button class="btn btn-autonomous" onclick="testAllModels()">
+                                <i class="fas fa-vial"></i> Test All Models
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row" id="modelsGrid">
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card model-card">
+                                <div class="card-body">
+                                    <div class="text-center text-muted">
+                                        <i class="fas fa-spinner fa-spin"></i> Loading models...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Guardrails Section -->
+                <div id="guardrails" class="section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-shield-alt"></i> Security Guardrails</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <button class="btn btn-autonomous" onclick="saveGuardrailsConfig()">
+                                <i class="fas fa-save"></i> Save Configuration
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card guardrail-card">
+                                <div class="card-header">
+                                    <h5>Approval Thresholds</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Budget Threshold ($)</label>
+                                        <input type="number" class="form-control" id="budgetThreshold" value="1000">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Resource Allocation Threshold (%)</label>
+                                        <input type="number" class="form-control" id="resourceThreshold" value="80" min="0" max="100">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Risk Mitigation Threshold (%)</label>
+                                        <input type="number" class="form-control" id="riskThreshold" value="85" min="0" max="100">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Stakeholder Communication Threshold (%)</label>
+                                        <input type="number" class="form-control" id="stakeholderThreshold" value="90" min="0" max="100">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card guardrail-card">
+                                <div class="card-header">
+                                    <h5>Time Limits</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Approval Timeout (hours)</label>
+                                        <input type="number" class="form-control" id="approvalTimeout" value="24">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Execution Timeout (minutes)</label>
+                                        <input type="number" class="form-control" id="executionTimeout" value="30">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Rollback Timeout (minutes)</label>
+                                        <input type="number" class="form-control" id="rollbackTimeout" value="60">
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="enableAutoRollback" checked>
+                                            <label class="form-check-label" for="enableAutoRollback">
+                                                Enable Auto Rollback
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Approvals Section -->
+                <div id="approvals" class="section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-check-circle"></i> Approval Management</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <button class="btn btn-autonomous" onclick="refreshApprovals()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Pending Approvals</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="pendingApprovalsList">
+                                <div class="text-center text-muted">
+                                    <i class="fas fa-spinner fa-spin"></i> Loading approvals...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audit Section -->
+                <div id="audit" class="section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-history"></i> Audit Trail</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <button class="btn btn-autonomous" onclick="exportAuditLog()">
+                                <i class="fas fa-download"></i> Export
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h5>Recent Audit Events</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Timestamp</th>
+                                            <th>Action</th>
+                                            <th>User</th>
+                                            <th>Resource</th>
+                                            <th>Details</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="auditTable">
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted">
+                                                <i class="fas fa-spinner fa-spin"></i> Loading audit log...
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configuration Section -->
+                <div id="config" class="section" style="display: none;">
+                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+                        <h1 class="h2"><i class="fas fa-cog"></i> System Configuration</h1>
+                        <div class="btn-toolbar mb-2 mb-md-0">
+                            <button class="btn btn-autonomous" onclick="saveSystemConfig()">
+                                <i class="fas fa-save"></i> Save Configuration
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>General Settings</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">System Mode</label>
+                                        <select class="form-select" id="systemMode">
+                                            <option value="autonomous">Fully Autonomous</option>
+                                            <option value="supervised">Supervised Autonomous</option>
+                                            <option value="manual">Manual Only</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Default Confidence Threshold (%)</label>
+                                        <input type="number" class="form-control" id="defaultConfidence" value="80" min="0" max="100">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Maximum Concurrent Workflows</label>
+                                        <input type="number" class="form-control" id="maxWorkflows" value="10">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Monitoring Settings</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label class="form-label">Monitoring Interval (seconds)</label>
+                                        <input type="number" class="form-control" id="monitoringInterval" value="30">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Alert Threshold (failed workflows)</label>
+                                        <input type="number" class="form-control" id="alertThreshold" value="3">
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="enableMonitoring" checked>
+                                            <label class="form-check-label" for="enableMonitoring">
+                                                Enable Real-time Monitoring
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="enableNotifications" checked>
+                                            <label class="form-check-label" for="enableNotifications">
+                                                Enable Email Notifications
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- New Workflow Modal -->
+    <div class="modal fade" id="newWorkflowModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Start New Workflow</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Workflow Type</label>
+                        <select class="form-select" id="workflowType">
+                            <option value="project_health_analysis">Project Health Analysis</option>
+                            <option value="risk_assessment">Risk Assessment</option>
+                            <option value="resource_optimization">Resource Optimization</option>
+                            <option value="budget_analysis">Budget Analysis</option>
+                            <option value="stakeholder_communication">Stakeholder Communication</option>
+                            <option value="plan_generation">Plan Generation</option>
+                            <option value="task_automation">Task Automation</option>
+                            <option value="decision_making">Decision Making</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Project ID (optional)</label>
+                        <input type="number" class="form-control" id="workflowProjectId">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Context (JSON)</label>
+                        <textarea class="form-control" id="workflowContext" rows="3">{"priority": "medium"}</textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-autonomous" onclick="createWorkflow()">Start Workflow</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variables
+        let currentSection = 'dashboard';
+        let systemStatus = {};
+        let workflows = [];
+        let models = [];
+        let approvals = [];
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboard();
+            loadGuardrailsConfig();
+        });
+
+        // Navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Show selected section
+            document.getElementById(sectionId).style.display = 'block';
+            
+            // Update navigation
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            currentSection = sectionId;
+            
+            // Load section-specific data
+            switch(sectionId) {
+                case 'dashboard':
+                    loadDashboard();
+                    break;
+                case 'workflows':
+                    loadWorkflows();
+                    break;
+                case 'models':
+                    loadModels();
+                    break;
+                case 'guardrails':
+                    loadGuardrailsConfig();
+                    break;
+                case 'approvals':
+                    loadApprovals();
+                    break;
+                case 'audit':
+                    loadAuditLog();
+                    break;
+                case 'config':
+                    loadSystemConfig();
+                    break;
+            }
+        }
+
+        // Dashboard functions
+        async function loadDashboard() {
+            try {
+                const response = await fetch('/api/v1/autonomous-system/autonomous-system-status');
+                const data = await response.json();
+                
+                if (data.success) {
+                    systemStatus = data.system_status;
+                    updateDashboardMetrics();
+                    updateRecentWorkflows();
+                }
+            } catch (error) {
+                console.error('Error loading dashboard:', error);
+                showAlert('Error loading dashboard data', 'danger');
+            }
+        }
+
+        function updateDashboardMetrics() {
+            const stats = systemStatus.workflows || {};
+            document.getElementById('activeWorkflows').textContent = stats.active_workflows || 0;
+            document.getElementById('availableModels').textContent = systemStatus.models?.total_models || 0;
+            document.getElementById('pendingApprovals').textContent = '0'; // TODO: Implement
+            document.getElementById('systemHealth').textContent = '100%'; // TODO: Calculate
+        }
+
+        async function updateRecentWorkflows() {
+            try {
+                const response = await fetch('/api/v1/autonomous-system/workflow-history?limit=5');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const workflowsHtml = data.workflows.map(workflow => `
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <strong>${workflow.workflow_type}</strong>
+                                <br><small class="text-muted">${workflow.workflow_id}</small>
+                            </div>
+                            <span class="badge bg-${getStatusColor(workflow.status)}">${workflow.status}</span>
+                        </div>
+                    `).join('');
+                    
+                    document.getElementById('recentWorkflows').innerHTML = workflowsHtml || '<p class="text-muted">No recent workflows</p>';
+                }
+            } catch (error) {
+                console.error('Error loading recent workflows:', error);
+            }
+        }
+
+        function getStatusColor(status) {
+            switch(status) {
+                case 'completed': return 'success';
+                case 'running': return 'primary';
+                case 'failed': return 'danger';
+                case 'rolled_back': return 'warning';
+                default: return 'secondary';
+            }
+        }
+
+        function refreshDashboard() {
+            loadDashboard();
+            showAlert('Dashboard refreshed', 'success');
+        }
+
+        // Workflow functions
+        async function loadWorkflows() {
+            try {
+                const response = await fetch('/api/v1/autonomous-system/workflow-history');
+                const data = await response.json();
+                
+                if (data.success) {
+                    workflows = data.workflows;
+                    updateWorkflowsTable();
+                }
+            } catch (error) {
+                console.error('Error loading workflows:', error);
+                showAlert('Error loading workflows', 'danger');
+            }
+        }
+
+        function updateWorkflowsTable() {
+            const tbody = document.getElementById('workflowsTable');
+            
+            if (workflows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No workflows found</td></tr>';
+                return;
+            }
+            
+            const rows = workflows.map(workflow => `
+                <tr>
+                    <td><code>${workflow.workflow_id}</code></td>
+                    <td>${workflow.workflow_type}</td>
+                    <td><span class="badge bg-${getStatusColor(workflow.status)}">${workflow.status}</span></td>
+                    <td>${workflow.project_id || 'N/A'}</td>
+                    <td>${new Date(workflow.initiated_at).toLocaleString()}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary" onclick="viewWorkflow('${workflow.workflow_id}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        ${workflow.status === 'running' ? `
+                            <button class="btn btn-sm btn-outline-warning" onclick="rollbackWorkflow('${workflow.workflow_id}')">
+                                <i class="fas fa-undo"></i>
+                            </button>
+                        ` : ''}
+                    </td>
+                </tr>
+            `).join('');
+            
+            tbody.innerHTML = rows;
+        }
+
+        function startNewWorkflow() {
+            const modal = new bootstrap.Modal(document.getElementById('newWorkflowModal'));
+            modal.show();
+        }
+
+        async function createWorkflow() {
+            try {
+                const workflowData = {
+                    workflow_type: document.getElementById('workflowType').value,
+                    project_id: parseInt(document.getElementById('workflowProjectId').value) || null,
+                    context: JSON.parse(document.getElementById('workflowContext').value || '{}')
+                };
+                
+                const response = await fetch('/api/v1/autonomous-system/start-workflow', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(workflowData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('Workflow started successfully', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('newWorkflowModal')).hide();
+                    loadWorkflows();
+                } else {
+                    showAlert('Failed to start workflow: ' + data.error, 'danger');
+                }
+            } catch (error) {
+                console.error('Error creating workflow:', error);
+                showAlert('Error creating workflow', 'danger');
+            }
+        }
+
+        // Model functions
+        async function loadModels() {
+            try {
+                const response = await fetch('/api/v1/autonomous-system/model-status');
+                const data = await response.json();
+                
+                if (data.success) {
+                    models = Object.entries(data.model_status.models);
+                    updateModelsGrid();
+                }
+            } catch (error) {
+                console.error('Error loading models:', error);
+                showAlert('Error loading models', 'danger');
+            }
+        }
+
+        function updateModelsGrid() {
+            const grid = document.getElementById('modelsGrid');
+            
+            const modelCards = models.map(([name, config]) => `
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card model-card">
+                        <div class="card-body">
+                            <h6 class="card-title">${name}</h6>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    <i class="fas fa-tasks"></i> ${config.task_types.join(', ')}<br>
+                                    <i class="fas fa-memory"></i> ${config.memory_usage_gb}GB<br>
+                                    <i class="fas fa-clock"></i> ${config.response_time_ms}ms
+                                </small>
+                            </p>
+                            <div class="d-flex justify-content-between">
+                                <span class="status-indicator status-${config.available ? 'active' : 'error'}"></span>
+                                <button class="btn btn-sm btn-outline-primary" onclick="testModel('${name}')">
+                                    <i class="fas fa-vial"></i> Test
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            grid.innerHTML = modelCards;
+        }
+
+        async function testAllModels() {
+            try {
+                const response = await fetch('/api/v1/autonomous-system/test-models', {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('Model testing completed', 'success');
+                    loadModels();
+                } else {
+                    showAlert('Model testing failed: ' + data.error, 'danger');
+                }
+            } catch (error) {
+                console.error('Error testing models:', error);
+                showAlert('Error testing models', 'danger');
+            }
+        }
+
+        async function testModel(modelName) {
+            try {
+                const response = await fetch('/api/v1/autonomous-system/ai-analysis', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        query: 'Hello, this is a test.',
+                        model_override: modelName
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert(`Model ${modelName} test successful`, 'success');
+                } else {
+                    showAlert(`Model ${modelName} test failed: ${data.error}`, 'danger');
+                }
+            } catch (error) {
+                console.error('Error testing model:', error);
+                showAlert('Error testing model', 'danger');
+            }
+        }
+
+        // Guardrails functions
+        async function loadGuardrailsConfig() {
+            try {
+                const response = await fetch('/api/v1/autonomous-system/guardrails-config');
+                const data = await response.json();
+                
+                if (data.success) {
+                    const config = data.config;
+                    document.getElementById('budgetThreshold').value = config.budget_threshold;
+                    document.getElementById('resourceThreshold').value = config.resource_allocation_threshold * 100;
+                    document.getElementById('riskThreshold').value = config.risk_mitigation_threshold * 100;
+                    document.getElementById('stakeholderThreshold').value = config.stakeholder_communication_threshold * 100;
+                    document.getElementById('approvalTimeout').value = config.approval_timeout_hours;
+                    document.getElementById('executionTimeout').value = config.execution_timeout_minutes;
+                    document.getElementById('rollbackTimeout').value = config.rollback_timeout_minutes;
+                    document.getElementById('enableAutoRollback').checked = config.enable_auto_rollback;
+                }
+            } catch (error) {
+                console.error('Error loading guardrails config:', error);
+                showAlert('Error loading guardrails configuration', 'danger');
+            }
+        }
+
+        async function saveGuardrailsConfig() {
+            try {
+                const configData = {
+                    budget_threshold: parseFloat(document.getElementById('budgetThreshold').value),
+                    resource_allocation_threshold: parseFloat(document.getElementById('resourceThreshold').value) / 100,
+                    risk_mitigation_threshold: parseFloat(document.getElementById('riskThreshold').value) / 100,
+                    stakeholder_communication_threshold: parseFloat(document.getElementById('stakeholderThreshold').value) / 100,
+                    approval_timeout_hours: parseInt(document.getElementById('approvalTimeout').value),
+                    execution_timeout_minutes: parseInt(document.getElementById('executionTimeout').value),
+                    rollback_timeout_minutes: parseInt(document.getElementById('rollbackTimeout').value),
+                    enable_auto_rollback: document.getElementById('enableAutoRollback').checked
+                };
+                
+                const response = await fetch('/api/v1/autonomous-system/update-guardrails-config', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(configData)
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('Guardrails configuration saved successfully', 'success');
+                } else {
+                    showAlert('Failed to save configuration: ' + data.error, 'danger');
+                }
+            } catch (error) {
+                console.error('Error saving guardrails config:', error);
+                showAlert('Error saving guardrails configuration', 'danger');
+            }
+        }
+
+        // Approval functions
+        async function loadApprovals() {
+            // TODO: Implement approval loading
+            document.getElementById('pendingApprovalsList').innerHTML = '<p class="text-muted">No pending approvals</p>';
+        }
+
+        function refreshApprovals() {
+            loadApprovals();
+            showAlert('Approvals refreshed', 'success');
+        }
+
+        // Audit functions
+        async function loadAuditLog() {
+            // TODO: Implement audit log loading
+            document.getElementById('auditTable').innerHTML = '<tr><td colspan="5" class="text-center text-muted">No audit events found</td></tr>';
+        }
+
+        function exportAuditLog() {
+            showAlert('Audit log export feature coming soon', 'info');
+        }
+
+        // Configuration functions
+        function loadSystemConfig() {
+            // TODO: Load system configuration
+        }
+
+        function saveSystemConfig() {
+            showAlert('System configuration saved', 'success');
+        }
+
+        // Utility functions
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-autonomous alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            const container = document.querySelector('.main-content');
+            container.insertBefore(alertDiv, container.firstChild);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

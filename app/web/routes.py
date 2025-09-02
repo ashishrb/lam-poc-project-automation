@@ -15,8 +15,23 @@ templates = Jinja2Templates(directory=templates_dir)
 
 @web_router.get("/", response_class=HTMLResponse)
 async def web_home(request: Request):
-    """Web home page"""
-    return templates.TemplateResponse("home.html", {"request": request})
+    """Web home page - redirect to login"""
+    return RedirectResponse(url="/web/login")
+
+@web_router.get("/login", response_class=HTMLResponse)
+async def login_page(request: Request):
+    """Login page"""
+    return templates.TemplateResponse("login.html", {"request": request})
+
+@web_router.get("/project-plan-creator", response_class=HTMLResponse)
+async def project_plan_creator_page(request: Request):
+    """Project plan creator page"""
+    return templates.TemplateResponse("project_plan_creator.html", {"request": request})
+
+@web_router.get("/project-reports", response_class=HTMLResponse)
+async def project_reports_page(request: Request):
+    """Project reports page with Gantt charts and analytics"""
+    return templates.TemplateResponse("project_reports.html", {"request": request})
 
 
 @web_router.get("/dashboard", response_class=HTMLResponse)
@@ -90,26 +105,26 @@ async def projects_page(request: Request):
             "id": 4, 
             "name": "DELTA Project", 
             "code": "PRJ-004", 
-            "project_manager_id": "Lisa PM", 
+            "project_manager_id": "Lisa Coordinator", 
             "status": "completed", 
-            "priority": "low",
+            "priority": "medium",
             "description": "Automated Workflow Engine",
             "start_date": "2023-09-01",
-            "end_date": "2024-01-31",
-            "budget": 200000,
+            "end_date": "2024-02-28",
+            "budget": 250000,
             "progress": 100
         },
         {
             "id": 5, 
             "name": "EPSILON Project", 
             "code": "PRJ-005", 
-            "project_manager_id": "Alex Tech", 
+            "project_manager_id": "David Architect", 
             "status": "on_hold", 
-            "priority": "medium",
+            "priority": "low",
             "description": "Cloud Migration Initiative",
             "start_date": "2024-03-01",
-            "end_date": "2024-09-30",
-            "budget": 200000,
+            "end_date": "2024-11-30",
+            "budget": 800000,
             "progress": 15
         }
     ]
@@ -123,72 +138,52 @@ async def projects_page(request: Request):
 @web_router.get("/resources", response_class=HTMLResponse)
 async def resources_page(request: Request):
     """Resources page"""
-    # Sample resources data with project allocations
+    # Sample resources data
     resources = [
         {
-            "id": 1, 
-            "name": "John Developer", 
-            "email": "john@company.com", 
-            "skills": ["Python", "FastAPI", "PostgreSQL"],
+            "id": 1,
+            "name": "John Developer",
+            "email": "john.dev@company.com",
             "role": "Senior Developer",
-            "department": "Engineering",
-            "availability": 85,
-            "current_projects": [
-                {"project_id": 1, "project_name": "ALPHA Project", "role": "Lead Developer", "hours_allocated": 40, "tasks": ["API Development", "Database Design"]},
-                {"project_id": 3, "project_name": "GAMMA Project", "role": "Developer", "hours_allocated": 20, "tasks": ["Analytics Module"]}
-            ]
-        },
-        {
-            "id": 2, 
-            "name": "Sarah Designer", 
-            "email": "sarah@company.com", 
-            "skills": ["UI/UX", "Figma", "React"],
-            "role": "UX Designer",
-            "department": "Design",
-            "availability": 70,
-            "current_projects": [
-                {"project_id": 1, "project_name": "ALPHA Project", "role": "UI Designer", "hours_allocated": 30, "tasks": ["Dashboard Design", "User Interface"]},
-                {"project_id": 2, "project_name": "BETA Project", "role": "UX Designer", "hours_allocated": 25, "tasks": ["User Research", "Wireframing"]}
-            ]
-        },
-        {
-            "id": 3, 
-            "name": "Mike Architect", 
-            "email": "mike@company.com", 
-            "skills": ["System Design", "AWS", "Docker"],
-            "role": "Solution Architect",
-            "department": "Architecture",
-            "availability": 60,
-            "current_projects": [
-                {"project_id": 2, "project_name": "BETA Project", "role": "Architect", "hours_allocated": 35, "tasks": ["System Architecture", "Cloud Setup"]},
-                {"project_id": 5, "project_name": "EPSILON Project", "role": "Architect", "hours_allocated": 15, "tasks": ["Migration Planning"]}
-            ]
-        },
-        {
-            "id": 4, 
-            "name": "Lisa Tester", 
-            "email": "lisa@company.com", 
-            "skills": ["QA", "Automation", "Selenium"],
-            "role": "QA Engineer",
-            "department": "Quality Assurance",
-            "availability": 90,
-            "current_projects": [
-                {"project_id": 1, "project_name": "ALPHA Project", "role": "QA Lead", "hours_allocated": 25, "tasks": ["Test Planning", "Automation"]},
-                {"project_id": 3, "project_name": "GAMMA Project", "role": "QA Engineer", "hours_allocated": 30, "tasks": ["Testing", "Bug Reports"]}
-            ]
-        },
-        {
-            "id": 5, 
-            "name": "Alex DevOps", 
-            "email": "alex@company.com", 
-            "skills": ["CI/CD", "Kubernetes", "Jenkins"],
-            "role": "DevOps Engineer",
-            "department": "Operations",
+            "skills": ["Python", "FastAPI", "React", "PostgreSQL"],
             "availability": 80,
-            "current_projects": [
-                {"project_id": 4, "project_name": "DELTA Project", "role": "DevOps Engineer", "hours_allocated": 40, "tasks": ["Pipeline Setup", "Deployment"]},
-                {"project_id": 5, "project_name": "EPSILON Project", "role": "DevOps Engineer", "hours_allocated": 20, "tasks": ["Infrastructure Setup"]}
-            ]
+            "current_projects": ["ALPHA Project", "GAMMA Project"]
+        },
+        {
+            "id": 2,
+            "name": "Sarah Designer",
+            "email": "sarah.design@company.com",
+            "role": "UI/UX Designer",
+            "skills": ["Figma", "Adobe XD", "Sketch", "Prototyping"],
+            "availability": 60,
+            "current_projects": ["BETA Project"]
+        },
+        {
+            "id": 3,
+            "name": "Mike Tester",
+            "email": "mike.test@company.com",
+            "role": "QA Engineer",
+            "skills": ["Selenium", "JUnit", "TestNG", "Manual Testing"],
+            "availability": 90,
+            "current_projects": ["ALPHA Project", "DELTA Project"]
+        },
+        {
+            "id": 4,
+            "name": "Lisa Analyst",
+            "email": "lisa.analyst@company.com",
+            "role": "Business Analyst",
+            "skills": ["Requirements Analysis", "Process Modeling", "Stakeholder Management"],
+            "availability": 70,
+            "current_projects": ["BETA Project", "EPSILON Project"]
+        },
+        {
+            "id": 5,
+            "name": "David DevOps",
+            "email": "david.devops@company.com",
+            "role": "DevOps Engineer",
+            "skills": ["Docker", "Kubernetes", "AWS", "CI/CD"],
+            "availability": 85,
+            "current_projects": ["GAMMA Project", "EPSILON Project"]
         }
     ]
     
@@ -201,32 +196,54 @@ async def resources_page(request: Request):
 @web_router.get("/finance", response_class=HTMLResponse)
 async def finance_page(request: Request):
     """Finance page"""
-    # Sample finance data with actual values
-    finance_data = {
-        "total_budget": 1600000,
-        "spent": 850000,
-        "remaining": 750000,
-        "variance": -50000,
-        "variance_percentage": -3.1,
+    # Sample financial data
+    financial_data = {
+        "total_budget": 2250000,
+        "total_spent": 1850000,
+        "total_remaining": 400000,
+        "budget_utilization": 82.2,
         "projects": [
-            {"name": "ALPHA Project", "budget": 500000, "spent": 375000, "remaining": 125000, "variance": 25000, "status": "On Track"},
-            {"name": "BETA Project", "budget": 300000, "spent": 75000, "remaining": 225000, "variance": -75000, "status": "Under Budget"},
-            {"name": "GAMMA Project", "budget": 400000, "spent": 240000, "remaining": 160000, "variance": 0, "status": "On Track"},
-            {"name": "DELTA Project", "budget": 200000, "spent": 200000, "remaining": 0, "variance": 0, "status": "Completed"},
-            {"name": "EPSILON Project", "budget": 200000, "spent": 30000, "remaining": 170000, "variance": -30000, "status": "On Hold"}
-        ],
-        "monthly_spending": [
-            {"month": "Jan", "spent": 120000},
-            {"month": "Feb", "spent": 150000},
-            {"month": "Mar", "spent": 180000},
-            {"month": "Apr", "spent": 200000},
-            {"month": "May", "spent": 0}
+            {
+                "name": "ALPHA Project",
+                "budget": 500000,
+                "spent": 375000,
+                "remaining": 125000,
+                "utilization": 75.0
+            },
+            {
+                "name": "BETA Project",
+                "budget": 300000,
+                "spent": 75000,
+                "remaining": 225000,
+                "utilization": 25.0
+            },
+            {
+                "name": "GAMMA Project",
+                "budget": 400000,
+                "spent": 240000,
+                "remaining": 160000,
+                "utilization": 60.0
+            },
+            {
+                "name": "DELTA Project",
+                "budget": 250000,
+                "spent": 250000,
+                "remaining": 0,
+                "utilization": 100.0
+            },
+            {
+                "name": "EPSILON Project",
+                "budget": 800000,
+                "spent": 120000,
+                "remaining": 680000,
+                "utilization": 15.0
+            }
         ]
     }
     
     return templates.TemplateResponse("finance.html", {
         "request": request,
-        "finance": finance_data
+        "financial_data": financial_data
     })
 
 
@@ -238,7 +255,7 @@ async def portfolio_page(request: Request):
 
 @web_router.get("/ai-copilot", response_class=HTMLResponse)
 async def ai_copilot_page(request: Request):
-    """AI Copilot console page"""
+    """AI Copilot page"""
     return templates.TemplateResponse("ai_copilot.html", {"request": request})
 
 
@@ -248,10 +265,56 @@ async def admin_page(request: Request):
     return templates.TemplateResponse("admin.html", {"request": request})
 
 
+@web_router.get("/autonomous-admin", response_class=HTMLResponse)
+async def autonomous_admin_page(request: Request):
+    """Autonomous system admin page"""
+    return templates.TemplateResponse("autonomous_admin.html", {"request": request})
+
+
+@web_router.get("/developer-workbench", response_class=HTMLResponse)
+async def developer_workbench_page(request: Request):
+    """Developer workbench page"""
+    return templates.TemplateResponse("developer_workbench.html", {"request": request})
+
+
 @web_router.get("/alerts", response_class=HTMLResponse)
 async def alerts_page(request: Request):
     """Alerts page"""
-    return templates.TemplateResponse("alerts.html", {"request": request})
+    # Sample alerts data
+    alerts = [
+        {
+            "id": 1,
+            "type": "warning",
+            "title": "Budget Overrun Risk",
+            "message": "ALPHA Project is approaching 80% budget utilization",
+            "project": "ALPHA Project",
+            "timestamp": "2024-01-15T10:30:00Z",
+            "severity": "medium"
+        },
+        {
+            "id": 2,
+            "type": "error",
+            "title": "Resource Conflict",
+            "message": "John Developer is over-allocated by 20%",
+            "project": "Multiple Projects",
+            "timestamp": "2024-01-15T09:15:00Z",
+            "severity": "high"
+        },
+        {
+            "id": 3,
+            "type": "info",
+            "title": "Milestone Completed",
+            "message": "DELTA Project Phase 1 completed successfully",
+            "project": "DELTA Project",
+            "timestamp": "2024-01-14T16:45:00Z",
+            "severity": "low"
+        }
+    ]
+    
+    return templates.TemplateResponse("alerts.html", {
+        "request": request,
+        "alerts": alerts
+    })
 
 
 @web_router.get("/reports", response_class=HTMLResponse)

@@ -36,6 +36,21 @@ class TaskPriority(str, enum.Enum):
     CRITICAL = "critical"
 
 
+class PlanStatus(str, enum.Enum):
+    DRAFT = "draft"
+    REVIEW = "review"
+    APPROVED = "approved"
+    ACTIVE = "active"
+    ARCHIVED = "archived"
+
+
+class PlanType(str, enum.Enum):
+    MANUAL = "manual"
+    AI_GENERATED = "ai_generated"
+    TEMPLATE_BASED = "template_based"
+    HYBRID = "hybrid"
+
+
 class Project(Base):
     __tablename__ = "projects"
     
@@ -60,6 +75,7 @@ class Project(Base):
     
     # Baseline & Versioning
     current_baseline_id = Column(Integer, ForeignKey("project_baselines.id"))
+    current_plan_id = Column(Integer, ForeignKey("project_plans.id"))
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -78,6 +94,125 @@ class Project(Base):
     ai_drafts = relationship("AIDraft", back_populates="project")
     baselines = relationship("ProjectBaseline", back_populates="project", foreign_keys="ProjectBaseline.project_id")
     current_baseline = relationship("ProjectBaseline", foreign_keys=[current_baseline_id])
+    plans = relationship("ProjectPlan", back_populates="project")
+    current_plan = relationship("ProjectPlan", foreign_keys=[current_plan_id])
+
+
+class ProjectPlan(Base):
+    """Comprehensive project plan storage with versioning and metadata"""
+    __tablename__ = "project_plans"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=False)
+    name = Column(String(200), nullable=False)
+    description = Column(Text)
+    version = Column(String(20), nullable=False)  # e.g., "1.0", "2.1"
+    status = Column(Enum(PlanStatus), default=PlanStatus.DRAFT)
+    plan_type = Column(Enum(PlanType), nullable=False)
+    
+    # Plan metadata
+    creation_method = Column(String(50))  # "manual", "ai_extraction", "template"
+    source_documents = Column(JSON)  # List of source documents used for AI generation
+    extraction_confidence = Column(Float)  # AI confidence score (0-1)
+    
+    # Plan structure
+    epics = Column(JSON)  # Epic-level breakdown
+    features = Column(JSON)  # Feature-level breakdown
+    tasks = Column(JSON)  # Task-level breakdown with full details
+    milestones = Column(JSON)  # Milestone definitions
+    dependencies = Column(JSON)  # Task dependencies and relationships
+    risks = Column(JSON)  # Identified risks
+    resource_requirements = Column(JSON)  # Resource needs and assignments
+    
+    # Plan metrics
+    total_tasks = Column(Integer, default=0)
+    total_milestones = Column(Integer, default=0)
+    estimated_duration_days = Column(Integer, default=0)
+    estimated_hours = Column(Float, default=0.0)
+    required_resources = Column(Integer, default=0)
+    total_budget = Column(Float, default=0.0)
+    
+    # Validation and quality
+    validation_score = Column(Float, default=0.0)  # 0-100
+    validation_issues = Column(JSON)  # List of validation issues
+    quality_metrics = Column(JSON)  # Quality assessment metrics
+    
+    # Metadata
+    created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    approved_by_id = Column(Integer, ForeignKey("users.id"))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    approved_at = Column(DateTime(timezone=True))
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    # Relationships
+    project = relationship("Project", back_populates="plans", foreign_keys=[project_id])
+    created_by = relationship("User", foreign_keys=[created_by_id])
+    approved_by = relationship("User", foreign_keys=[approved_by_id])
+    plan_tasks = relationship("PlanTask", back_populates="plan")
+    plan_milestones = relationship("PlanMilestone", back_populates="plan")
+
+
+class PlanTask(Base):
+    """Individual tasks within a project plan"""
+    __tablename__ = "plan_tasks"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    plan_id = Column(Integer, ForeignKey("project_plans.id"), nullable=False)
+    task_id = Column(Integer, ForeignKey("tasks.id"))  # Links to actual task if created
+    
+    # Task details
+    name = Column(String(200), nullable=False)
+    description = Column(Text)
+    epic = Column(String(100))  # Epic this task belongs to
+    feature = Column(String(100))  # Feature this task belongs to
+    
+    # Task properties
+    priority = Column(Enum(TaskPriority), default=TaskPriority.MEDIUM)
+    estimated_hours = Column(Float, default=0.0)
+    start_date = Column(Date)
+    due_date = Column(Date)
+    dependencies = Column(JSON)  # List of dependent task IDs
+    
+    # Resource assignment
+    assigned_resource_id = Column(Integer, ForeignKey("users.id"))
+    skill_requirements = Column(JSON)  # Required skills for this task
+    skill_match_score = Column(Float)  # How well assigned resource matches requirements
+    
+    # AI-generated metadata
+    confidence_score = Column(Float)  # AI confidence in this task
+    reasoning = Column(JSON)  # AI reasoning for task creation
+    source = Column(String(20), default="manual")  # "manual", "ai", "template"
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    plan = relationship("ProjectPlan", back_populates="plan_tasks")
+    task = relationship("Task", foreign_keys=[task_id])
+    assigned_resource = relationship("User", foreign_keys=[assigned_resource_id])
+
+
+class PlanMilestone(Base):
+    """Milestones within a project plan"""
+    __tablename__ = "plan_milestones"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    plan_id = Column(Integer, ForeignKey("project_plans.id"), nullable=False)
+    milestone_id = Column(Integer, ForeignKey("milestones.id"))  # Links to actual milestone if created
+    
+    # Milestone details
+    name = Column(String(200), nullable=False)
+    description = Column(Text)
+    due_date = Column(Date, nullable=False)
+    is_critical = Column(Boolean, default=False)
+    
+    # Associated tasks
+    associated_tasks = Column(JSON)  # List of task IDs that contribute to this milestone
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    plan = relationship("ProjectPlan", back_populates="plan_milestones")
+    milestone = relationship("Milestone", foreign_keys=[milestone_id])
 
 
 class Task(Base):
@@ -104,7 +239,8 @@ class Task(Base):
     reasoning = Column(JSON)  # AI reasoning for task creation/assignment
     source = Column(String(20), default="ai")  # 'ai' or 'human'
     
-    # Baseline & Versioning
+    # Plan and Baseline Integration
+    plan_task_id = Column(Integer, ForeignKey("plan_tasks.id"))
     baseline_task_id = Column(Integer, ForeignKey("baseline_tasks.id"))
     
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -117,6 +253,7 @@ class Task(Base):
     subtasks = relationship("Task", back_populates="parent_task")
     work_items = relationship("WorkItem", back_populates="task")
     timesheets = relationship("Timesheet", back_populates="task")
+    plan_task = relationship("PlanTask", foreign_keys=[plan_task_id])
     baseline_task = relationship("BaselineTask", back_populates="current_task", foreign_keys=[baseline_task_id])
     baseline_tasks = relationship("BaselineTask", back_populates="task", foreign_keys="BaselineTask.task_id")
 
@@ -155,11 +292,16 @@ class Milestone(Base):
     completed_date = Column(Date)
     is_critical = Column(Boolean, default=False)
     status = Column(String(20), default="pending")  # pending, completed, delayed
+    
+    # Plan Integration
+    plan_milestone_id = Column(Integer, ForeignKey("plan_milestones.id"))
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relationships
     project = relationship("Project", back_populates="milestones")
+    plan_milestone = relationship("PlanMilestone", foreign_keys=[plan_milestone_id])
 
 
 class BaselineStatus(str, enum.Enum):

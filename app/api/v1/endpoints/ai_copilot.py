@@ -47,7 +47,8 @@ async def chat_with_copilot(
             "actions": response.get("actions", []),
             "citations": response.get("citations", []),
             "confidence": response.get("confidence", 0.0),
-            "tools_used": response.get("tools_used", [])
+            "tools_used": response.get("tools_used", []),
+            "interactive_buttons": response.get("interactive_buttons", [])
         }
         
     except Exception as e:

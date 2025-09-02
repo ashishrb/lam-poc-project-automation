@@ -144,6 +144,34 @@
             margin: 2px;
             display: inline-block;
         }
+        .interactive-buttons {
+            margin-top: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .action-button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .action-button.primary { background: #007bff; color: white; }
+        .action-button.success { background: #28a745; color: white; }
+        .action-button.info { background: #17a2b8; color: white; }
+        .action-button.warning { background: #ffc107; color: #212529; }
+        .action-button.danger { background: #dc3545; color: white; }
+        .action-button.secondary { background: #6c757d; color: white; }
     </style>
 </head>
 <body>
@@ -598,7 +626,7 @@
             container.innerHTML = '';
         }
         
-        function addMessage(type, content, saveToHistory = true) {
+        function addMessage(type, content, saveToHistory = true, interactiveButtons = []) {
             const container = document.getElementById('chatContainer');
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${type}-message`;
@@ -612,6 +640,22 @@
                 messageDiv.innerHTML = `<strong>AI Copilot:</strong> ${formattedContent}`;
             } else if (type === 'system') {
                 messageDiv.innerHTML = `<i class="fas fa-info-circle"></i> ${formattedContent}`;
+            }
+            
+            // Add interactive buttons if provided
+            if (interactiveButtons && interactiveButtons.length > 0) {
+                const buttonsDiv = document.createElement('div');
+                buttonsDiv.className = 'interactive-buttons';
+                
+                interactiveButtons.forEach(button => {
+                    const buttonElement = document.createElement('button');
+                    buttonElement.className = `action-button ${button.color}`;
+                    buttonElement.innerHTML = `<i class="${button.icon}"></i> ${button.text}`;
+                    buttonElement.onclick = () => handleActionButton(button.action);
+                    buttonsDiv.appendChild(buttonElement);
+                });
+                
+                messageDiv.appendChild(buttonsDiv);
             }
             
             container.appendChild(messageDiv);
@@ -630,6 +674,89 @@
             
             // ✅ NEW: Update context display
             updateContextDisplay();
+        }
+
+        function handleActionButton(action) {
+            console.log('Action button clicked:', action);
+            
+            // Handle different actions
+            switch(action) {
+                case 'generate_project_plan':
+                    addMessage('user', 'Generate a comprehensive project plan for the ALPHA project');
+                    sendMessage();
+                    break;
+                case 'create_gantt_chart':
+                    addMessage('user', 'Create a Gantt chart for the current project timeline');
+                    sendMessage();
+                    break;
+                case 'view_wbs':
+                    addMessage('user', 'Show me the Work Breakdown Structure for the project');
+                    sendMessage();
+                    break;
+                case 'generate_report':
+                    addMessage('user', 'Generate a detailed project status report');
+                    sendMessage();
+                    break;
+                case 'email_report':
+                    addMessage('user', 'Create and email a project report to stakeholders');
+                    sendMessage();
+                    break;
+                case 'executive_summary':
+                    addMessage('user', 'Create an executive summary of project status');
+                    sendMessage();
+                    break;
+                case 'resource_allocation':
+                    addMessage('user', 'Analyze and optimize resource allocation');
+                    sendMessage();
+                    break;
+                case 'capacity_planning':
+                    addMessage('user', 'Show capacity planning analysis');
+                    sendMessage();
+                    break;
+                case 'optimize_resources':
+                    addMessage('user', 'Suggest resource optimization strategies');
+                    sendMessage();
+                    break;
+                case 'budget_analysis':
+                    addMessage('user', 'Analyze budget performance and variance');
+                    sendMessage();
+                    break;
+                case 'forecast_budget':
+                    addMessage('user', 'Forecast budget for the next quarter');
+                    sendMessage();
+                    break;
+                case 'variance_alert':
+                    addMessage('user', 'Check for budget variances and alerts');
+                    sendMessage();
+                    break;
+                case 'risk_assessment':
+                    addMessage('user', 'Perform comprehensive risk assessment');
+                    sendMessage();
+                    break;
+                case 'mitigation_plan':
+                    addMessage('user', 'Create risk mitigation strategies');
+                    sendMessage();
+                    break;
+                case 'risk_dashboard':
+                    addMessage('user', 'Show risk dashboard and metrics');
+                    sendMessage();
+                    break;
+                case 'ai_assistant':
+                    addMessage('user', 'What can you help me with today?');
+                    sendMessage();
+                    break;
+                case 'view_docs':
+                    addMessage('user', 'Show me the available documentation');
+                    sendMessage();
+                    break;
+                case 'get_help':
+                    addMessage('user', 'I need help with using the system');
+                    sendMessage();
+                    break;
+                default:
+                    addMessage('user', `Execute action: ${action}`);
+                    sendMessage();
+            }
         }
         
         function handleKeyPress(event) {

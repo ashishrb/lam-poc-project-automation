@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Project Portfolio Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            max-width: 400px;
+            width: 100%;
+        }
+        .login-header {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .login-header h2 {
+            margin: 0;
+            font-weight: 600;
+        }
+        .login-body {
+            padding: 40px;
+        }
+        .form-floating {
+            margin-bottom: 20px;
+        }
+        .btn-login {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            border: none;
+            padding: 12px;
+            font-weight: 600;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .btn-login:hover {
+            background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+        }
+        .role-selector {
+            margin-bottom: 20px;
+        }
+        .role-option {
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .role-option:hover {
+            border-color: #007bff;
+            background: #f8f9fa;
+        }
+        .role-option.selected {
+            border-color: #007bff;
+            background: #e3f2fd;
+        }
+        .role-option input[type="radio"] {
+            margin-right: 10px;
+        }
+        .demo-credentials {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+        .demo-credentials h6 {
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+        .credential-item {
+            margin-bottom: 5px;
+        }
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-header">
+            <h2><i class="fas fa-rocket"></i> PPM System</h2>
+            <p class="mb-0">Project Portfolio Management</p>
+        </div>
+        
+        <div class="login-body">
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+            
+            <form id="loginForm">
+                <div class="role-selector">
+                    <h6 class="mb-3">Select Your Role:</h6>
+                    <div class="role-option" onclick="selectRole('admin')">
+                        <input type="radio" name="role" value="admin" id="roleAdmin">
+                        <label for="roleAdmin">
+                            <i class="fas fa-user-shield"></i> Administrator
+                        </label>
+                        <small class="text-muted d-block">Full system access</small>
+                    </div>
+                    <div class="role-option" onclick="selectRole('manager')">
+                        <input type="radio" name="role" value="manager" id="roleManager">
+                        <label for="roleManager">
+                            <i class="fas fa-user-tie"></i> Project Manager
+                        </label>
+                        <small class="text-muted d-block">Project management access</small>
+                    </div>
+                    <div class="role-option" onclick="selectRole('developer')">
+                        <input type="radio" name="role" value="developer" id="roleDeveloper">
+                        <label for="roleDeveloper">
+                            <i class="fas fa-user-cog"></i> Developer
+                        </label>
+                        <small class="text-muted d-block">Task updates and progress</small>
+                    </div>
+                    <div class="role-option" onclick="selectRole('executive')">
+                        <input type="radio" name="role" value="executive" id="roleExecutive">
+                        <label for="roleExecutive">
+                            <i class="fas fa-chart-line"></i> Executive
+                        </label>
+                        <small class="text-muted d-block">Portfolio overview and reports</small>
+                    </div>
+                </div>
+                
+                <div class="form-floating">
+                    <input type="email" class="form-control" id="email" placeholder="name@example.com" required>
+                    <label for="email">Email address</label>
+                </div>
+                
+                <div class="form-floating">
+                    <input type="password" class="form-control" id="password" placeholder="Password" required>
+                    <label for="password">Password</label>
+                </div>
+                
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="rememberMe">
+                    <label class="form-check-label" for="rememberMe">
+                        Remember me
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-login">
+                    <i class="fas fa-sign-in-alt"></i> Sign In
+                </button>
+            </form>
+            
+            <div class="demo-credentials">
+                <h6><i class="fas fa-info-circle"></i> Demo Credentials:</h6>
+                <div class="credential-item">
+                    <strong>Admin:</strong> admin@demo.com / admin123
+                </div>
+                <div class="credential-item">
+                    <strong>Manager:</strong> manager@demo.com / manager123
+                </div>
+                <div class="credential-item">
+                    <strong>Developer:</strong> dev@demo.com / dev123
+                </div>
+                <div class="credential-item">
+                    <strong>Executive:</strong> exec@demo.com / exec123
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedRole = '';
+        
+        function selectRole(role) {
+            selectedRole = role;
+            // Remove selected class from all options
+            document.querySelectorAll('.role-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            // Add selected class to clicked option
+            event.currentTarget.classList.add('selected');
+            // Check the radio button
+            document.getElementById('role' + role.charAt(0).toUpperCase() + role.slice(1)).checked = true;
+        }
+        
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const role = selectedRole;
+            
+            if (!role) {
+                showError('Please select a role');
+                return;
+            }
+            
+            try {
+                showSuccess('Logging in...');
+                
+                // For demo purposes, we'll use predefined credentials
+                const validCredentials = {
+                    'admin@demo.com': { password: 'admin123', role: 'admin' },
+                    'manager@demo.com': { password: 'manager123', role: 'manager' },
+                    'dev@demo.com': { password: 'dev123', role: 'developer' },
+                    'exec@demo.com': { password: 'exec123', role: 'executive' }
+                };
+                
+                if (validCredentials[email] && validCredentials[email].password === password) {
+                    // Store user info in session storage
+                    sessionStorage.setItem('user', JSON.stringify({
+                        email: email,
+                        role: validCredentials[email].role,
+                        name: email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1)
+                    }));
+                    
+                    // Redirect based on role
+                    setTimeout(() => {
+                        switch(validCredentials[email].role) {
+                            case 'admin':
+                                window.location.href = '/web/dashboard';
+                                break;
+                            case 'manager':
+                                window.location.href = '/web/manager';
+                                break;
+                            case 'developer':
+                                window.location.href = '/web/employee';
+                                break;
+                            case 'executive':
+                                window.location.href = '/web/executive';
+                                break;
+                            default:
+                                window.location.href = '/web/dashboard';
+                        }
+                    }, 1000);
+                } else {
+                    showError('Invalid email or password');
+                }
+                
+            } catch (error) {
+                showError('Login failed: ' + error.message);
+            }
+        });
+        
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+        
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+        
+        // Auto-fill demo credentials for quick testing
+        function autoFillCredentials(role) {
+            const credentials = {
+                'admin': { email: 'admin@demo.com', password: 'admin123' },
+                'manager': { email: 'manager@demo.com', password: 'manager123' },
+                'developer': { email: 'dev@demo.com', password: 'dev123' },
+                'executive': { email: 'exec@demo.com', password: 'exec123' }
+            };
+            
+            if (credentials[role]) {
+                document.getElementById('email').value = credentials[role].email;
+                document.getElementById('password').value = credentials[role].password;
+                selectRole(role);
+            }
+        }
+        
+        // Add quick fill buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const demoDiv = document.querySelector('.demo-credentials');
+            const quickFillDiv = document.createElement('div');
+            quickFillDiv.className = 'mt-3';
+            quickFillDiv.innerHTML = `
+                <h6>Quick Fill:</h6>
+                <div class="d-flex gap-2 flex-wrap">
+                    <button class="btn btn-sm btn-outline-primary" onclick="autoFillCredentials('admin')">Admin</button>
+                    <button class="btn btn-sm btn-outline-success" onclick="autoFillCredentials('manager')">Manager</button>
+                    <button class="btn btn-sm btn-outline-info" onclick="autoFillCredentials('developer')">Developer</button>
+                    <button class="btn btn-sm btn-outline-warning" onclick="autoFillCredentials('executive')">Executive</button>
+                </div>
+            `;
+            demoDiv.appendChild(quickFillDiv);
+        });
+    </script>
+</body>
+</html>
