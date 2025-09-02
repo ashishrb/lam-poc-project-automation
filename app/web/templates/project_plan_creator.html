@@ -93,7 +93,12 @@
                 <a class="nav-link" href="/web/projects">Projects</a>
                 <a class="nav-link active" href="/web/project-plan-creator">Plan Creator</a>
                 <a class="nav-link" href="/web/resources">Resources</a>
+                <a class="nav-link" href="/web/finance">Finance</a>
                 <a class="nav-link" href="/web/ai-copilot">AI Copilot</a>
+                <a class="nav-link" href="/web/alerts">Alerts</a>
+                <a class="nav-link" href="/web/reports">Reports</a>
+                <a class="nav-link" href="/web/admin">Admin</a>
+                <a class="nav-link" href="/web/developer-workbench">Developer</a>
             </div>
         </div>
     </nav>
@@ -144,23 +149,22 @@
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label class="form-label">Project Name *</label>
-                        <input type="text" class="form-control" id="projectName" placeholder="Enter project name">
+                        <select class="form-select" id="projectName" required>
+                            <option value="">Select a project...</option>
+                            <option value="ALPHA Project">ALPHA Project</option>
+                            <option value="BETA Project">BETA Project</option>
+                            <option value="GAMMA Project">GAMMA Project</option>
+                            <option value="DELTA Project">DELTA Project</option>
+                            <option value="EPSILON Project">EPSILON Project</option>
+                        </select>
+                        <small class="form-text text-muted">Select an existing project to create/modify its plan</small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Description</label>
-                        <textarea class="form-control" id="projectDescription" rows="3" placeholder="Project description"></textarea>
+                        <textarea class="form-control" id="projectDescription" rows="3" placeholder="Project description and objectives..."></textarea>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="mb-3">
-                        <label class="form-label">Project Manager</label>
-                        <select class="form-control" id="projectManager">
-                            <option value="">Select Project Manager</option>
-                            <option value="1">John Manager</option>
-                            <option value="2">Sarah Lead</option>
-                            <option value="3">Mike Director</option>
-                        </select>
-                    </div>
                     <div class="mb-3">
                         <label class="form-label">Start Date</label>
                         <input type="date" class="form-control" id="startDate">
@@ -168,6 +172,10 @@
                     <div class="mb-3">
                         <label class="form-label">End Date</label>
                         <input type="date" class="form-control" id="endDate">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Budget (USD)</label>
+                        <input type="number" class="form-control" id="budget" placeholder="500000">
                     </div>
                 </div>
             </div>
