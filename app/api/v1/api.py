@@ -17,7 +17,9 @@ from .endpoints import (
     autonomous_system,
     developer_workbench,
     vector_index,
-    financial_controls
+    financial_controls,
+    ai_risk_mitigation,
+    ai_dependency_resolution
 )
 
 api_router = APIRouter()
@@ -41,3 +43,5 @@ api_router.include_router(autonomous_system.router, prefix="/autonomous-system",
 api_router.include_router(developer_workbench.router, prefix="/developer-workbench", tags=["Developer Workbench"])
 api_router.include_router(vector_index.router, prefix="/vector-index", tags=["Vector Index Management"])
 api_router.include_router(financial_controls.router, prefix="/financial-controls", tags=["Financial Controls"])
+api_router.include_router(ai_risk_mitigation.router, prefix="/ai-risk-mitigation", tags=["AI Risk Mitigation"])
+api_router.include_router(ai_dependency_resolution.router, prefix="/ai-dependency-resolution", tags=["AI Dependency Resolution"])
